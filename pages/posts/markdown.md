@@ -1,9 +1,9 @@
 ---
-title: Markdown Examples
-date: 2021/3/19
-description: View examples of all possible Markdown options.
+title: Markdown 
+date: 2004/01/01
+description: Markdown stylings 
 tag: web development
-author: You
+author: Hugo Demenez
 ---
 
 # Markdown Examples
@@ -48,7 +48,7 @@ Ordered
 
 Inline `code`
 
-```
+```javascript
 export default function Nextra({ Component, pageProps }) {
   return (
     <>
