@@ -70,6 +70,9 @@ date: 2023-11-17
     <summary>Academic Highlights</summary>
 
     - SIT (Systematic Inventive thinking)
+    - The four phases of innovation
+    - 2x2 framework
+    - Fogg model
     </details>
 
 ---
@@ -96,6 +99,11 @@ date: 2023-11-17
 
     > Leveraging decentralized finance by developing solutions to reduce market asymetries.
 
+- Dry-aging appliance - since early 2022
+
+    > Dive into budget-friendly gourmet at home with the help of machine learning and computer vision. Enjoy the extraordinary flavors of dry-aged meat, cheese, wine, and sausages—all effortlessly tailored by the appliance.
+    
 - [Pattern Recognition Algorithm](https://github.com/FinancialForecastingProject) - from September 2022 to May 2023
 
     > Identifying financial market patterns based on historical variations. Throughout this work, we came to the conclusion that modern markets are highly driven by emotions.
+
