@@ -1,0 +1,59 @@
+---
+title: Tips on version control 
+date: 2023/12/01
+description: A few tips about things recently for version controlling on Github
+tag: code
+author: Hugo Demenez
+---
+
+There are a few things I recently learned that I'd like to share with you.
+
+- Git commits enhanced -> To look super organized
+- Markdown new styling for relevent messages
+
+
+# Commits enhancements
+
+Let's start with something I really wanted to write about in order to have a place where I can remember it
+
+Now I'll write my commits this way :
+
+```md
+TYPE(SCOPE) : Short title
+
+Details about things changed with the commit
+```
+ 
+First, let's take a look at different types accepted :
+* **build**: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+* **ci**: Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+* **docs**: Documentation only changes
+* **feat**: A new feature
+* **fix**: A bug fix
+* **perf**: A code change that improves performance
+* **refactor**: A code change that neither fixes a bug nor adds a feature
+* **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+* **test**: Adding missing tests or correcting existing tests
+
+Then, about the scope :
+> It is a short word to define what are changes affecting
+
+
+# New styling capabilities in markdown (on github)
+
+```
+> [!NOTE]  
+> Highlights information that users should take into account, even when skimming.
+
+> [!TIP]
+> Optional information to help a user be more successful.
+
+> [!IMPORTANT]  
+> Crucial information necessary for users to succeed.
+
+> [!WARNING]  
+> Critical content demanding immediate user attention due to potential risks.
+
+> [!CAUTION]
+> Negative potential consequences of an action.
+```
