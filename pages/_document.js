@@ -5,7 +5,7 @@ export default function Document() {
   const meta = {
     title: 'Hugo Demenez',
     description: 'Personal portfolio.',
-    image: 'https://assets.vercel.com/image/upload/q_auto/front/vercel/dps.png'
+    image: '/public/images/social.png'
   }
 
   return (
