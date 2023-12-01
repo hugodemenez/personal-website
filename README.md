@@ -1,7 +1,7 @@
 # Hugo DEMENEZ's personal portfolio
 
 ## Built using: Portfolio Starter Kit
-[!TIP]
+> [!TIP]
 Repository is updated daily/weekly
 It hosts blog posts directly in markdown within
 the Repository
