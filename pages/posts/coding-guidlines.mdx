@@ -8,25 +8,25 @@ author: Hugo Demenez
 
 There are a few things I recently learned that I'd like to share with you.
 
-- Git commits enhanced -> To look super organized
+- Git commits enhanced -> To collaborate efficiently
 - Markdown new styling for relevent messages
-
 
 # Commits enhancements
 
-Let's start with something I really wanted to write about in order to have a place where I can remember it
+Let's start with something I really wanted to write about.
+It is a way for me to remember.
 
-Now I'll write my commits this way :
-
+Commits should have the following structure :
 ```md
 TYPE(SCOPE) : Short title
 
 Details about things changed with the commit
 ```
  
-First, let's take a look at different types accepted :
-* **build**: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
-* **ci**: Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+There are different types:
+
+* **build**: Changes that affect the build system or external dependencies 
+* **ci**: Changes to CI configuration files and scripts 
 * **docs**: Documentation only changes
 * **feat**: A new feature
 * **fix**: A bug fix
@@ -35,9 +35,15 @@ First, let's take a look at different types accepted :
 * **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
 * **test**: Adding missing tests or correcting existing tests
 
-Then, about the scope :
-> It is a short word to define what are changes affecting
+Reference: [conventionalcommits.org](https://www.conventionalcommits.org/en/v1.0.0/)
 
+Then, about the scope :
+It is a short word to define what are changes affecting
+
+## Breaking changes
+
+If you add a `!` after the scope, it means the commit is a breaking change.
+A breaking change is an API response change for example.
 
 # New styling capabilities in markdown (on github)
 
