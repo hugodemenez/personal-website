@@ -40,23 +40,25 @@ date: 2023-11-17
 
     **4th year**
     - AI development
-    - Programming Language basic understanding : 
-        - Android using `Java`, `Kotlin`
+    - Programming Languages : 
+        - Android using `Java`, `Maven`, `Kotlin`
+        - `C#`
         - `HTML`, `CSS` and `Javascript`
         - `PHP`
+        - `C`
     - Network architecture
     - Digital Marketing
 
     **3rd year**
     - Quantum physics (Schrodinger equations, cristal atomic composition and others that I don't quite remember)
     - Electronics (`Assembly` coding FPGA, sound systems with filters and equations)
-    - Applied mathematics with statistics
+    - Applied mathematics with statistics `MATLAB` and `Python`
 
     **2nd year**
-    - Physics: Fluid mechanics, MATLAB visualization
+    - Physics: Fluid mechanics, `MATLAB` visualization
     - Mathematics: Brownian motion, Taylor expansions, ...
     - Engineering Sciences: Connections, 3D design, force calculations
-    - Algorithmic Development: Python
+    - Algorithmic Development: Bubble, Selection, Merge sorting algorithms with `Python`
 
     **1st year**
     - Math Sup (Mathematics Foundation Year)
