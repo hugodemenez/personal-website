@@ -24,6 +24,8 @@ body {
   font-variation-settings: 'wght' 450;
   font-variant: common-ligatures contextual;
   letter-spacing: -0.02em;
+  background-color: #ffffff; /* White background for light theme */
+  color: #333333; /* Dark gray text for light theme */
 }
 b,
 strong,
@@ -62,4 +64,19 @@ img.next-image {
 
 .nav-line .nav-link {
   color: #69778c;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #000000; /* Pure black background for dark theme */
+    color: #f0f0f0; /* Light gray text for dark theme */
+  }
+
+  .prose a {
+    color: #3b82f6; /* Lighter blue for links in dark mode */
+  }
+
+  .nav-line .nav-link {
+    color: #9ca3af; /* Lighter gray for nav links in dark mode */
+  }
 }
