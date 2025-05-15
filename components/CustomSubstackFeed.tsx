@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import styles from './CustomSubstackFeed.module.css';
 
 interface Post {
   title: string;
@@ -22,7 +23,7 @@ export default function CustomSubstackFeed() {
   }, []);
 
   return (
-    <div style={{ marginBottom: 24, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, alignItems: 'center' }}>
+    <div className={styles.grid}>
       {posts.map((post, idx) => (
         <div key={idx} style={{ height: 400, alignItems: 'center', textAlign: 'center' }}>
           <p style={{ color: '#666', fontSize: '0.9em', marginTop: '8px' }}>
