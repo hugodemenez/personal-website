@@ -19,13 +19,16 @@ export default function CustomSubstackFeed() {
       const data = await res.json();
       setPosts(data.posts);
     }
-    fetchFeed();
+    setInterval(()=>fetchFeed(),10000)
   }, []);
 
   return (
     <div className={styles.grid}>
-      {posts.map((post, idx) => (
-        <div key={idx} style={{ height: 400, alignItems: 'center', textAlign: 'center' }}>
+      {posts?.map((post, idx) => (
+        <Link href={post.link} key={idx} style={{ height: 400, alignItems: 'center', textAlign: 'center' }}>
+          {post.image && (
+            <Image src={post.image} alt={post.title} width={400} height={200} style={{ width: '100%', maxWidth: 400, borderRadius: 8 }} />
+          )}
           <p style={{ color: '#666', fontSize: '0.9em', marginTop: '8px' }}>
             {new Date(post.pubDate).toLocaleDateString('en-US', {
               year: 'numeric',
@@ -33,15 +36,10 @@ export default function CustomSubstackFeed() {
               day: 'numeric'
             })}
           </p>
-          {post.image && (
-            <Image src={post.image} alt={post.title} width={400} height={200} style={{ width: '100%', maxWidth: 400, borderRadius: 8 }} />
-          )}
           <p>
-            <Link href={post.link} target="_blank" rel="noopener noreferrer">
-              {post.title}
-            </Link>
+            {post.title}
           </p>
-        </div>
+        </Link>
       ))}
     </div>
   );
