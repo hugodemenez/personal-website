@@ -3,7 +3,10 @@ import { XMLParser } from 'fast-xml-parser';
 
 const SUBSTACK_FEED_URL = 'https://hugodemenez.substack.com/feed';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     const feedRes = await fetch(SUBSTACK_FEED_URL);
     const xml = await feedRes.text();
@@ -29,7 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     });
     res.status(200).json({ posts });
-  } catch (e) {
+  } catch (error) {
+    console.error('Error fetching Substack feed:', error);
     res.status(500).json({ error: 'Failed to fetch Substack feed' });
   }
 } 

@@ -5,7 +5,7 @@ date: 2024-10-16
 ---
 
 import Image from 'next/image'
-import CustomSubstackFeed from '../components/CustomSubstackFeed'
+import SubstackFeedWrapper from '../components/SubstackFeedWrapper'
 
 ## Welcome!
 
@@ -21,7 +21,7 @@ I'm deeply committed to open source and the free exchange of knowledge. Contribu
 
 ## Latest from My Newsletter
 
-<CustomSubstackFeed />
+<SubstackFeedWrapper />
 
 ## Current Projects 
 
@@ -55,7 +55,7 @@ I'm always eager to expand my skills. Currently, I'm exploring:
   alt="Wakatime metrics"
   width={1125}
   height={750}
-  priority
+  loading="eager"
   className="next-image"
 />
 
