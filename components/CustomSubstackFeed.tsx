@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './CustomSubstackFeed.module.css';
@@ -10,17 +10,25 @@ interface Post {
   pubDate: string;
 }
 
-export default function CustomSubstackFeed() {
-  const [posts, setPosts] = useState<Post[]>([]);
+interface CustomSubstackFeedProps {
+  posts: Post[];
+  isLoading?: boolean;
+}
 
-  useEffect(() => {
-    async function fetchFeed() {
-      const res = await fetch('/api/substack-feed');
-      const data = await res.json();
-      setPosts(data.posts);
-    }
-    setInterval(()=>fetchFeed(),10000)
-  }, []);
+export default function CustomSubstackFeed({ posts, isLoading = false }: CustomSubstackFeedProps) {
+  if (isLoading) {
+    return (
+      <div className={styles.grid}>
+        {[1, 2, 3].map((idx) => (
+          <div key={idx} className={styles.skeletonCard}>
+            <div className={styles.skeletonImage} />
+            <div className={styles.skeletonDate} />
+            <div className={styles.skeletonTitle} />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.grid}>
