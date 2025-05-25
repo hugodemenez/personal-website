@@ -8,16 +8,25 @@
   },
   "dependencies": {
     "@vercel/analytics": "^1.1.1",
+    "clsx": "^2.1.1",
+    "color-thief-react": "^2.1.0",
+    "date-fns": "^4.1.0",
     "fast-xml-parser": "^5.2.3",
+    "framer-motion": "^12.12.2",
+    "geist": "^1.4.2",
     "gray-matter": "^4.0.3",
+    "motion": "^12.12.2",
     "next": "^13.5.6",
     "next-mdx-remote": "^5.0.0",
     "nextra": "^2.13.2",
     "nextra-theme-blog": "^2.13.2",
+    "postcss": "^8.5.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rss": "^1.2.2",
-    "swr": "^2.3.3"
+    "swr": "^2.3.3",
+    "tailwind-merge": "^3.3.0",
+    "tailwindcss": "^4.1.7"
   },
   "prettier": {
     "arrowParens": "always",

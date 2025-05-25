@@ -12,7 +12,7 @@ export default async function handler(
     const xml = await feedRes.text();
     const parser = new XMLParser({ ignoreAttributes: false });
     const json = parser.parse(xml);
-    const items = json.rss.channel.item.slice(0, 3);
+    const items = json.rss.channel.item;
     const posts = items.map((item: any) => {
       // Try to extract image from content:encoded or enclosure
       let image = undefined;
