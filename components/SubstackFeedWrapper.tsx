@@ -16,6 +16,7 @@ export default function SubstackFeedWrapper() {
     revalidateOnReconnect: false,
     refreshInterval: 604800000, // Refresh every week (7 days)
   });
+  console.log(data);
 
   if (error) {
     console.error('Error loading Substack feed:', error);
