@@ -5,9 +5,7 @@ date: 2024-10-16
 ---
 
 import Image from 'next/image'
-import SubstackFeedWrapper from '../components/SubstackFeedWrapper'
-import StaticSubstackFeed from '../components/StaticSubstackFeed'
-import UnifiedPostGrid from '../components/UnifiedPostGrid'
+import UnifiedPostGridWrapper from '../components/UnifiedPostGridWrapper'
 import YouTube from '../components/youtube-viewer'
 
 
@@ -25,12 +23,11 @@ I have been driven by programming and investing.
   className="next-image"
 />
 
-## Sharing my thoughts
+## Latest Posts
 
-Every week, I share my thoughts on [Substack](https://substack.com/@hugodemenez).
-Here you can find some of my posts:
+Here you can find my latest posts from both this blog and my [Substack newsletter](https://substack.com/@hugodemenez):
 
-<SubstackFeedWrapper />
+<UnifiedPostGridWrapper showLoadMore={true} initialVisible={6} />
 
 ## Interviews
 

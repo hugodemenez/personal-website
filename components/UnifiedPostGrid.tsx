@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
-import styles from './CustomSubstackFeed.module.css';
+import styles from './UnifiedPostGrid.module.css';
 import type { UnifiedPost } from '../lib/posts';
 
 interface UnifiedPostGridProps {
@@ -40,13 +40,12 @@ function PostCard({ post, index }: { post: UnifiedPost; index: number }) {
         viewTransitionName: isSubstack ? 'substack-post' : 'post-card'
       }}
     >
-      {/* Image or placeholder */}
+      {/* Full-width image or placeholder */}
       {post.image ? (
         <Image 
           src={post.image} 
           alt={post.title} 
-          width={400} 
-          height={220} 
+          fill
           className={styles.postImage}
           priority={index < 4}
           loading={index < 4 ? 'eager' : 'lazy'}
@@ -55,15 +54,9 @@ function PostCard({ post, index }: { post: UnifiedPost; index: number }) {
         />
       ) : (
         <div 
-          className={styles.postImage}
+          className={`${styles.postImage} ${styles.placeholder}`}
           style={{
             background: `linear-gradient(135deg, ${tagColor}22, ${tagColor}44)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: tagColor,
-            fontSize: '2rem',
-            fontWeight: 'bold',
           }}
         >
           {post.title.charAt(0).toUpperCase()}
@@ -72,8 +65,7 @@ function PostCard({ post, index }: { post: UnifiedPost; index: number }) {
       
       {/* Source tag */}
       <div 
-        className={styles.substackTag}
-        style={{ backgroundColor: tagColor }}
+        className={`${styles.substackTag} ${styles[post.tag?.toLowerCase() || post.source.toLowerCase()] || styles.default}`}
       >
         {post.tag || post.source}
       </div>
