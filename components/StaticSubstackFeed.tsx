@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './CustomSubstackFeed.module.css';
 import { formatDistanceToNow } from 'date-fns';
+import useSWR from 'swr';
 
 interface Post {
   title: string;
@@ -13,17 +14,43 @@ interface Post {
   content?: string;
   author?: string;
   guid?: string;
+  slug?: string;
 }
 
-interface CustomSubstackFeedProps {
-  posts: Post[];
-  isLoading?: boolean;
+interface StaticSubstackFeedProps {
+  initialPosts: Post[];
+  lastUpdated?: string;
+  enableLiveUpdates?: boolean;
 }
 
-export default function CustomSubstackFeed({ posts, isLoading = false }: CustomSubstackFeedProps) {
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export default function StaticSubstackFeed({ 
+  initialPosts, 
+  lastUpdated,
+  enableLiveUpdates = true 
+}: StaticSubstackFeedProps) {
   const [visibleCount, setVisibleCount] = useState(4);
   const [isGallery, setIsGallery] = useState(false);
   const itemsPerLoad = 4;
+
+  // Use SWR for live updates only if enabled and we have initial data
+  const { data, error } = useSWR(
+    enableLiveUpdates ? '/api/substack-feed' : null,
+    fetcher,
+    {
+      fallbackData: { posts: initialPosts, lastUpdated },
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      refreshInterval: 300000, // Check for updates every 5 minutes
+      dedupingInterval: 300000,
+      errorRetryCount: 2,
+    }
+  );
+
+  // Use either live data or static data
+  const posts = data?.posts || initialPosts;
+  const isLoading = false; // Since we always have static data
 
   const handleShowMore = useCallback(() => {
     if (document.startViewTransition) {
@@ -78,13 +105,32 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
     );
   }
 
+  if (!posts || posts.length === 0) {
+    return (
+      <div className={styles.errorMessage}>
+        <p>No posts available at the moment.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
+      {enableLiveUpdates && lastUpdated && (
+        <p className={styles.lastUpdated}>
+          Last updated: {formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
+          {error && (
+            <span style={{ color: '#f59e0b', marginLeft: '8px' }}>
+              (Live updates unavailable - showing cached content)
+            </span>
+          )}
+        </p>
+      )}
+      
       <div className={`${styles.grid} ${isGallery ? styles.gallery : ''}`}>
-        {posts?.map((post, idx) => (
+        {posts.map((post, idx) => (
           <Link 
             href={post.link} 
-            key={post.guid || idx} 
+            key={post.guid || post.slug || idx} 
             className={`${styles.postLink} substack-post-transition`}
             target="_blank"
             rel="noopener noreferrer"
@@ -127,6 +173,7 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
           </Link>
         ))}
       </div>
+      
       <div className={styles.buttonGroup}>
         {!isGallery && visibleCount < posts.length && (
           <button onClick={handleShowMore} className={styles.showMoreButton}>
@@ -146,4 +193,4 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
       </div>
     </div>
   );
-} 
+}

@@ -1,3 +1,105 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* View Transitions API Support */
+@view-transition {
+  navigation: auto;
+}
+
+/* Enhanced view transition styles */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Custom view transition for Substack posts */
+::view-transition-group(substack-post) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+::view-transition-old(substack-post),
+::view-transition-new(substack-post) {
+  animation: none;
+  mix-blend-mode: normal;
+  height: 100%;
+  border-radius: 1rem;
+}
+
+/* Individual post card transitions */
+::view-transition-group(post-card) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Enhanced navigation transitions */
+::view-transition-group(main-content) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Smooth transitions for navigation */
+::view-transition-group(nav) {
+  animation-duration: 250ms;
+}
+
+/* Enhanced focus and hover states */
+@layer utilities {
+  .transition-view {
+    view-transition-name: auto;
+  }
+  
+  .substack-post-transition {
+    view-transition-name: substack-post;
+  }
+  
+  .nav-transition {
+    view-transition-name: nav;
+  }
+}
+
+/* Modern scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
+/* Performance optimizations */
+img {
+  content-visibility: auto;
+  contain-intrinsic-size: 300px 200px;
+}
+
+/* Better typography and loading states */
+.prose {
+  --tw-prose-body: rgb(75 85 99);
+  --tw-prose-headings: rgb(17 24 39);
+  --tw-prose-links: rgb(59 130 246);
+}
+
+@media (prefers-color-scheme: dark) {
+  .prose {
+    --tw-prose-body: rgb(229 231 235);
+    --tw-prose-headings: rgb(249 250 251);
+    --tw-prose-links: rgb(96 165 250);
+  }
+}
