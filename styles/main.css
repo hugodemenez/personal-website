@@ -83,6 +83,28 @@ img.next-image {
   color: #69778c;
 }
 
+/* View Transition Names for Core Elements */
+.nx-nav {
+  view-transition-name: nav;
+}
+
+main {
+  view-transition-name: main-content;
+}
+
+h1 {
+  view-transition-name: page-title;
+}
+
+/* Navigation and link transitions */
+.substack-post-transition {
+  view-transition-name: substack-post;
+}
+
+.post-card-transition {
+  view-transition-name: post-card;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #000000; /* Pure black background for dark theme */

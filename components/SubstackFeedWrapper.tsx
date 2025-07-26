@@ -29,8 +29,27 @@ export default function SubstackFeedWrapper() {
   if (error) {
     console.error('Error loading Substack feed:', error);
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600">Unable to load recent posts. Please try again later.</p>
+      <div style={{ 
+        textAlign: 'center', 
+        padding: '40px 20px',
+        color: '#6b7280',
+        background: '#f9fafb',
+        borderRadius: '16px',
+        border: '1px solid #e5e7eb',
+        margin: '20px 0'
+      }}>
+        <p>Unable to load recent posts. Please try again later.</p>
+        <p style={{ fontSize: '0.8rem', marginTop: '8px', opacity: 0.7 }}>
+          You can still visit my{' '}
+          <a 
+            href="https://substack.com/@hugodemenez"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#f59e0b', textDecoration: 'underline' }}
+          >
+            Substack directly
+          </a>
+        </p>
       </div>
     );
   }

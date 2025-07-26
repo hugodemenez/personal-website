@@ -17,6 +17,7 @@
 /* Custom view transition for Substack posts */
 ::view-transition-group(substack-post) {
   animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 ::view-transition-old(substack-post),
@@ -24,7 +25,19 @@
   animation: none;
   mix-blend-mode: normal;
   height: 100%;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
+}
+
+/* Individual post card transitions */
+::view-transition-group(post-card) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Enhanced navigation transitions */
+::view-transition-group(main-content) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Smooth transitions for navigation */

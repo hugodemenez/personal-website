@@ -61,14 +61,19 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
 
   if (isLoading) {
     return (
-      <div className={styles.grid}>
-        {[1, 2, 3, 4].map((idx) => (
-          <div key={idx} className={styles.skeletonCard}>
-            <div className={styles.skeletonImage} />
-            <div className={styles.skeletonDate} />
-            <div className={styles.skeletonTitle} />
-          </div>
-        ))}
+      <div className={styles.container}>
+        <div className={styles.grid}>
+          {[1, 2, 3, 4].map((idx) => (
+            <div key={idx} className={styles.skeletonCard}>
+              <div className={styles.skeletonImage} />
+              <div className={styles.skeletonContent}>
+                <div className={styles.skeletonDate} />
+                <div className={styles.skeletonTitle} />
+                <div className={styles.skeletonDesc} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -81,6 +86,8 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
             href={post.link} 
             key={post.guid || idx} 
             className={`${styles.postLink} substack-post-transition`}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{ 
               animationDelay: `${idx * 0.1}s`,
               display: idx < visibleCount ? 'block' : 'none'
@@ -91,58 +98,28 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
                 src={post.image} 
                 alt={post.title} 
                 width={400} 
-                height={200} 
-                style={{
-                  margin: 0, 
-                  height: '20vh', 
-                  width: '100%', 
-                  objectFit: 'cover'
-                }}
+                height={220} 
+                className={styles.postImage}
                 priority={idx < 4}
                 loading={idx < 4 ? 'eager' : 'lazy'}
                 placeholder="blur"
                 blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
               />
             )}
-            <div 
-              style={{ 
-                position: 'absolute', 
-                bottom: 0, 
-                left: 0, 
-                width: '100%', 
-                height: '30%', 
-                backgroundColor:'rgba(0, 0, 0, 0.2)',
-                backdropFilter: 'blur(25px)',
-                display: 'flex', 
-                flexDirection: 'column', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-              }} 
-              id='banner'
-            >
-              <p style={{ color: '#fff', fontSize: '0.8em', margin: '0' }}>
+            
+            <div className={styles.substackTag}>
+              Substack
+            </div>
+            
+            <div className={styles.contentOverlay}>
+              <p className={styles.postDate}>
                 {formatDistanceToNow(new Date(post.pubDate), { addSuffix: true })}
               </p>
-              <p style={{ 
-                color: '#fff', 
-                margin: 0, 
-                maxWidth: '90%', 
-                overflow: 'hidden', 
-                textOverflow: 'ellipsis', 
-                whiteSpace: 'nowrap' 
-              }}>
+              <h3 className={styles.postTitle}>
                 {post.title}
-              </p>
+              </h3>
               {post.description && (
-                <p style={{ 
-                  color: 'rgba(255, 255, 255, 0.8)', 
-                  fontSize: '0.7em',
-                  margin: '4px 0 0 0',
-                  maxWidth: '90%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
+                <p className={styles.postDescription}>
                   {post.description}
                 </p>
               )}
