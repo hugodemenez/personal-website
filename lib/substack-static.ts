@@ -1,9 +1,11 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
 import { XMLParser } from 'fast-xml-parser';
+import fs from 'fs/promises';
+import path from 'path';
 
 const SUBSTACK_FEED_URL = 'https://hugodemenez.substack.com/feed';
+const CACHE_DIR = path.join(process.cwd(), '.next/cache/substack');
 
-interface SubstackPost {
+export interface SubstackPost {
   title: string;
   link: string;
   image?: string;
@@ -12,11 +14,13 @@ interface SubstackPost {
   content?: string;
   author?: string;
   guid?: string;
+  slug?: string;
 }
 
-interface SubstackFeedResponse {
+export interface SubstackCache {
   posts: SubstackPost[];
   lastUpdated: string;
+  version: string;
 }
 
 // Enhanced content extraction from HTML
@@ -51,6 +55,15 @@ function extractContentFromHtml(html: string): {
   };
 }
 
+// Generate URL slug from title
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 50);
+}
+
 // Parse and enhance Substack posts
 function parseSubstackPosts(items: any[]): SubstackPost[] {
   return items.map((item: any) => {
@@ -66,8 +79,11 @@ function parseSubstackPosts(items: any[]): SubstackPost[] {
       image = item.enclosure['@_url'];
     }
 
+    const title = item.title || 'Untitled';
+    const slug = generateSlug(title);
+
     return {
-      title: item.title || 'Untitled',
+      title,
       link: item.link || '',
       image,
       pubDate: item.pubDate || new Date().toISOString(),
@@ -75,20 +91,51 @@ function parseSubstackPosts(items: any[]): SubstackPost[] {
       content: text,
       author: item['dc:creator'] || item.author || 'Hugo Demenez',
       guid: item.guid?.['#text'] || item.guid || item.link,
+      slug,
     };
   });
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<SubstackFeedResponse | { error: string }>
-) {
-  // Set cache headers for better performance
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-  
+// Ensure cache directory exists
+async function ensureCacheDir(): Promise<void> {
+  try {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+  } catch (error) {
+    // Directory might already exist
+  }
+}
+
+// Read cached data
+async function readCache(): Promise<SubstackCache | null> {
+  try {
+    const cachePath = path.join(CACHE_DIR, 'posts.json');
+    const data = await fs.readFile(cachePath, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    return null;
+  }
+}
+
+// Write cache data
+async function writeCache(cache: SubstackCache): Promise<void> {
+  await ensureCacheDir();
+  const cachePath = path.join(CACHE_DIR, 'posts.json');
+  await fs.writeFile(cachePath, JSON.stringify(cache, null, 2));
+}
+
+// Check if cache is still valid (1 hour)
+function isCacheValid(cache: SubstackCache): boolean {
+  const cacheTime = new Date(cache.lastUpdated).getTime();
+  const now = Date.now();
+  const oneHour = 60 * 60 * 1000;
+  return (now - cacheTime) < oneHour;
+}
+
+// Fetch fresh data from Substack
+export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const feedRes = await fetch(SUBSTACK_FEED_URL, {
       signal: controller.signal,
@@ -131,21 +178,65 @@ export default async function handler(
     // Sort by date (newest first)
     posts.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
 
-    const response: SubstackFeedResponse = {
-      posts: posts.slice(0, 20), // Limit to 20 most recent posts
+    return posts.slice(0, 20); // Limit to 20 most recent posts
+  } catch (error) {
+    console.error('Error fetching Substack posts:', error);
+    throw error;
+  }
+}
+
+// Get cached posts or fetch fresh ones
+export async function getSubstackPosts(forceRefresh = false): Promise<SubstackPost[]> {
+  if (!forceRefresh) {
+    const cache = await readCache();
+    if (cache && isCacheValid(cache)) {
+      return cache.posts;
+    }
+  }
+
+  try {
+    const posts = await fetchSubstackPosts();
+    
+    const cache: SubstackCache = {
+      posts,
       lastUpdated: new Date().toISOString(),
+      version: '1.0.0',
     };
 
-    res.status(200).json(response);
+    await writeCache(cache);
+    return posts;
   } catch (error) {
-    console.error('Error fetching Substack feed:', error);
-    
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : 'Failed to fetch Substack feed';
-
-    res.status(500).json({ 
-      error: errorMessage,
-    });
+    // If fetch fails, try to return cached data as fallback
+    const cache = await readCache();
+    if (cache) {
+      console.warn('Using cached Substack posts due to fetch error:', error);
+      return cache.posts;
+    }
+    throw error;
   }
-} 
+}
+
+// Generate static props for Next.js pages
+export async function getSubstackStaticProps() {
+  try {
+    const posts = await getSubstackPosts();
+    
+    return {
+      props: {
+        posts,
+        lastUpdated: new Date().toISOString(),
+      },
+      revalidate: 3600, // Revalidate every hour
+    };
+  } catch (error) {
+    console.error('Error in getSubstackStaticProps:', error);
+    
+    return {
+      props: {
+        posts: [],
+        lastUpdated: new Date().toISOString(),
+      },
+      revalidate: 300, // Retry in 5 minutes if there was an error
+    };
+  }
+}
