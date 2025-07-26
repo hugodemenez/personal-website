@@ -26,7 +26,8 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
   const itemsPerLoad = 4;
 
   const handleShowMore = useCallback(() => {
-    if (document.startViewTransition) {
+    // Use view transition only if user prefers motion and it's supported
+    if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.startViewTransition(() => {
         setVisibleCount(prev => prev + itemsPerLoad);
       });
@@ -36,7 +37,7 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
   }, [itemsPerLoad]);
 
   const handleCollapse = useCallback(() => {
-    if (document.startViewTransition) {
+    if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.startViewTransition(() => {
         setVisibleCount(4);
         setIsGallery(false);
@@ -48,7 +49,7 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
   }, []);
 
   const handleShowAll = useCallback(() => {
-    if (document.startViewTransition) {
+    if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       document.startViewTransition(() => {
         setVisibleCount(posts.length);
         setIsGallery(true);
@@ -89,8 +90,8 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
             target="_blank"
             rel="noopener noreferrer"
             style={{ 
-              animationDelay: `${idx * 0.1}s`,
-              display: idx < visibleCount ? 'block' : 'none'
+              animationDelay: idx < 8 ? `${idx * 0.05}s` : '0s',
+              ...(idx >= visibleCount && { display: 'none' })
             }}
           >
             {post.image && (
@@ -103,6 +104,7 @@ export default function CustomSubstackFeed({ posts, isLoading = false }: CustomS
                 priority={idx < 4}
                 loading={idx < 4 ? 'eager' : 'lazy'}
                 placeholder="blur"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWEREiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
               />
             )}

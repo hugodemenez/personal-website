@@ -2,22 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* View Transitions API Support */
+/* View Transitions API Support - Optimized for performance */
 @view-transition {
   navigation: auto;
 }
 
-/* Enhanced view transition styles */
+/* Enhanced view transition styles - Reduced duration for better performance */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 300ms;
-  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
 }
 
-/* Custom view transition for Substack posts */
+/* Custom view transition for Substack posts - Simplified */
 ::view-transition-group(substack-post) {
-  animation-duration: 400ms;
-  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-duration: 250ms;
+  animation-timing-function: ease-out;
 }
 
 ::view-transition-old(substack-post),
@@ -26,23 +26,26 @@
   mix-blend-mode: normal;
   height: 100%;
   border-radius: 1rem;
+  /* Performance optimization */
+  will-change: transform, opacity;
 }
 
-/* Individual post card transitions */
+/* Individual post card transitions - Optimized */
 ::view-transition-group(post-card) {
-  animation-duration: 350ms;
-  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
 }
 
-/* Enhanced navigation transitions */
+/* Enhanced navigation transitions - Simplified */
 ::view-transition-group(main-content) {
-  animation-duration: 300ms;
-  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
 }
 
-/* Smooth transitions for navigation */
+/* Smooth transitions for navigation - Faster */
 ::view-transition-group(nav) {
-  animation-duration: 250ms;
+  animation-duration: 150ms;
+  animation-timing-function: ease-out;
 }
 
 /* Enhanced focus and hover states */
@@ -87,6 +90,33 @@
 img {
   content-visibility: auto;
   contain-intrinsic-size: 300px 200px;
+}
+
+/* Optimize for smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Performance optimizations for specific elements */
+.postLink,
+.grid {
+  /* Enable hardware acceleration for better scrolling */
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
 
 /* Better typography and loading states */
