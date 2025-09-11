@@ -15,13 +15,13 @@
 }
 
 /* Custom view transition for Substack posts - Simplified */
-::view-transition-group(substack-post) {
+::view-transition-group(substack-*) {
   animation-duration: 250ms;
   animation-timing-function: ease-out;
 }
 
-::view-transition-old(substack-post),
-::view-transition-new(substack-post) {
+::view-transition-old(substack-*),
+::view-transition-new(substack-*) {
   animation: none;
   mix-blend-mode: normal;
   height: 100%;
@@ -31,7 +31,7 @@
 }
 
 /* Individual post card transitions - Optimized */
-::view-transition-group(post-card) {
+::view-transition-group(post-*) {
   animation-duration: 200ms;
   animation-timing-function: ease-out;
 }

@@ -28,6 +28,9 @@ function getTagColor(tag?: string): string {
 function PostCard({ post, index }: { post: UnifiedPost; index: number }) {
   const isSubstack = post.source === 'substack';
   const tagColor = getTagColor(post.tag);
+  // Create unique view transition name using post slug/guid and source
+  const uniqueId = post.slug || post.guid || `post-${index}`;
+  const viewTransitionName = isSubstack ? `substack-${uniqueId}` : `post-${uniqueId}`;
   
   return (
     <Link 
@@ -37,7 +40,7 @@ function PostCard({ post, index }: { post: UnifiedPost; index: number }) {
       rel={isSubstack ? 'noopener noreferrer' : undefined}
       style={{ 
         animationDelay: `${index * 0.1}s`,
-        viewTransitionName: isSubstack ? 'substack-post' : 'post-card'
+        viewTransitionName: viewTransitionName
       }}
     >
       {/* Full-width image or placeholder */}
