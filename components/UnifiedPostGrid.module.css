@@ -45,14 +45,14 @@
   /* Optimized transitions for better scrolling performance */
   transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
   -webkit-tap-highlight-color: transparent;
-  border-radius: 16px;
+  border-radius: 2px;
   overflow: hidden;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.4s ease forwards;
   background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   min-height: 380px;
   text-decoration: none;
   /* Performance optimizations */
@@ -64,9 +64,9 @@
 
 @media (prefers-color-scheme: dark) {
   .postLink {
-    background: rgba(30, 30, 30, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -80,8 +80,8 @@
 /* Reduce hover effects complexity for better scrolling */
 @media (hover: hover) and (pointer: fine) {
   .postLink:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
 
   .postLink:hover .postImage {
@@ -185,43 +185,48 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(255, 107, 0, 0.9);
+  background: #000;
   color: white;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 2px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   z-index: 3;
   backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   text-shadow: none;
 }
 
-/* Different colors for different tags */
-.substack {
-  background: rgba(255, 107, 0, 0.9) !important;
+@media (prefers-color-scheme: dark) {
+  .substackTag {
+    background: white;
+    color: #000;
+  }
 }
 
-.code {
-  background: rgba(59, 130, 246, 0.9) !important;
-}
-
-.tech {
-  background: rgba(16, 185, 129, 0.9) !important;
-}
-
-.trading {
-  background: rgba(139, 92, 246, 0.9) !important;
-}
-
-.personal {
-  background: rgba(236, 72, 153, 0.9) !important;
-}
-
+/* Black and white minimalist tag styling */
+.substack,
+.code,
+.tech,
+.trading,
+.personal,
 .default {
-  background: rgba(107, 114, 128, 0.9) !important;
+  background: #000 !important;
+  color: white !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .substack,
+  .code,
+  .tech,
+  .trading,
+  .personal,
+  .default {
+    background: white !important;
+    color: #000 !important;
+  }
 }
 
 /* Loading skeleton */
@@ -255,7 +260,7 @@
 .skeletonCard {
   position: relative;
   height: 380px;
-  border-radius: 16px;
+  border-radius: 2px;
   overflow: hidden;
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
@@ -316,7 +321,7 @@
   right: 16px;
   width: 60px;
   height: 24px;
-  border-radius: 20px;
+  border-radius: 2px;
   background: rgba(255, 255, 255, 0.3);
 }
 
@@ -353,27 +358,39 @@
 }
 
 .showMoreButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #000;
   color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 25px;
+  border-radius: 2px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .showMoreButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  background: #333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .showMoreButton:active {
   transform: translateY(0);
+}
+
+@media (prefers-color-scheme: dark) {
+  .showMoreButton {
+    background: white;
+    color: #000;
+  }
+  
+  .showMoreButton:hover {
+    background: #e5e5e5;
+  }
 }
 
 .lastUpdated {
@@ -390,11 +407,18 @@
 }
 
 .errorMessage {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  background: #000;
   color: white;
   padding: 16px 24px;
-  border-radius: 12px;
+  border-radius: 2px;
   text-align: center;
   font-weight: 500;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .errorMessage {
+    background: white;
+    color: #000;
+  }
 }
