@@ -55,6 +55,7 @@ export function LandingContent() {
                 id="userInput"
                 placeholder="What is your name? you can put extra information to make sure AI finds you on the web"
                 className="flex-1 bg-surface border-none outline-none text-base text-foreground placeholder:text-muted py-2"
+                autoComplete="name"
               />
               <button
                 type="submit"
