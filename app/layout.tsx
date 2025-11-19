@@ -30,7 +30,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="min-h-screen flex flex-col">
-            <main className="max-w-4xl mx-auto px-2 sm:px-8 py-12 container flex-grow">
+            <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 container flex-grow">
               <Header />
               <div className="mt-4 sm:mt-12">
                 <ViewTransition>
