@@ -1,0 +1,67 @@
+export const metadata = {
+  "title": "Tips on version control",
+  "date": "2023/12/01",
+  "description": "A few tips about things recently for version controlling on Github",
+  "tags": [
+    "code"
+  ],
+  "author": "Hugo Demenez"
+};
+
+There are a few things I recently learned that I'd like to share with you.
+
+- Git commits enhanced -> To collaborate efficiently
+- Markdown new styling for relevent messages
+
+# Commits enhancements
+
+Let's start with something I really wanted to write about.
+It is a way for me to remember.
+
+Commits should have the following structure :
+```md
+TYPE(SCOPE) : Short title
+
+Details about things changed with the commit
+```
+ 
+There are different types:
+
+* **build**: Changes that affect the build system or external dependencies 
+* **ci**: Changes to CI configuration files and scripts 
+* **docs**: Documentation only changes
+* **feat**: A new feature
+* **fix**: A bug fix
+* **perf**: A code change that improves performance
+* **refactor**: A code change that neither fixes a bug nor adds a feature
+* **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+* **test**: Adding missing tests or correcting existing tests
+
+Reference: [conventionalcommits.org](https://www.conventionalcommits.org/en/v1.0.0/)
+
+Then, about the scope :
+It is a short word to define what are changes affecting
+
+## Breaking changes
+
+If you add a `!` after the scope, it means the commit is a breaking change.
+A breaking change is an API response change for example.
+
+# New styling capabilities in markdown (on github)
+
+```
+> [!NOTE]  
+> Highlights information that users should take into account, even when skimming.
+
+> [!TIP]
+> Optional information to help a user be more successful.
+
+> [!IMPORTANT]  
+> Crucial information necessary for users to succeed.
+
+> [!WARNING]  
+> Critical content demanding immediate user attention due to potential risks.
+
+> [!CAUTION]
+> Negative potential consequences of an action.
+```

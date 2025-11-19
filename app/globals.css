@@ -1,0 +1,126 @@
+@import 'tailwindcss';
+
+@source "./**/*.{js,ts,jsx,tsx,mdx}";
+@source "../content/**/*.{mdx}";
+@source "../mdx-components.tsx";
+
+@theme {
+  --font-family-sans: 'Inter', sans-serif;
+  
+  /* Theme Colors mapped to CSS variables */
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-border: var(--border);
+}
+
+:root {
+  /* Light Mode (Creamy Theme) - Default */
+  --background: #FDFBF7;
+  --surface: #F2EFE9;
+  --foreground: #292524;
+  --muted: #57534E;
+  --accent: #EA580C;
+  --accent-light: #FDBA74;
+  --border: #E6E2D8;
+}
+
+/* Manual Dark Mode override via class="dark" */
+.dark {
+  --background: #14120b;
+  --surface: #1c1a15;
+  --foreground: #E4E4E4;
+  --muted: #D6D6DD;
+  --accent: #EA580C;
+  --accent-light: #FDBA74;
+  --border: #33302B;
+}
+
+html {
+  min-width: 360px;
+  scrollbar-gutter: stable;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-family-sans);
+}
+
+::selection {
+  background-color: var(--accent);
+  color: white;
+}
+
+.next-image {
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+}
+
+/* Smooth View Transitions */
+::view-transition-group(root) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dialog positioning */
+dialog {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Mobile: full screen */
+dialog {
+  inset: 0;
+  max-width: none;
+  max-height: none;
+}
+
+/* Desktop: centered with proper sizing and styling */
+@media (min-width: 768px) {
+  dialog {
+    top: 10%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translateX(-50%);
+    width: 42rem;
+    height: auto;
+    max-width: 42rem; /* max-w-2xl equivalent */
+    max-height: 80vh;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+  }
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Prevent iOS zoom on input focus - minimum 16px font size on mobile */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
