@@ -1,7 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-// @ts-expect-eslint-disable-next-line
 import { ViewTransition } from 'react';
 import { Header } from '../components/Header';
 import { ThemeProvider } from '../components/theme-provider';
@@ -34,9 +33,9 @@ export default function RootLayout({
             <main className="max-w-4xl mx-auto px-2 sm:px-8 py-12 container flex-grow">
               <Header />
               <div className="mt-4 sm:mt-12">
-              <ViewTransition>
-                {children}
-              </ViewTransition>
+                <ViewTransition>
+                  {children}
+                </ViewTransition>
               </div>
             </main>
           </div>

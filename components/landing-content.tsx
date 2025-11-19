@@ -46,20 +46,24 @@ export function LandingContent() {
           <p className="text-muted mb-4 text-sm">
             This content is fully AI generated. Try it by yourself!
           </p>
-            <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              id="userInput"
-              placeholder="What is your name / city you live in / you can put extra information to make sure AI finds you on the web"
-              className="w-full px-4 py-2 bg-surface border border-border rounded-lg text-base text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
-            />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            <form
+              onSubmit={handleSubmit}
+              className="w-full flex items-center px-4 py-2 bg-surface border border-border rounded-lg"
             >
-            Generate my page
-            </button>
-          </form>
+              <input
+                type="text"
+                id="userInput"
+                placeholder="What is your name? you can put extra information to make sure AI finds you on the web"
+                className="flex-1 bg-surface border-none outline-none text-base text-foreground placeholder:text-muted py-2"
+              />
+              <button
+                type="submit"
+                className="ml-4 px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Generate my page
+              </button>
+            </form>
+            <span className="text-muted text-xs">*Hint: You can put your Twitter/X handle, GitHub handle, LinkedIn handle and Substack handle to make sure AI finds you on the web</span>
         </div>
       )}
 
