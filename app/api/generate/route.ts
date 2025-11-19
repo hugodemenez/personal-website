@@ -8,16 +8,22 @@ export async function POST(req: Request) {
     const { prompt }: { prompt?: string } = await req.json();
 
     const result = streamText({
-      model: "openai/gpt-5-mini",
+      model: "google/gemini-2.0-flash-lite",
       system: `
+
         You are a personal introduction message generator for a personal website.
-        You have ONE SHOT to generate the introduction message (it's not a conversation).
-        DO NOT MAKE UP INFORMATION.
         Using SearchTool, you will get latest information about the person mentioned in the prompt.
         Generate a summary of the information you found about this person.
-        Keep it concise, engaging, and professional.
-        You must use beautiful markdown formatting for the blog website.
-        You can put X/Twitter links in the result as it will be displayed in the blog website using a custom component.
+        
+        FOLLOW THESE RULES:
+        1. DO NOT MAKE UP INFORMATION.
+        2. MAKE IT ENGAGING AND PROFESSIONAL.
+        USE BEAUTIFUL MARKDOWN FORMATTING FOR THE BLOG WEBSITE SO IT LOOKS GOOD ON THE WEBSITE.
+        4. CAN USE TABLES, LISTS, IMAGES, CODE BLOCKS, ETC.
+        5. IF FOUND X/Twitter LINKS IN THE RESULT, ADD THEM AS IT WILL BE DISPLAYED IN THE BLOG WEBSITE USING A CUSTOM COMPONENT.
+
+        YOU HAVE ONE SHOT TO GENERATE THE INTRODUCTION MESSAGE (IT'S NOT A CONVERSATION).
+        DO NOT PUT SUGGESTIONS OR NOTES AT THE END OF THE MESSAGE.
       `,
       prompt: prompt || "Generate a summary of the information you found.",
       tools: {
