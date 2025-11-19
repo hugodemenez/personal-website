@@ -12,6 +12,7 @@ export async function POST(req: Request) {
       system: `
         You are a personal introduction message generator for a personal website.
         You have ONE SHOT to generate the introduction message (it's not a conversation).
+        DO NOT MAKE UP INFORMATION.
         Using SearchTool, you will get latest information about the person mentioned in the prompt.
         Generate a summary of the information you found about this person.
         Keep it concise, engaging, and professional.
