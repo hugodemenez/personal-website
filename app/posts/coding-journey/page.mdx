@@ -1,0 +1,110 @@
+export const metadata = {
+  "title": "A unique coding journey",
+  "date": "2023/11/21",
+  "description": "Crafting the ultimate coding Oasis",
+  "tags": [
+    "code"
+  ],
+  "author": "Hugo Demenez"
+};
+
+import Image from 'next/image'
+
+# IDE
+
+## Started from the bottom
+I started python programming in 2018 using a software called Pyzo (ouch! I had such a hard time remembering that one). In fact, I would have to use it for a whole year since my professor wasn’t familiar with other IDEs. It wasn’t that great for managing project with more than one file, and dealing with the integrated terminal was a nightmare (as I remember).
+
+That’s why I started switching to VSCode (In early 2018) even if my teacher wasn’t willing to make some effort to understand what were the advantages.
+
+> In fact, I was realizing that I’d work with VSCode for years to come, and that I had to take the risk to not get feedbacks from my teacher.
+
+I kept pushing with VSCode during my second engineering year. However, since I was working with other students (who were using Pyzo) on huge codebases, we only had one **GIANT** file of over 1500 lines of code. It was tough…
+
+
+<Image
+  src="/images/coding-journey-classroom.png"
+  alt="Students working on computers in classroom"
+  width={1125}
+  height={750}
+  priority
+  className="next-image"
+/>
+
+Then we started learning C# and everybody in my class switched to Visual Studio (not the “code” one). However, I wanted to keep my VSCode with this beautiful theme called OneDark. So, I tried to install dotnet compiler, but soon realized it wasn’t supporter by macOS (at least I wasn’t able to tinker at the time). So I installed Windows through bootcamp (and everybody was shocked when they realized I wasn’t using macOS on a MacBook (at the time I was the only one using a MacBook, everybody had expensive yet not so powerful gaming laptops).
+
+
+
+## Discovering Vim
+
+In late 2019, I started to interest myself to the stock market. I was looking at videos from YouTubers making a living out of trading. They weren’t looking that smart, and I thought I could take a look (I had nothing to loose except time).
+
+Then early 2020, we got into lockdown situation. At first, schools just stopped. Teachers started to learn how to use computers, except my ultimate math teacher also known as the WoW (world of warcraft) master. I started calling him like that when I discovered his dedication to the game during my first online class, when he opened the web browser and I saw all the pinned tabs talking about WoW forums and guides on Wow quests).
+
+<Image
+  src="/images/coding-journey-teacher.png"
+  alt="Math teacher with gaming headset"
+  width={1125}
+  height={750}
+  priority
+  className="next-image"
+/>
+
+Apart from this marvelous class and dedicated math teacher, other classes were delayed and I had loads of time to spend learning about the stock market. I started trading on an easy to use IOS App. Among all the different stocks, there was one stock that triggered something in me. This Ethereum stock looked quite interesting, good volatility and ranging between 70 and 90$ (as I recall).
+
+> ***That's how I learned about crypto, "the first stone" in the path leading to Vim.***
+
+I talk about crypto because that’s how I started the creative process behind programming. I realized I could interact programmatically with the stock market using APIs. I discovered the Coinbase API (with huge fees for High Frequency Trading btw) and after a few months of python tinkering and trying to build a working (not winning) algorithm, I started learning about linux servers to deploy my python script.
+
+If you have ever used a linux server over ssh, I bet you had to use vi or vim somehow.
+
+
+# PDE (Personal Development Environment)
+
+<Image
+  src="/images/coding-journey-me.png"
+  alt="Guy coding alone"
+  width={1125}
+  height={750}
+  priority
+  className="next-image"
+/>
+
+After years using vim for small code refactors on the server, I decided to ditch VSCode for NeoVim as my main IDE.
+
+At first, I thought I was following the trend leaded by [ThePrimeAgen](https://www.youtube.com/c/theprimeagen). But soon realized there was something else. I started to use NeoVim using the [kickstarter](https://github.com/nvim-lua/kickstart.nvim) project. I didn’t understand anything. So, I tried deleting lines in the `init.lua` file, and see what happened.
+
+> ***I was left with a 50 lines code config***
+
+After 3-5 days, I realized I hadn’t code a single line of code regarding my personal projects. I decided to try using Vim to code python. I opened a script… and… said “no linting WTF? VSCode is much better… I go back to it (and maybe install Vim motion plugin).”
+
+> I was almost there… Ready to use Vim and enter the matrix. But due to my stupid kickstarter refactor, I was left with an unusable config of vim…
+I managed to get back into the creative process of programming… but it was on this not so personalized VSCode. I learned vim motions a bit (hjkl, diw, w, b, e keystroke used to navigate and delete words) thanks to the vim plugin.
+
+I wasn’t satisfied with my attempt. And then… after two weeks, I tried again.
+
+1. I installed the NvChad config.
+2. I opened Neovim.
+3. Got blasted with the look of it.
+4. Didn’t manage to use shortcuts.
+5. Read the documentation
+6. But finally started programming!!!
+
+And then, after days managing to code using NeoVim, I can say that I fully got my PDE.
+
+A PDE (Personalized Development Environment) is an IDE that is tailored to your needs. And… I don’t need a lot. You can find my config on my GitHub.
+
+At first, it might look overwhelming, but you’ll see that it’s very minimal.
+
+I have :
+
+1. Treesitter (for code highlighting and parsing)
+2. LSP (Language Server Protocol) manager which handles linting in every languages I use.
+3. CMP and Copilot plugins (which handle completion)
+4. Git plugins to deal with git diff, git stages and commits
+5. Harpoon and Telescope (which handle the file navigation)
+6. Github theme and transparent background theme (to make my code looks good on my [Warp terminal](https://www.warp.dev/))
+
+As I said, it might look overwhelming but it’s quite minimal and during the process of looking for the right plugins, I managed to understand how all of this works!
+
+**AND IT WORKS GREAT!**

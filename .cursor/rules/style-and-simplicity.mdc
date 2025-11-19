@@ -1,0 +1,107 @@
+---
+description: Style and simplicity guidelines for the personal website project
+globs: 
+  - "**/*.{ts,tsx,js,jsx,mdx,css}"
+alwaysApply: true
+---
+
+# Style and Simplicity Guidelines
+
+## Core Principles
+
+- **Simplicity First**: Prefer simple, readable solutions over clever ones
+- **Minimal Dependencies**: Avoid adding packages unless absolutely necessary
+- **Clean Code**: Write code that is easy to understand and maintain
+- **Consistent Styling**: Maintain the creamy theme aesthetic throughout
+
+## Code Style
+
+### TypeScript
+- Use explicit types for function parameters and return values
+- Prefer `interface` over `type` for object shapes
+- Use `Readonly<>` for props when appropriate
+- Avoid `any` - use `unknown` if type is truly unknown
+- Use meaningful variable and function names
+
+### React Components
+- Keep components small and focused on a single responsibility
+- Use functional components with hooks
+- Extract reusable logic into custom hooks
+- Prefer composition over complex prop drilling
+- Use `'use client'` only when necessary (interactivity, hooks, browser APIs)
+
+### Styling
+- Use Tailwind CSS utility classes exclusively
+- Leverage theme variables from `globals.css`:
+  - `text-foreground`, `text-muted` for text colors
+  - `bg-background`, `bg-surface` for backgrounds
+  - `text-accent`, `text-accent-light` for accent colors
+  - `border-border` for borders
+- Prefer semantic color names over raw hex values
+- Use `transition-colors` for hover states
+- Keep spacing consistent (use Tailwind spacing scale)
+
+### File Organization
+- Components in `components/` directory
+- Pages in `app/` directory following Next.js App Router conventions
+- MDX content in `app/` or `content/` directories
+- Keep related files close together
+
+## Design Patterns
+
+### Navigation
+- Use Next.js `Link` component for internal navigation
+- External links should include `target="_blank"` and `rel="noopener noreferrer"`
+- Navigation should be accessible and keyboard-friendly
+
+### Animations
+- Use View Transitions for page transitions (already configured)
+- Keep animations subtle and purposeful
+- Prefer CSS transitions over JavaScript animations when possible
+
+### MDX Content
+- Use semantic HTML in MDX files
+- Keep markdown clean and readable
+- Use the MDX component overrides in `mdx-components.tsx` for consistent styling
+
+## Best Practices
+
+### Performance
+- Use Next.js Image component for images
+- Lazy load components when appropriate
+- Minimize client-side JavaScript
+
+### Accessibility
+- Use semantic HTML elements
+- Include proper ARIA labels when needed
+- Ensure sufficient color contrast
+- Make interactive elements keyboard accessible
+
+### Code Quality
+- Write self-documenting code with clear variable names
+- Add comments only when explaining "why", not "what"
+- Remove unused imports and code
+- Keep functions small and focused
+
+## Theme Consistency
+
+- Background: Warm creamy white (`#FDFBF7`)
+- Surface: Slightly darker cream (`#F2EFE9`)
+- Text: Warm dark stone (`#292524`)
+- Accent: Orange (`#EA580C`)
+- Maintain this color palette throughout the site
+
+## When Adding Features
+
+1. **Question first**: Is this feature necessary?
+2. **Keep it simple**: Can this be done with existing tools?
+3. **Stay consistent**: Does this match the existing style?
+4. **Test**: Does it work across different screen sizes?
+
+## Avoid
+
+- Over-engineering solutions
+- Adding unnecessary abstractions
+- Using complex state management when simple props work
+- Hardcoding colors or values that should use theme variables
+- Creating components that are too large or do too much

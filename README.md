@@ -1,16 +1,34 @@
-# Hugo DEMENEZ's personal portfolio
+# Hugo DEMENEZ's Personal Website
 
-## Built using: Portfolio Starter Kit
-> [!TIP]
-Repository is updated daily/weekly, it hosts blog posts directly in markdown within the repository
+This is my personal portfolio and blog, built with the latest web technologies.
 
+## ⚡️ Tech Stack
 
-This portfolio is built with **Next.js** and a library called [Nextra](https://nextra.vercel.app/). It allows you to write Markdown and focus on the _content_ of your portfolio. This starter includes:
+- **Framework**: [Next.js 16](https://nextjs.org/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Content**: [Next MDX](https://nextjs.org/docs/app/building-your-application/configuring/mdx) for blog posts and pages
+- **AI**: [Vercel AI SDK](https://sdk.vercel.ai/docs) with Perplexity Sonar model via [AI Gateway](https://vercel.com/docs/ai/ai-gateway)
 
-- Automatically configured to handle Markdown/MDX
-- Generates an RSS feed based on your posts
-- A beautiful theme included out of the box
-- Easily categorize posts with tags
-- Fast, optimized web font loading
+## 🚀 Features
 
-Deploy it to the cloud with [Vercel](https://vercel.com/new?utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
+- **Substack Integration**: 
+  - Leverages **Server Component Caching** (`use cache` directive) for optimal performance.
+  - Uses [into.md](https://into.md/) to scrape and retrieve Substack posts, rendering them directly as MDX on the blog.
+  
+- **AI Assistant**:
+  - Includes an AI-powered assistant that uses the **Sonar model** to provide relevant information about my current work and background.
+  
+- **Modern UI**:
+  - Clean and responsive design using the latest Tailwind CSS v4 features.
+  - Optimized web font loading (Geist & Geist Mono).
+
+## 🛠️ Development
+
+```bash
+npm install
+npm run dev
+```
+
+## ☁️ Deployment
+
+Deployed on [Vercel](https://vercel.com).
