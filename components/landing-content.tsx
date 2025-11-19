@@ -41,7 +41,7 @@ export function LandingContent() {
         <div className="animate-pulse">Thinking...</div>
       )}
 
-      {!isLoading && !completion && (
+      {completion && (
         <div className="mt-12 pt-8 border-t border-border">
           <p className="text-muted mb-4 text-sm">
             This content is fully AI generated. Try it by yourself!
