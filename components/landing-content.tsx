@@ -112,12 +112,11 @@ export function LandingContent() {
   useEffect(() => {
     if (!hasStartedRef.current) {
       hasStartedRef.current = true;
-      const hugoPrompt = `
-      Generate a summary about Hugo Demenez.
-      Twitter/X handle: @hugodemenez
-      GitHub handle: hugodemenez
-      LinkedIn handle: hugodemenez
-      Substack handle: hugodemenez`;
+      const hugoPrompt = "Hugo Demenez" +
+      "Twitter/X handle: @hugodemenez" +
+      "GitHub handle: hugodemenez" +
+      "LinkedIn handle: hugodemenez" +
+      "Substack handle: hugodemenez";
       complete(hugoPrompt);
     }
   }, [complete]);
