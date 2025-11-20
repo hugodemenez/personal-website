@@ -1,58 +1,40 @@
-import { createCached } from "@ai-sdk-tools/cache";
-import { generateText, streamText, tool } from "ai";
+import { streamText, tool } from "ai";
 import { z } from "zod";
+import { getWriter } from "./context";
 
-const expensiveSearchTool = tool({
+export const searchTool = tool({
   description:
-    "Get latest information about a person. Use this to search for information about anyone mentioned in the prompt.",
+    "Use this to search for information about a given person.",
   inputSchema: z.object({
-    personInfo: z
+    name: z
       .string()
       .describe(
-        "The name, location, or other identifying information about the person to search for"
+        "The name of the person to search for"
       ),
-    twitterHandle: z.string().optional(),
-    githubHandle: z.string().optional(),
-    linkedinHandle: z.string().optional(),
-    substackHandle: z.string().optional(),
   }),
-  execute: async ({
-    personInfo,
-    twitterHandle,
-    githubHandle,
-    linkedinHandle,
-    substackHandle,
-  }) => {
-    console.log("Executing searchTool for:", personInfo);
-
-    const handles = [];
-    if (twitterHandle) handles.push(`Twitter/X: ${twitterHandle}`);
-    if (githubHandle) handles.push(`GitHub: ${githubHandle}`);
-    if (linkedinHandle) handles.push(`LinkedIn: ${linkedinHandle}`);
-    if (substackHandle) handles.push(`Substack: ${substackHandle}`);
-
-    const handleInfo =
-      handles.length > 0 ? `\nKnown handles: ${handles.join(", ")}` : "";
-
-    // Expensive API call - 2s response time
-    const result = await generateText({
+  async *execute(params, executionOptions) {
+    yield{
+      status: "searching" as const,
+      text: `Searching for information about ${params.name}...`,
+    };
+    const writer = getWriter(executionOptions);
+    // This is a very expensive API call - 2s response time
+    // The goal is to provide user feedback while the expensive API call is running
+    const stream = streamText({
       model: "perplexity/sonar",
-      system: `
-      Looking at github, linkedin, x posts and substack, find the latest information about the person and their projects.
-        Make sure to only search about the person mentioned in the prompt.
-        If you don't find any information about the person mentioned in the prompt, say that you couldn't find any information about them.
-      Try to find Twitter/X content (tweets, threads, etc.) and add the link to the post to the result.
-     `,
-      prompt: `Who is ${personInfo} and what are they building or working on lately? ${handleInfo}`,
+      system: "Looking at github, linkedin, X posts and substack, find the latest information about the person and their projects."+
+        "Make sure to strictly search about the person mentioned in the prompt."+
+        "If you don't find any information about the person mentioned in the prompt, say that you couldn't find any information about them."+
+        "Try to find Twitter/X content (tweets, threads, etc.) and add the link to the post to the result.",
+      prompt: `Find the latest information about ${params.name} and their projects.`,
     });
 
-    return { text: result.text, sources: result.sources };
+    const sources = await stream.sources;
+
+    yield{
+      status: "finished" as const,
+      sources: sources,
+    }
+    return stream.toUIMessageStream();
   },
 });
-
-// LRU cache (zero config)
-const cached = createCached({
-  ttl: 7 * 24 * 60 * 60 * 1000, // 1 week in milliseconds
-});
-
-export const searchTool = cached(expensiveSearchTool);

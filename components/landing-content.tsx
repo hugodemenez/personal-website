@@ -1,19 +1,113 @@
-'use client';
+"use client";
 
-import { useCompletion } from '@ai-sdk/react';
-import { useEffect, useRef, useState } from 'react';
-import { Streamdown } from 'streamdown';
-import { mdxComponents } from './mdx-components-list';
+import { useCompletion } from "@ai-sdk/react";
+import { useEffect, useRef, useMemo } from "react";
+import { Streamdown } from "streamdown";
+import { mdxComponents } from "./mdx-components-list";
+import {
+  parseStreamContent,
+  extractTextFromEvents,
+  type ToolOutputAvailableEvent,
+} from "@/lib/stream-parser";
+import { SourcesAccordion } from "./sources-accordion";
+import { ToolFeedback } from "./tool-feedback";
+import { GenerateForm } from "./generate-form";
+
+interface Source {
+  type: string;
+  sourceType: string;
+  id: string;
+  url: string;
+}
+
+interface ParsedStreamData {
+  text: string | null;
+  toolFeedback: string | null;
+  sources: Source[];
+}
 
 export function LandingContent() {
   const { completion, complete, isLoading, error } = useCompletion({
-    api: '/api/generate',
-    onError: (err) => console.error('Completion error:', err),
-    onFinish: (text) => console.log('Completion finished:', text),
+    api: "/api/generate",
+    streamProtocol: "text",
+    onError: (err) => console.error("Completion error:", err),
   });
 
+  // Single memo to parse the stream once and extract all needed data
+  const parsedData = useMemo((): ParsedStreamData => {
+    if (!completion) {
+      return {
+        text: null,
+        toolFeedback: null,
+        sources: [],
+      };
+    }
+
+    try {
+      const events = parseStreamContent(completion);
+      
+      // Extract text content
+      const text = extractTextFromEvents(events) || null;
+
+      // Extract preliminary tool feedback
+      const preliminaryToolOutputs = events.filter(
+        (e): e is ToolOutputAvailableEvent =>
+          e.type === "tool-output-available" &&
+          e.preliminary === true &&
+          e.output &&
+          typeof e.output === "object" &&
+          "status" in e.output &&
+          "text" in e.output
+      );
+      const latestPreliminary = preliminaryToolOutputs[preliminaryToolOutputs.length - 1];
+      const toolFeedback =
+        latestPreliminary &&
+        latestPreliminary.output &&
+        typeof latestPreliminary.output === "object"
+          ? (latestPreliminary.output as { text?: string }).text || null
+          : null;
+
+      // Extract sources from finished tool outputs
+      const finishedToolOutputs = events.filter(
+        (e): e is ToolOutputAvailableEvent =>
+          e.type === "tool-output-available" &&
+          e.output &&
+          typeof e.output === "object" &&
+          "status" in e.output &&
+          e.output.status === "finished" &&
+          "sources" in e.output &&
+          Array.isArray(e.output.sources)
+      );
+      const latestFinished = finishedToolOutputs[finishedToolOutputs.length - 1];
+      const sources =
+        latestFinished &&
+        latestFinished.output &&
+        typeof latestFinished.output === "object"
+          ? (latestFinished.output as { sources?: Source[] }).sources || []
+          : [];
+
+      return {
+        text,
+        toolFeedback,
+        sources,
+      };
+    } catch (error) {
+      console.error("Failed to parse completion:", error);
+      return {
+        text: null,
+        toolFeedback: null,
+        sources: [],
+      };
+    }
+  }, [completion]);
+
+  useEffect(() => {
+    if (completion) {
+      console.log("Parsed data:", parsedData);
+    }
+  }, [completion, parsedData]);
+
   const hasStartedRef = useRef(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!hasStartedRef.current) {
@@ -28,88 +122,25 @@ export function LandingContent() {
     }
   }, [complete]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (inputRef.current?.value.trim()) {
-      complete(inputRef.current.value);
-      inputRef.current.value = '';
-    }
-  };
-
   return (
     <div className="mt-8">
-      {completion ? (
-        <Streamdown components={mdxComponents}>{completion}</Streamdown>
-      ) : (
-        <div 
-          className="animate-pulse" 
-          role="status" 
-          aria-live="polite"
-          aria-label="Generating content"
-        >
-          Thinking...
-        </div>
+      {!isLoading && <SourcesAccordion sources={parsedData.sources} />}
+
+      {parsedData.toolFeedback && isLoading && (
+        <ToolFeedback message={parsedData.toolFeedback} />
       )}
 
-      {(completion && !isLoading) && (
-        <div className="mt-12 pt-8 border-t border-border">
-          <p className="text-muted mb-4 text-sm">
-            This content is fully AI generated. Try it by yourself!
-          </p>
-          <form
-            onSubmit={handleSubmit}
-            className="w-full"
-            aria-label="Generate AI content form"
-          >
-            <div className="flex flex-col gap-2">
-              <label 
-                htmlFor="userInput" 
-                className="sr-only"
-              >
-                Enter your name and social media handles
-              </label>
-              <div className="flex items-center px-4 py-2 bg-surface border border-border rounded-lg focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-background">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  id="userInput"
-                  name="userInput"
-                  placeholder="What is your name?"
-                  className="flex-1 bg-surface border-none outline-none text-base text-foreground placeholder:text-muted py-2"
-                  autoComplete="name"
-                  aria-describedby="userInputHint"
-                  aria-required="true"
-                  disabled={isLoading}
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="ml-4 px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
-                  aria-label="Generate my page"
-                >
-                  {isLoading ? 'Generating...' : 'Generate my page'}
-                </button>
-              </div>
-              <p 
-                id="userInputHint" 
-                className="text-muted text-xs"
-              >
-                *Hint: You can put your Twitter/X handle, GitHub handle, LinkedIn handle and Substack handle to make sure AI finds you on the web
-              </p>
-            </div>
-          </form>
-          {error && (
-            <div 
-              role="alert" 
-              aria-live="assertive"
-              className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-200"
-            >
-              An error occurred while generating content. Please try again.
-            </div>
-          )}
-        </div>
+      {parsedData.text && (
+        <Streamdown components={mdxComponents}>{parsedData.text}</Streamdown>
       )}
 
+      {parsedData.text && !isLoading && (
+        <GenerateForm
+          onGenerate={complete}
+          isLoading={isLoading}
+          error={error || null}
+        />
+      )}
     </div>
   );
 }

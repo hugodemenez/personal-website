@@ -14,14 +14,9 @@ interface PageProps {
 // Page itself creates the dynamic boundary
 export default function BlogPost({ params }: PageProps) {
   return (
-    <div>
-      <div className="mb-8">
-        <BackButton />
-      </div>
       <Suspense fallback={<div className="text-muted">Loading...</div>}>
         <CachedBlogPost params={params} />
       </Suspense>
-    </div>
   );
 }
 
@@ -72,7 +67,6 @@ async function CachedBlogPost({ params }: PageProps) {
         '$1\n\n<Tweet id="$3" />\n\n'
       );
 
-    console.log(processedMarkdown);
     // Compile MDX
     const { content } = await compileMDX({
       source: processedMarkdown,
