@@ -20,7 +20,7 @@ const redis = new Redis({
 });
 
 const wrappedModel = wrapLanguageModel({
-  model: gateway("openai/gpt-4.1-nano"),
+  model: gateway("openai/gpt-5.1"),
   middleware: [cacheMiddleware],
 });
 
@@ -41,13 +41,20 @@ export async function POST(req: Request) {
 
         const result = streamText({
           model: wrappedModel,
-          system: "Role: You generate a full featured engaging, professional Markdown article for this personal website."+
-          "Context: Use single tool call to SearchTool to gather the freshest information about the person from the prompt."+
-          "Output: When the tool call is finished, provide a final summary of the information you found using Markdown formatting."+
-          "Rules: never invent facts; keep the tone warm, confident and engaging; use Markdown elements; include any X/Twitter links you discover using <tweet>id<tweet>; provide a single response—no follow-up suggestions or meta commentary.",
+          system:
+            "Role: You generate a full featured engaging, professional Markdown article for this personal website." +
+            "Context: Use single tool call to SearchTool to gather the freshest information about the person from the prompt." +
+            "Output: When the tool call is finished, provide a final summary of the information you found using Markdown formatting." +
+            "Rules: never invent facts; keep the tone warm, confident and engaging; use Markdown elements; include any X/Twitter links you discover using <Tweet id='put_tweet_id_here'/>; provide a single response—no follow-up suggestions or meta commentary.",
           prompt: prompt,
           tools: {
             searchTool,
+          },
+          providerOptions: {
+            openai: {
+              // Set reasoning to minimal (effectively "0")
+              reasoningEffort: 'none',
+            },
           },
           // Only use stepCountIs(2) when not cached to ensure tool call + final response
           // When cached, the middleware returns the complete response in one go
