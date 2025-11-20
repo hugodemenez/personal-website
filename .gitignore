@@ -16,6 +16,9 @@ yarn.lock
 # production
 /build
 
+# TypeScript
+*.tsbuildinfo
+
 # misc
 .DS_Store
 *.pem
