@@ -57,7 +57,7 @@ export default function SubstackCarousel({ posts }: SubstackCarouselProps) {
         {posts.map((post) => (
           <Link
             key={post.link}
-            href={post.slug ? `/blog/${post.slug}` : post.link}
+            href={post.slug ? `/posts/${post.slug}` : post.link}
             target={post.slug ? undefined : "_blank"}
             rel={post.slug ? undefined : "noopener noreferrer"}
             className="flex-none w-80 snap-center group cursor-pointer"
