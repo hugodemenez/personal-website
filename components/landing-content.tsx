@@ -12,6 +12,7 @@ import {
 import { SourcesAccordion } from "./sources-accordion";
 import { ToolFeedback } from "./tool-feedback";
 import { GenerateForm } from "./generate-form";
+import { processMarkdown } from "@/lib/markdown";
 
 interface Source {
   type: string;
@@ -46,8 +47,9 @@ export function LandingContent() {
     try {
       const events = parseStreamContent(completion);
       
-      // Extract text content
-      const text = extractTextFromEvents(events) || null;
+      // Extract text content and process markdown (convert Twitter/X links to Tweet components)
+      const rawText = extractTextFromEvents(events) || null;
+      const text = rawText ? processMarkdown(rawText) : null;
 
       // Extract preliminary tool feedback
       const preliminaryToolOutputs = events.filter(

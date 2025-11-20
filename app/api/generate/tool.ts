@@ -24,8 +24,7 @@ export const searchTool = tool({
       model: "xai/grok-4-fast-non-reasoning",
       system: "Looking at github, linkedin, X posts and substack, find the latest information about the person and their projects."+
         "Make sure to strictly search about the person mentioned in the prompt."+
-        "If you don't find any information about the person mentioned in the prompt, say that you couldn't find any information about them."+
-        "Try to find at least one Twitter/X content (tweets, threads, etc.) and add the link to the post to the result.",
+        "If you don't find any information about the person mentioned in the prompt, say that you couldn't find any information about them.",
       prompt: `Find the latest information about ${params.name} and their projects.`,
       providerOptions: {
         xai: {
