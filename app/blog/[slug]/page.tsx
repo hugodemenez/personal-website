@@ -11,20 +11,24 @@ interface PageProps {
   }>;
 }
 
-// Page component reads the slug from params (creates dynamic boundary)
-export default async function BlogPost({ params }: PageProps) {
-  const { slug } = await params;
-  
+// Page component (default export) wraps BlogPost with Suspense
+export default function Page({ params }: PageProps) {
   return (
     <div>
       <div className="mb-8">
         <BackButton />
       </div>
       <Suspense fallback={<div className="text-muted">Loading...</div>}>
-        <CachedBlogPost slug={slug} />
+        <BlogPost params={params} />
       </Suspense>
     </div>
   );
+}
+
+// BlogPost reads the slug from params and passes it to cached component
+async function BlogPost({ params }: PageProps) {
+  const { slug } = await params;
+  return <CachedBlogPost slug={slug} />;
 }
 
 // Cached component receives slug as prop and caches the fetched content
