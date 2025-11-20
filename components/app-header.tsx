@@ -27,7 +27,7 @@ export function Header() {
               <Search />
             </Suspense>
           </li>
-          <li>
+          {/* <li>
             <Link href="/about" className="hover:text-accent transition-colors">
               About
             </Link>
@@ -41,7 +41,7 @@ export function Header() {
             >
               Twitter
             </a>
-          </li>
+          </li> */}
           <li>
             <ThemeToggle />
           </li>

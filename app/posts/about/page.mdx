@@ -1,8 +1,18 @@
 import Image from 'next/image';
-import SubstackPosts from './SubstackPosts';
-import YoutubeVideos from './YoutubeVideos';
+import SubstackPosts from '../../about/SubstackPosts';
+import YoutubeVideos from '../../about/YoutubeVideos';
 import YearsSince from '@/components/years-parser';
 import { Suspense } from 'react';
+
+export const metadata = {
+  "title": "About me",
+  "date": "2025/11/20",
+  "description": "A few tips about things recently for version controlling on Github",
+  "tags": [
+    "about"
+  ],
+  "author": "Hugo Demenez"
+};
 
 ## Programming
 

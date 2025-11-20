@@ -123,7 +123,7 @@ export function SearchClient({ posts }: SearchClientProps) {
           </div>
 
           {/* Results - appears below input on both mobile and desktop */}
-          <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain pb-64 md:pb-0">
+          <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain pb-72 md:pb-0">
             <div className="py-2">
               {filteredPosts.length > 0 ? (
                 filteredPosts.map((post) => (
