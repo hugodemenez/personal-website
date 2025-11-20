@@ -7,12 +7,17 @@ import {
   stepCountIs,
   streamText,
   wrapLanguageModel,
-  wrapProvider,
 } from "ai";
+import { Redis } from "@upstash/redis";
 import { searchTool } from "./tool";
-import { cacheMiddleware } from "./middleware";
+import { cacheMiddleware, getCacheKey } from "./middleware";
 
 export const maxDuration = 30;
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 const wrappedModel = wrapLanguageModel({
   model: gateway("openai/gpt-4.1-nano"),
@@ -29,6 +34,11 @@ export async function POST(req: Request) {
 
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
+        // Check if result is cached
+        const cacheKey = getCacheKey(prompt);
+        const cached = await redis.get(cacheKey);
+        const isCached = cached !== null;
+
         const result = streamText({
           model: wrappedModel,
           system: "Role: You generate a full featured engaging, professional Markdown article for this personal website."+
@@ -39,15 +49,14 @@ export async function POST(req: Request) {
           tools: {
             searchTool,
           },
-          stopWhen: stepCountIs(2),
+          // Only use stepCountIs(2) when not cached to ensure tool call + final response
+          // When cached, the middleware returns the complete response in one go
+          ...(isCached ? {} : { stopWhen: stepCountIs(2) }),
           experimental_context: { writer },
           experimental_transform: smoothStream({
             delayInMs: 20, // optional: defaults to 10ms
             chunking: "line", // optional: defaults to 'word'
           }),
-          onFinish: (result) => {
-          console.log(result.text);
-          },
         });
         writer.merge(result.toUIMessageStream());
       },

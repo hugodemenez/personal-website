@@ -13,6 +13,39 @@ const redis = new Redis({
 
 const cache = new Map<string, any>();
 
+// Temporary cache for tool-call-only responses (before final response)
+// Key: prompt-based cache key, Value: array of stream parts from tool calls
+const tempToolCallCache = new Map<string, LanguageModelV2StreamPart[]>();
+
+/**
+ * Generate cache key from a prompt string
+ */
+export function getCacheKey(prompt: string): string {
+  return JSON.stringify({ prompt: prompt.trim() });
+}
+
+/**
+ * Extract user prompt from params for cache key generation
+ */
+function extractUserPrompt(params: any): string {
+  try {
+    const promptArr = Array.isArray(params.prompt) ? params.prompt : [];
+    if (
+      promptArr.length > 1 &&
+      promptArr[1].content &&
+      Array.isArray(promptArr[1].content) &&
+      promptArr[1].content.length > 0 &&
+      promptArr[1].content[0].type === "text"
+    ) {
+      return promptArr[1].content[0].text.trim();
+    } else {
+      return JSON.stringify(params.prompt); // fallback
+    }
+  } catch {
+    return JSON.stringify(params.prompt);
+  }
+}
+
 export const cacheMiddleware: LanguageModelV2Middleware = {
   wrapGenerate: async ({ doGenerate, params }) => {
     const cacheKey = JSON.stringify(params);
@@ -31,27 +64,8 @@ export const cacheMiddleware: LanguageModelV2Middleware = {
   wrapStream: async ({ doStream, params }) => {
     // Extract just the user prompt text for caching to ensure identical prompts are cached together,
     // regardless of tool call details.
-    // The "prompt" is in params.prompt[1].content[0].text for this API structure.
-    let userPrompt = "";
-    try {
-      const promptArr = Array.isArray(params.prompt) ? params.prompt : [];
-      if (
-        promptArr.length > 1 &&
-        promptArr[1].content &&
-        Array.isArray(promptArr[1].content) &&
-        promptArr[1].content.length > 0 &&
-        promptArr[1].content[0].type === "text"
-      ) {
-        userPrompt = promptArr[1].content[0].text.trim();
-      } else {
-        userPrompt = JSON.stringify(params.prompt); // fallback
-      }
-    } catch {
-      userPrompt = JSON.stringify(params.prompt);
-    }
-    const cacheKey = JSON.stringify({ prompt: userPrompt });
-    console.log("Searching for cache key:", cacheKey);
-  
+    const userPrompt = extractUserPrompt(params);
+    const cacheKey = getCacheKey(userPrompt);
     // Check if the result is in the cache
     const cached = await redis.get(cacheKey);
   
@@ -100,13 +114,27 @@ export const cacheMiddleware: LanguageModelV2Middleware = {
         controller.enqueue(chunk);
       },
       flush() {
-        console.log('Full response:', fullResponse);
-        // Only cache if we have a complete response (not just tool calls)
         if (isCompleteResponse) {
           console.log('Caching complete response');
-          redis.set(cacheKey, fullResponse, { ex: 60 * 60 * 24 * 7 }); // 1 week
+          // Check if we have tool call chunks from a previous middleware call
+          const toolCallChunks = tempToolCallCache.get(cacheKey);
+          
+          if (toolCallChunks && toolCallChunks.length > 0) {
+            // Merge tool call chunks with final response
+            const mergedResponse = [...toolCallChunks, ...fullResponse];
+            console.log('Caching merged response (tool calls + final response)');
+            redis.set(cacheKey, mergedResponse, { ex: 60 * 60 * 24 * 7 }); // 1 week
+            // Clear the temp cache entry
+            console.log('Clearing temp cache entry');
+            tempToolCallCache.delete(cacheKey);
+          } else {
+            console.log('Caching complete response without tool calls because it is incomplete');
+            redis.set(cacheKey, fullResponse, { ex: 60 * 60 * 24 * 7 }); // 1 week
+          }
         } else {
-          console.log('Not caching incomplete response (tool calls only)');
+          // Store tool call chunks in temp cache for later merging
+          console.log('Storing tool call chunks in temp cache');
+          tempToolCallCache.set(cacheKey, [...fullResponse]);
         }
       },
     });
