@@ -11,27 +11,28 @@ interface PageProps {
   }>;
 }
 
-// Page itself creates the dynamic boundary
-export default function BlogPost({ params }: PageProps) {
+// Page component reads the slug from params (creates dynamic boundary)
+export default async function BlogPost({ params }: PageProps) {
+  const { slug } = await params;
+  
   return (
     <div>
       <div className="mb-8">
         <BackButton />
       </div>
       <Suspense fallback={<div className="text-muted">Loading...</div>}>
-        <CachedBlogPost params={params} />
+        <CachedBlogPost slug={slug} />
       </Suspense>
     </div>
   );
 }
 
-// Cached component/function receives data as props
-async function CachedBlogPost({ params }: PageProps) {
+// Cached component receives slug as prop and caches the fetched content
+async function CachedBlogPost({ slug }: { slug: string }) {
   "use cache";
   cacheLife("weeks");
 
-  const { slug } = await params;
-  // slug becomes part of cache key
+  // slug is part of the cache key
   const substackUrl = `https://hugodemenez.substack.com/p/${slug}`;
   // into.md usage: https://into.md/https://hugodemenez.substack.com/p/slug
   const intoMdUrl = `https://into.md/${substackUrl}`;
