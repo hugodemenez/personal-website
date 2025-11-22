@@ -28,10 +28,10 @@ export function SourcesAccordion({ sources }: SourcesAccordionProps) {
   if (sources.length === 0) return null;
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 bg-surface border border-border rounded-lg hover:bg-surface/80 transition-colors"
+        className="w-full flex items-center justify-between p-4 bg-surface border border-border rounded-lg hover:bg-surface/80 transition-colors duration-200 ease"
         aria-expanded={isOpen}
         aria-controls="sources-content"
       >
@@ -39,9 +39,12 @@ export function SourcesAccordion({ sources }: SourcesAccordionProps) {
           Sources ({sources.length})
         </span>
         <svg
-          className={`w-5 h-5 text-muted transition-transform ${
+          className={`w-5 h-5 text-muted transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
+          style={{
+            transitionTimingFunction: "cubic-bezier(.215, .61, .355, 1)",
+          }}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -57,7 +60,11 @@ export function SourcesAccordion({ sources }: SourcesAccordionProps) {
       {isOpen && (
         <div
           id="sources-content"
-          className="mt-2 border border-border rounded-lg bg-background overflow-hidden"
+          className="absolute top-full left-0 right-0 mt-2 border border-border rounded-lg bg-background shadow-lg z-10 max-h-96 overflow-y-auto"
+          style={{
+            transformOrigin: "top",
+            animation: "dropdownEnter 0.25s cubic-bezier(.215, .61, .355, 1) forwards",
+          }}
         >
           <ul className="divide-y divide-border">
             {sources.map((source) => (
@@ -66,7 +73,7 @@ export function SourcesAccordion({ sources }: SourcesAccordionProps) {
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 hover:bg-surface transition-colors"
+                  className="flex items-center gap-3 p-4 hover:bg-surface transition-colors duration-200 ease"
                 >
                   <img
                     src={getFaviconUrl(source.url)}

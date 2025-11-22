@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         const result = streamText({
           model: wrappedModel,
           system:
-            "Role: You generate a full featured engaging, professional Markdown article for this personal website." +
+            "Role: You generate a full featured engaging, professional Markdown article for this personal website around 100 words long." +
             "Context: Use single tool call to SearchTool to gather the freshest information about the person from the prompt." +
             "Output: When the tool call is finished, provide a final summary of the information you found using Markdown formatting." +
             "Rules: never invent facts; never generate mock information; keep the tone warm, confident and engaging; use Markdown elements; provide a single response—no follow-up suggestions or meta commentary.",
@@ -50,6 +50,7 @@ export async function POST(req: Request) {
           tools: {
             searchTool,
           },
+          maxOutputTokens: 500,
           providerOptions: {
             openai: {
               // Set reasoning to minimal (effectively "0")
@@ -68,6 +69,8 @@ export async function POST(req: Request) {
         writer.merge(result.toUIMessageStream());
       },
     });
+    console.log("Stream:", stream);
+    
 
     return createUIMessageStreamResponse({ stream });
   } catch (error) {

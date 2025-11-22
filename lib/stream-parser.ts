@@ -12,7 +12,8 @@ export type StreamEventType =
   | 'text-start'
   | 'text-delta'
   | 'text-end'
-  | 'finish';
+  | 'finish'
+  | 'error';
 
 export interface BaseStreamEvent {
   type: StreamEventType;
@@ -80,6 +81,11 @@ export interface FinishEvent extends BaseStreamEvent {
   finishReason: string;
 }
 
+export interface ErrorEvent extends BaseStreamEvent {
+  type: 'error';
+  errorText?: string;
+}
+
 export type StreamEvent =
   | StartEvent
   | StartStepEvent
@@ -91,7 +97,8 @@ export type StreamEvent =
   | TextStartEvent
   | TextDeltaEvent
   | TextEndEvent
-  | FinishEvent;
+  | FinishEvent
+  | ErrorEvent;
 
 /**
  * Parses a single SSE data line
@@ -165,20 +172,39 @@ export function parseAndGroupStreamContent(content: string | string[]) {
       'text-delta': events.filter((e): e is TextDeltaEvent => e.type === 'text-delta'),
       'text-end': events.filter((e): e is TextEndEvent => e.type === 'text-end'),
       finish: events.filter((e): e is FinishEvent => e.type === 'finish'),
+      error: events.filter((e): e is ErrorEvent => e.type === 'error'),
     },
   };
 }
 
 /**
+ * Extracts accumulated text from text-delta events, grouped by stream ID
+ * @param events - Array of stream events
+ * @returns Map of stream ID to accumulated text
+ */
+export function extractTextByStreamId(events: StreamEvent[]): Map<string, string> {
+  const textByStreamId = new Map<string, string>();
+  
+  events
+    .filter((e): e is TextDeltaEvent => e.type === 'text-delta')
+    .forEach((e) => {
+      const current = textByStreamId.get(e.id) || '';
+      textByStreamId.set(e.id, current + e.delta);
+    });
+  
+  return textByStreamId;
+}
+
+/**
  * Extracts accumulated text from text-delta events
  * @param events - Array of stream events
- * @returns Concatenated text from all text-delta events
+ * @returns Concatenated text from all text-delta events (all streams merged)
  */
 export function extractTextFromEvents(events: StreamEvent[]): string {
-  return events
-    .filter((e): e is TextDeltaEvent => e.type === 'text-delta')
-    .map((e) => e.delta)
-    .join('');
+  const textByStreamId = extractTextByStreamId(events);
+  // Merge all streams in order of first appearance
+  const streamIds = Array.from(textByStreamId.keys());
+  return streamIds.map(id => textByStreamId.get(id) || '').join('');
 }
 
 /**

@@ -7,9 +7,12 @@ import { mdxComponents } from "./mdx-components-list";
 import {
   parseStreamContent,
   extractTextFromEvents,
+  extractTextByStreamId,
   type ToolOutputAvailableEvent,
+  type ErrorEvent,
 } from "@/lib/stream-parser";
 import { SourcesAccordion } from "./sources-accordion";
+import { TextStreamsAccordion } from "./text-streams-accordion";
 import { ToolFeedback } from "./tool-feedback";
 import { GenerateForm } from "./generate-form";
 import { processMarkdown } from "@/lib/markdown";
@@ -21,10 +24,16 @@ interface Source {
   url: string;
 }
 
+interface TextStream {
+  id: string;
+  text: string;
+}
+
 interface ParsedStreamData {
-  text: string | null;
+  streams: TextStream[];
   toolFeedback: string | null;
   sources: Source[];
+  error: string | null;
 }
 
 export function LandingContent() {
@@ -38,18 +47,34 @@ export function LandingContent() {
   const parsedData = useMemo((): ParsedStreamData => {
     if (!completion) {
       return {
-        text: null,
+        streams: [],
         toolFeedback: null,
         sources: [],
+        error: null,
       };
     }
 
     try {
       const events = parseStreamContent(completion);
       
-      // Extract text content and process markdown (convert Twitter/X links to Tweet components)
-      const rawText = extractTextFromEvents(events) || null;
-      const text = rawText ? processMarkdown(rawText) : null;
+      // Extract error events
+      const errorEvents = events.filter(
+        (e): e is ErrorEvent => e.type === "error"
+      );
+      const latestError = errorEvents[errorEvents.length - 1];
+      const streamError = latestError?.errorText || null;
+
+      // Extract text content by stream ID, keeping streams separate
+      const textByStreamId = extractTextByStreamId(events);
+      const streamIds = Array.from(textByStreamId.keys());
+      const streams: TextStream[] = streamIds
+        .map((id) => {
+          const rawText = textByStreamId.get(id) || "";
+          if (!rawText) return null;
+          const processedText = processMarkdown(rawText);
+          return { id, text: processedText };
+        })
+        .filter((stream): stream is TextStream => stream !== null);
 
       // Extract preliminary tool feedback
       const preliminaryToolOutputs = events.filter(
@@ -89,16 +114,18 @@ export function LandingContent() {
           : [];
 
       return {
-        text,
+        streams,
         toolFeedback,
         sources,
+        error: streamError,
       };
     } catch (error) {
       console.error("Failed to parse completion:", error);
       return {
-        text: null,
+        streams: [],
         toolFeedback: null,
         sources: [],
+        error: error instanceof Error ? error.message : "Failed to parse stream",
       };
     }
   }, [completion]);
@@ -106,6 +133,7 @@ export function LandingContent() {
   useEffect(() => {
     if (completion) {
       console.log("Parsed data:", parsedData);
+      console.log("Completion:", completion);
     }
   }, [completion, parsedData]);
 
@@ -123,6 +151,9 @@ export function LandingContent() {
     }
   }, [complete]);
 
+  // Combine stream errors with hook errors
+  const displayError = parsedData.error || error?.message || null;
+
   return (
     <div className="mt-8">
       {!isLoading && <SourcesAccordion sources={parsedData.sources} />}
@@ -131,15 +162,42 @@ export function LandingContent() {
         <ToolFeedback message={parsedData.toolFeedback} />
       )}
 
-      {parsedData.text && (
-        <Streamdown components={mdxComponents}>{parsedData.text}</Streamdown>
+      {displayError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-800 dark:text-red-200"
+        >
+          <p className="font-medium mb-1">Error generating content</p>
+          <p>{displayError}</p>
+        </div>
       )}
 
-      {parsedData.text && !isLoading && (
+      {/* Render accordion streams (xai-search, perplexity-search) */}
+      {parsedData.streams.filter(
+        (s) => s.id === "xai-search" || s.id === "perplexity-search"
+      ).length > 0 && (
+        <TextStreamsAccordion
+          streams={parsedData.streams.filter(
+            (s) => s.id === "xai-search" || s.id === "perplexity-search"
+          )}
+        />
+      )}
+
+      {/* Render direct streams (everything else) */}
+      {parsedData.streams
+        .filter((s) => s.id !== "xai-search" && s.id !== "perplexity-search")
+        .map((stream) => (
+          <div key={stream.id} className="mb-6">
+            <Streamdown components={mdxComponents}>{stream.text}</Streamdown>
+          </div>
+        ))}
+
+      {parsedData.streams.length > 0 && !isLoading && (
         <GenerateForm
           onGenerate={complete}
           isLoading={isLoading}
-          error={error || null}
+          error={displayError ? new Error(displayError) : null}
         />
       )}
     </div>
