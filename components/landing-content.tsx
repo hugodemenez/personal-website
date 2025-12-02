@@ -111,12 +111,19 @@ function LandingContentInner() {
   return (
     <div className="mt-8">
       <GenerateForm
-        onGenerate={(prompt) => {
+        onGenerate={(prompt, pages) => {
           setMessages([]);
-          sendMessage({
-            role: "user",
-            parts: [{ type: "text", text: prompt }],
-          });
+          sendMessage(
+            {
+              role: "user",
+              parts: [{ type: "text", text: prompt }],
+            },
+            {
+              body: {
+                pages,
+              },
+            }
+          );
         }}
         isLoading={isLoading}
         error={displayError ? new Error(displayError) : null}
@@ -208,16 +215,7 @@ function LandingContentInner() {
 
 export function LandingContent() {
   return (
-    <Suspense
-      fallback={
-        <div className="mt-8">
-          <div className="animate-pulse">
-            <div className="h-12 bg-surface rounded-lg mb-4"></div>
-            <div className="h-64 bg-surface rounded-lg"></div>
-          </div>
-        </div>
-      }
-    >
+    <Suspense>
       <LandingContentInner />
     </Suspense>
   );

@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, FormEvent, useState, KeyboardEvent, useEffect } from "react";
+import { CornerDownLeft, Loader2 } from "lucide-react";
 
 interface GenerateFormProps {
-  onGenerate: (prompt: string) => void;
+  onGenerate: (prompt: string, pages: string[]) => void;
   isLoading: boolean;
   error: Error | null;
 }
@@ -58,6 +59,19 @@ function getDomainFromUrl(url: string): string {
   }
 }
 
+function generateUUID(): string {
+  // Use crypto.randomUUID if available (modern browsers)
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback UUID v4 generator
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export function GenerateForm({
   onGenerate,
   isLoading,
@@ -72,8 +86,13 @@ export function GenerateForm({
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Don't submit if we're adding a context URL
+    if (isAddingUrl) {
+      return;
+    }
     if (inputRef.current?.value.trim()) {
-      onGenerate(inputRef.current.value);
+      const pages = contextUrls.map((item) => item.url);
+      onGenerate(inputRef.current.value, pages);
       inputRef.current.value = "";
       setContextUrls([]);
       setContextInputValue("");
@@ -104,7 +123,7 @@ export function GenerateForm({
     }
 
     const newUrl: ContextUrl = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       url: normalizedUrl,
     };
 
@@ -130,6 +149,7 @@ export function GenerateForm({
   const handleContextInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      e.stopPropagation();
       if (contextInputValue.trim()) {
         handleAddContextUrl(contextInputValue, true);
       } else {
@@ -137,6 +157,8 @@ export function GenerateForm({
         setContextInputValue("");
       }
     } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
       setIsAddingUrl(false);
       setContextInputValue("");
       contextInputRef.current?.blur();
@@ -214,7 +236,7 @@ export function GenerateForm({
                 <button
                   type="button"
                   onClick={() => handleRemoveContextUrl(item.id)}
-                  className="ml-1 text-muted hover:text-foreground transition-colors focus:outline-none opacity-0 group-hover:opacity-100 flex-shrink-0"
+                  className="ml-1 text-muted hover:text-foreground transition-colors focus:outline-none opacity-100 md:opacity-0 md:group-hover:opacity-100 flex-shrink-0"
                   aria-label={`Remove ${item.url}`}
                   disabled={isLoading}
                 >
@@ -317,10 +339,20 @@ export function GenerateForm({
             <button
               type="submit"
               disabled={isLoading}
-              className="ml-4 px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+              className="ml-4 px-3 md:px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background flex items-center justify-center"
               aria-label="Generate my page"
             >
-              {isLoading ? "Generating..." : "Generate my page"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="hidden md:inline ml-2">Generating...</span>
+                </>
+              ) : (
+                <>
+                  <CornerDownLeft className="w-5 h-5" />
+                  <span className="hidden md:inline ml-2">Generate my page</span>
+                </>
+              )}
             </button>
           </div>
           <p id="userInputHint" className="text-muted text-xs mt-2">

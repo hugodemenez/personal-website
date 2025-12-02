@@ -27,8 +27,9 @@ const cachedOpenaiModel = wrapLanguageModel({
 
 export async function POST(req: Request) {
   try {
-    const { messages } = (await req.json()) as {
+    const { messages, pages } = (await req.json()) as {
       messages?: UIMessage[];
+      pages?: string[];
     };
 
     if (!messages || messages.length === 0) {
@@ -64,8 +65,11 @@ export async function POST(req: Request) {
           system:
             "Role: You generate a full featured engaging, professional Markdown article for this personal website around 100 words long." +
             "Context: Use single tool call to SearchTool to gather the freshest information about the person from the prompt." +
+            pages ? `Input: The pages provided by the user to prioritize when searching for the person: ${pages?.join("\n")}` : "" +
             "Output: When the tool call is finished, provide a final summary of the information you found using Markdown formatting." +
-            "Rules: never invent facts; never generate mock information; keep the tone warm, confident and engaging; use Markdown elements; provide a single response—no follow-up suggestions or meta commentary.",
+            "Rules:"+
+            "embed links in the markdown format like this: [text](https://example.com)"+
+            "never invent facts; never generate mock information; keep the tone warm, confident and engaging; use Markdown elements; provide a single response—no follow-up suggestions or meta commentary.",
           maxOutputTokens: 500,
           // Only use stepCountIs(2) when not cached to ensure tool call + final response
           // When cached, the middleware returns the complete response in one go
@@ -80,7 +84,7 @@ export async function POST(req: Request) {
           },
           experimental_transform: smoothStream({
             delayInMs: 10,
-            chunking: "word",
+            chunking: "line",
           }),
         });
         writer.merge(result.toUIMessageStream({ sendSources: true }));
