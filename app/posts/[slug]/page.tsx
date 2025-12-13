@@ -29,7 +29,7 @@ async function BlogPost({ params }: PageProps) {
 // Cached component receives slug as prop and caches the fetched content
 async function CachedBlogPost({ slug }: { slug: string }) {
   "use cache";
-  cacheLife("weeks");
+  cacheLife("max");
 
   // slug is part of the cache key
   const substackUrl = `https://hugodemenez.substack.com/p/${slug}`;
