@@ -11,17 +11,13 @@ export const size = {
 export const contentType = 'image/png'
 
 export default async function Image() {
-  // Load images
+  // Load background image
   const backgroundData = await readFile(
     join(process.cwd(), 'public/background.png')
-  )
-  const profileData = await readFile(
-    join(process.cwd(), 'public/profile-image.png')
   )
 
   // Convert to base64 for use in ImageResponse
   const backgroundBase64 = `data:image/png;base64,${backgroundData.toString('base64')}`
-  const profileBase64 = `data:image/png;base64,${profileData.toString('base64')}`
 
   // Fetch latest Substack post date
   let lastUpdate = ''
@@ -78,54 +74,38 @@ export default async function Image() {
             bottom: '60px',
             left: '60px',
             display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: '32px',
+            flexDirection: 'column',
+            gap: '12px',
+            padding: '24px',
+            backgroundColor: 'rgba(253, 251, 247, 0.95)',
+            borderRadius: '8px',
           }}
         >
-          {/* Profile image */}
-          <img
-            src={profileBase64}
-            style={{
-              width: '400px',
-              height: '400px',
-              objectFit: 'cover',
-              display: 'block',
-            }}
-          />
-
-          {/* Name and update container */}
+          {/* Name */}
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
+              fontSize: '56px',
+              fontWeight: 900,
+              color: '#292524',
+              letterSpacing: '-0.02em',
+              display: 'block',
+              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)',
             }}
           >
-            {/* Name */}
-            <div
-              style={{
-                fontSize: '56px',
-                fontWeight: 900,
-                color: '#292524',
-                letterSpacing: '-0.02em',
-                display: 'block',
-              }}
-            >
-              Hugo DEMENEZ
-            </div>
+            Hugo DEMENEZ
+          </div>
 
-            {/* Last update */}
-            <div
-              style={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#57534E',
-                display: lastUpdateDisplay,
-              }}
-            >
-              {lastUpdateText}
-            </div>
+          {/* Last update */}
+          <div
+            style={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#57534E',
+              display: lastUpdateDisplay,
+              textShadow: '1px 1px 2px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            {lastUpdateText}
           </div>
         </div>
       </div>
