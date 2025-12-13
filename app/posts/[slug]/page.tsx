@@ -45,7 +45,6 @@ async function CachedBlogPost({ slug }: { slug: string }) {
     }
 
     const markdown = await res.text();
-console.log(markdown);
 
     // Preprocess markdown to fix specific formatting issues from into.md
     const processedMarkdown = markdown
