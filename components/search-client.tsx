@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import type { PostMetadata } from '@/lib/posts';
 
@@ -13,13 +13,28 @@ export function SearchClient({ posts }: SearchClientProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+  const sortedPosts = useMemo(
+    () =>
+      [...posts].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      ),
+    [posts]
+  );
+
   // Filter posts - show all if no query, otherwise filter
   const filteredPosts = query
-    ? posts.filter((post) => {
+    ? sortedPosts.filter((post) => {
         const searchContent = `${post.title} ${post.description} ${post.tags.join(' ')}`.toLowerCase();
         return searchContent.includes(query.toLowerCase());
       })
-    : posts;
+    : sortedPosts;
 
   const handleOpen = () => {
     dialogRef.current?.showModal();
@@ -30,6 +45,14 @@ export function SearchClient({ posts }: SearchClientProps) {
   const handleClose = () => {
     dialogRef.current?.close();
     setQuery('');
+  };
+
+  // Handle backdrop clicks to close dialog
+  const handleDialogClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    // If click is directly on the dialog element (backdrop), close it
+    if (e.target === dialogRef.current) {
+      handleClose();
+    }
   };
 
   // Handle escape key (native dialog handles this, but we clear query)
@@ -72,6 +95,7 @@ export function SearchClient({ posts }: SearchClientProps) {
         ref={dialogRef}
         className="w-full h-full md:w-[42rem] md:h-auto md:rounded-lg border-0 md:border md:border-border bg-background p-0 md:shadow-xl transition-opacity overflow-hidden"
         onClose={handleClose}
+        onClick={handleDialogClick}
       >
         <div className="flex flex-col h-full md:h-auto md:max-h-[80vh] relative overflow-hidden md:rounded-lg">
           {/* Input - fixed at top on both mobile and desktop */}
@@ -133,15 +157,13 @@ export function SearchClient({ posts }: SearchClientProps) {
                     onClick={handleClose}
                     className="block px-4 py-3 text-sm hover:bg-surface transition-colors border-b border-border last:border-b-0 focus:outline-none focus:bg-surface"
                   >
+                    <div className="flex items-center justify-between">
                     <div className="font-medium text-foreground">{post.title}</div>
+                    <div className="text-xs text-muted mt-1">{formatDate(post.date)}</div>
+                    </div>
                     {post.description && (
                       <div className="text-xs text-muted mt-1 line-clamp-1">
                         {post.description}
-                      </div>
-                    )}
-                    {post.tags.length > 0 && (
-                      <div className="text-xs text-muted mt-1.5">
-                        {post.tags.join(', ')}
                       </div>
                     )}
                   </Link>

@@ -1,0 +1,21 @@
+[data-direction="backward"] .selected-post {
+  animation: slideUpFromBottom 400ms ease-out;
+  z-index: 1000 !important;
+}
+
+[data-direction="backward"] .post-behind {
+  transition-delay: 150ms;
+}
+
+.selected-post {
+  z-index: 1000 !important;
+}
+
+@keyframes slideUpFromBottom {
+  from {
+    transform: translate(-50%, calc(-50% + 80px)) translateZ(0) scale(1);
+  }
+  to {
+    transform: translate(-50%, -50%) translateZ(0) scale(1);
+  }
+}

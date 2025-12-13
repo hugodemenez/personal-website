@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ThemeToggle } from "./theme-toggle";
 import { Search } from "./search";
 
 export function Header() {
@@ -11,7 +10,7 @@ export function Header() {
         fixed top-0 left-0 right-0 z-50
         max-w-4xl mx-auto px-4 sm:px-8 pt-3
         pb-8 sm:pb-12
-        bg-gradient-to-b from-background via-background to-background/0
+        bg-linear-to-b from-background via-background to-background/0
       `}
     >
       <Link
@@ -26,24 +25,6 @@ export function Header() {
             <Suspense fallback={<div className="w-9 h-9" />}>
               <Search />
             </Suspense>
-          </li>
-          {/* <li>
-            <Link href="/about" className="hover:text-accent transition-colors">
-              About
-            </Link>
-          </li>
-          <li>
-            <a
-              href="https://twitter.com/hugodemenez"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-accent transition-colors"
-            >
-              Twitter
-            </a>
-          </li> */}
-          <li>
-            <ThemeToggle />
           </li>
         </ul>
       </nav>

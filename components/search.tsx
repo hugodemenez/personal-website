@@ -6,7 +6,7 @@ import { PostMetadata } from '@/lib/posts';
 
 export async function Search() {
   'use cache';
-  cacheLife('weeks');
+  cacheLife('days');
   // Local posts
   const posts = await getPosts();
 
@@ -23,6 +23,9 @@ export async function Search() {
     author: 'Hugo Demenez',
   })) as PostMetadata[];
 
-  const allPosts = [...posts, ...parsedExternalPosts];
+  const allPosts = [...posts, ...parsedExternalPosts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
   return <SearchClient posts={allPosts} />;
 }
+

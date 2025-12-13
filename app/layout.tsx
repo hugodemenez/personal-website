@@ -27,12 +27,13 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
+          forcedTheme="system"
           disableTransitionOnChange
         >
           <div className="min-h-screen flex flex-col">
-            <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 container flex-grow">
+            <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 container grow">
               <Header />
-              <div className="mt-4 sm:mt-12">
+              <div className="mt-4 sm:mt-12  max-w-xl mx-auto">
                 <ViewTransition>
                   {children}
                 </ViewTransition>

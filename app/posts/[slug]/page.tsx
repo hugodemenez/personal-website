@@ -14,7 +14,7 @@ interface PageProps {
 // Page component (default export) wraps BlogPost with Suspense
 export default function Page({ params }: PageProps) {
   return (
-      <Suspense fallback={<div className="text-muted">Loading...</div>}>
+      <Suspense fallback={<div className="text-muted"></div>}>
         <BlogPost params={params} />
       </Suspense>
   );
@@ -45,6 +45,7 @@ async function CachedBlogPost({ slug }: { slug: string }) {
     }
 
     const markdown = await res.text();
+console.log(markdown);
 
     // Preprocess markdown to fix specific formatting issues from into.md
     const processedMarkdown = markdown
