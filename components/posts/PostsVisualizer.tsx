@@ -30,13 +30,15 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         selectedPostIndex={selectedPostIndex}
         onSelectPost={setSelectedPostIndex}
       />
-      <section className="flex items-center justify-center min-h-[500px] md:min-h-[600px] py-4 md:py-8" style={{ overflow: 'visible' }}>
-        <PostStack
-          posts={sortedPosts}
-          selectedPostIndex={selectedPostIndex}
-          onSelectPost={setSelectedPostIndex}
-        />
-      </section>
+      <div className="overflow-x-hidden">
+        <section className="flex items-center justify-center min-h-[500px] md:min-h-[600px] py-4 md:py-8" style={{ overflow: 'visible' }}>
+          <PostStack
+            posts={sortedPosts}
+            selectedPostIndex={selectedPostIndex}
+            onSelectPost={setSelectedPostIndex}
+          />
+        </section>
+      </div>
     </div>
   );
 }
