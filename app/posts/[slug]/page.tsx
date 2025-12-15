@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "@/components/mdx-components-list";
 import { cacheLife } from "next/cache";
+// app/posts/[slug]/page.tsx
+import { fetchSubstackPosts } from '@/lib/substack-feed';
 
 interface PageProps {
   params: Promise<{
@@ -11,10 +13,17 @@ interface PageProps {
   }>;
 }
 
+
+// 1) Build-time static params for "known" Substack posts
+export async function generateStaticParams() {
+  const posts = await fetchSubstackPosts(); // uses revalidate: 3600 but at build it just runs once
+  return posts.map((post) => ({ slug: post.slug }));
+}
+
 // Page component (default export) wraps BlogPost with Suspense
 export default function Page({ params }: PageProps) {
   return (
-      <Suspense fallback={<div className="text-muted"></div>}>
+      <Suspense fallback={<div className="text-muted animate-pulse">Loading...</div>}>
         <BlogPost params={params} />
       </Suspense>
   );
