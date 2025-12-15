@@ -1,4 +1,5 @@
 const SUBSTACK_FEED_URL = 'https://hugodemenez.substack.com/feed';
+const SUBSTACK_ARCHIVE_URL = 'https://hugodemenez.substack.com/archive';
 
 export interface SubstackPost {
   title: string;
@@ -47,6 +48,36 @@ function cleanDescription(html: string): string {
     return decoded.slice(0, 150).trim() + '...';
   }
   return decoded;
+}
+
+interface ArchivePost {
+  slug: string;
+  title?: string;
+  pubDate?: string;
+}
+
+function parseArchivePage(html: string): ArchivePost[] {
+  const posts: ArchivePost[] = [];
+  const seenSlugs = new Set<string>();
+
+  // Extract post slugs from archive page links
+  // Substack archive page contains links in format: href="/p/{slug}"
+  const postLinkRegex = /href=["']\/p\/([a-z0-9-]+)["']/gi;
+  let match;
+
+  while ((match = postLinkRegex.exec(html)) !== null) {
+    const slug = match[1];
+    if (!seenSlugs.has(slug)) {
+      seenSlugs.add(slug);
+      posts.push({
+        slug,
+        // Title and date can be optionally extracted from the HTML if needed
+        // For now, we'll rely on the RSS feed or into.md for detailed metadata
+      });
+    }
+  }
+
+  return posts;
 }
 
 function parseRSSFeed(xml: string): SubstackPost[] {
@@ -112,16 +143,77 @@ function parseRSSFeed(xml: string): SubstackPost[] {
 }
 
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
-  const feedRes = await fetch(SUBSTACK_FEED_URL, {
-    next: { revalidate: 3600 },
-  });
+  // Fetch both RSS feed and archive page in parallel
+  const [feedRes, archiveRes] = await Promise.all([
+    fetch(SUBSTACK_FEED_URL, {
+      next: { revalidate: 3600 },
+    }),
+    fetch(SUBSTACK_ARCHIVE_URL, {
+      next: { revalidate: 3600 },
+    }),
+  ]);
 
-  if (!feedRes.ok) {
-    throw new Error(`Failed to fetch feed: ${feedRes.status}`);
+  // Parse RSS feed for detailed metadata (limited to ~20 posts)
+  let rssPosts: SubstackPost[] = [];
+  if (feedRes.ok) {
+    const xml = await feedRes.text();
+    rssPosts = parseRSSFeed(xml);
+  } else {
+    console.warn(`Failed to fetch RSS feed: ${feedRes.status}`);
   }
 
-  const xml = await feedRes.text();
-  return parseRSSFeed(xml);
+  // Parse archive page for all post slugs
+  let archivePosts: ArchivePost[] = [];
+  if (archiveRes.ok) {
+    const html = await archiveRes.text();
+    archivePosts = parseArchivePage(html);
+  } else {
+    console.warn(`Failed to fetch archive page: ${archiveRes.status}`);
+  }
+
+  // Create a map of RSS posts by slug for quick lookup
+  const rssPostsBySlug = new Map<string, SubstackPost>();
+  for (const post of rssPosts) {
+    rssPostsBySlug.set(post.slug, post);
+  }
+
+  // Combine: use RSS data when available, otherwise create minimal post from archive
+  const allPosts: SubstackPost[] = [];
+  const processedSlugs = new Set<string>();
+
+  // First, add all posts from archive
+  for (const archivePost of archivePosts) {
+    const rssPost = rssPostsBySlug.get(archivePost.slug);
+    
+    if (rssPost) {
+      // Use full RSS post data
+      allPosts.push(rssPost);
+    } else {
+      // Create minimal post from archive slug
+      allPosts.push({
+        title: archivePost.title || archivePost.slug.replace(/-/g, ' '),
+        link: `https://hugodemenez.substack.com/p/${archivePost.slug}`,
+        slug: archivePost.slug,
+        pubDate: archivePost.pubDate || new Date().toISOString(),
+        description: '',
+      });
+    }
+    processedSlugs.add(archivePost.slug);
+  }
+
+  // Add any RSS posts not found in archive (shouldn't happen, but defensive)
+  for (const rssPost of rssPosts) {
+    if (!processedSlugs.has(rssPost.slug)) {
+      allPosts.push(rssPost);
+    }
+  }
+
+  // If we have no posts from archive, fall back to RSS only
+  if (allPosts.length === 0 && rssPosts.length > 0) {
+    return rssPosts;
+  }
+
+  return allPosts;
 }
 
 
