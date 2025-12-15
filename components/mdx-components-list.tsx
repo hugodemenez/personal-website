@@ -78,9 +78,9 @@ export const mdxComponents = {
       <Image
         src={src}
         alt={typeof alt === 'string' ? alt : ''}
-        width={1125}
-        height={750}
-        className="next-image rounded-lg my-4 max-w-xl"
+        width={1456}
+        height={971}
+        className="rounded-lg my-4 scale-105 h-auto border"
         loading="lazy"
         unoptimized={isExternal}
       />

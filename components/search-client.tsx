@@ -93,7 +93,15 @@ export function SearchClient({ posts }: SearchClientProps) {
 
       <dialog
         ref={dialogRef}
-        className="w-full h-full md:w-[42rem] md:h-auto md:rounded-lg border-0 md:border md:border-border bg-background p-0 md:shadow-xl transition-opacity overflow-hidden"
+        className="
+          fixed inset-0 m-0 box-border
+          h-full w-full max-h-none max-w-none overflow-hidden
+          border-0 bg-background p-0
+          transition-opacity
+          md:inset-auto md:top-[10%] md:left-1/2 md:right-auto md:bottom-auto
+          md:h-auto md:w-2xl md:max-h-[80vh] md:max-w-2xl
+          md:-translate-x-1/2 md:rounded-lg md:border md:border-border md:shadow-xl
+        "
         onClose={handleClose}
         onClick={handleDialogClick}
       >
@@ -101,7 +109,7 @@ export function SearchClient({ posts }: SearchClientProps) {
           {/* Input - fixed at top on both mobile and desktop */}
           <div className="flex items-center px-4 py-3 border-b border-border bg-background flex-shrink-0">
             <svg
-              className="text-muted mr-2 flex-shrink-0"
+              className="text-muted mr-2 shrink-0"
               xmlns="http://www.w3.org/2000/svg"
               width="20"
               height="20"
@@ -147,7 +155,7 @@ export function SearchClient({ posts }: SearchClientProps) {
           </div>
 
           {/* Results - appears below input on both mobile and desktop */}
-          <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain pb-72 md:pb-0">
+          <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain pb-80 md:pb-0">
             <div className="py-2">
               {filteredPosts.length > 0 ? (
                 filteredPosts.map((post) => (
