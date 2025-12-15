@@ -60,20 +60,55 @@ function parseArchivePage(html: string): ArchivePost[] {
   const posts: ArchivePost[] = [];
   const seenSlugs = new Set<string>();
 
-  // Extract post slugs from archive page links
-  // Substack archive page contains links in format: href="/p/{slug}"
-  const postLinkRegex = /href=["']\/p\/([a-z0-9-]+)["']/gi;
+  // Substack archive page often has structured post entries
+  // Try multiple patterns to extract post information
+  
+  // Pattern 1: Try to match post entries with title and date
+  // This pattern looks for common Substack archive HTML structure
+  const postEntryRegex = /<a[^>]*href=["']\/p\/([a-zA-Z0-9_-]+)["'][^>]*>([\s\S]*?)<\/a>/gi;
   let match;
 
-  while ((match = postLinkRegex.exec(html)) !== null) {
+  while ((match = postEntryRegex.exec(html)) !== null) {
     const slug = match[1];
+    const innerHtml = match[2];
+    
     if (!seenSlugs.has(slug)) {
       seenSlugs.add(slug);
+      
+      // Try to extract title from various possible locations
+      let title: string | undefined;
+      const h3Match = innerHtml.match(/<h3[^>]*>(.*?)<\/h3>/i);
+      const h2Match = innerHtml.match(/<h2[^>]*>(.*?)<\/h2>/i);
+      const titleMatch = h3Match || h2Match;
+      
+      if (titleMatch) {
+        title = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+      }
+      
+      // Try to extract date - look for time elements or date patterns
+      let pubDate: string | undefined;
+      const timeMatch = innerHtml.match(/<time[^>]*datetime=["']([^"']+)["']/i);
+      if (timeMatch) {
+        pubDate = timeMatch[1];
+      }
+      
       posts.push({
         slug,
-        // Title and date can be optionally extracted from the HTML if needed
-        // For now, we'll rely on the RSS feed or into.md for detailed metadata
+        title,
+        pubDate,
       });
+    }
+  }
+
+  // Pattern 2: If no posts found with pattern 1, fall back to simple link extraction
+  if (posts.length === 0) {
+    const postLinkRegex = /href=["']\/p\/([a-zA-Z0-9_-]+)["']/gi;
+    while ((match = postLinkRegex.exec(html)) !== null) {
+      const slug = match[1];
+      if (!seenSlugs.has(slug)) {
+        seenSlugs.add(slug);
+        posts.push({ slug });
+      }
     }
   }
 
@@ -190,11 +225,13 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
       allPosts.push(rssPost);
     } else {
       // Create minimal post from archive slug
+      // Use a very old date (epoch) so these posts appear at the end when sorted by date
+      // The actual date will be visible when the post is opened via into.md
       allPosts.push({
         title: archivePost.title || archivePost.slug.replace(/-/g, ' '),
         link: `https://hugodemenez.substack.com/p/${archivePost.slug}`,
         slug: archivePost.slug,
-        pubDate: archivePost.pubDate || new Date().toISOString(),
+        pubDate: archivePost.pubDate || '1970-01-01T00:00:00.000Z',
         description: '',
       });
     }
