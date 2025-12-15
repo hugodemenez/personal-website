@@ -1,3 +1,23 @@
+/* Swipe interaction styles for mobile */
+.post-stack-container {
+  --drag-x: 0px;
+  --drag-rotate: 0deg;
+}
+
+/* Apply drag transform only to front card on mobile during drag */
+@media (max-width: 767px) {
+  .post-stack-container.is-dragging .post-card-front {
+    transition: none !important;
+    transform: translate(-50%, -50%) 
+               translateX(var(--drag-x)) 
+               translateY(var(--translateY, 0px)) 
+               translateZ(var(--translateZ, 0px)) 
+               rotateX(var(--rotateX, 0deg))
+               rotateZ(var(--drag-rotate))
+               scale(var(--scale, 1)) !important;
+  }
+}
+
 [data-direction="backward"] .selected-post {
   animation: slideUpFromBottom 400ms ease-out;
   z-index: 1000 !important;
