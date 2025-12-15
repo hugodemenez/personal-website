@@ -29,19 +29,36 @@ function extractImageFromContent(content: string): string | null {
 }
 
 function cleanDescription(html: string): string {
-  // Remove HTML tags
-  const text = html.replace(/<[^>]*>/g, '');
-  // Decode HTML entities (basic ones)
+  // Simple and safe text extraction: replace all tags with spaces
+  // This avoids complex sanitization issues since React will escape the output anyway
+  let text = html;
+  
+  // Remove script and style tags (with flexible whitespace)
+  text = text.replace(/<script\s[^>]*>[\s\S]*?<\/script\s*>/gi, '');
+  text = text.replace(/<script>[\s\S]*?<\/script\s*>/gi, '');
+  text = text.replace(/<style\s[^>]*>[\s\S]*?<\/style\s*>/gi, '');
+  text = text.replace(/<style>[\s\S]*?<\/style\s*>/gi, '');
+  
+  // Replace all remaining tags with spaces
+  text = text.replace(/<[^>]+>/g, ' ');
+  
+  // Final safety: remove any remaining angle brackets to prevent any possible injection
+  text = text.replace(/[<>]/g, '');
+  text = text.replace(/\s+/g, ' '); // Normalize whitespace
+  
+  // Decode common HTML entities (in safe order to avoid double-decoding)
   const decoded = text
     .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '')  // Remove < instead of decoding since we stripped them
+    .replace(/&gt;/g, '')  // Remove > instead of decoding since we stripped them
     .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
     .replace(/&#8217;/g, "'")
     .replace(/&#8220;/g, '"')
     .replace(/&#8221;/g, '"')
-    .replace(/&#8212;/g, '—');
+    .replace(/&#8212;/g, '—')
+    .replace(/&amp;/g, '&') // Decode & last to avoid double-decoding
+    .trim();
   
   // Truncate to ~150 chars
   if (decoded.length > 150) {
@@ -83,7 +100,32 @@ function parseArchivePage(html: string): ArchivePost[] {
       const titleMatch = h1Match || h2Match || h3Match;
       
       if (titleMatch) {
-        title = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+        // Extract text from title, removing HTML tags safely
+        // React will escape the output, but we clean it for good measure
+        let titleText = titleMatch[1];
+        
+        // Remove script and style tags (with flexible whitespace)
+        titleText = titleText.replace(/<script\s[^>]*>[\s\S]*?<\/script\s*>/gi, '');
+        titleText = titleText.replace(/<script>[\s\S]*?<\/script\s*>/gi, '');
+        titleText = titleText.replace(/<style\s[^>]*>[\s\S]*?<\/style\s*>/gi, '');
+        titleText = titleText.replace(/<style>[\s\S]*?<\/style\s*>/gi, '');
+        
+        // Replace all remaining tags with spaces
+        titleText = titleText.replace(/<[^>]+>/g, ' ');
+        
+        // Final safety: remove any remaining angle brackets
+        titleText = titleText.replace(/[<>]/g, '');
+        titleText = titleText.replace(/\s+/g, ' '); // Normalize whitespace
+        
+        // Decode HTML entities (in safe order)
+        title = titleText
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&lt;/g, '')  // Remove instead of decode since we stripped brackets
+          .replace(/&gt;/g, '')  // Remove instead of decode since we stripped brackets
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&') // Decode & last
+          .trim();
       }
       
       // Try to extract date - look for time elements or date patterns
