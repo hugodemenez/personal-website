@@ -43,7 +43,7 @@ export default function PostCard({
 }: PostCardProps) {
   return (
     <div
-      className="absolute top-1/2 left-1/2 transition-all duration-300"
+      className={`absolute top-1/2 left-1/2 transition-all duration-300 post-card ${position === 0 ? 'post-card-front' : ''}`}
       style={{
         transform: `
           translate(-50%, -50%)
@@ -61,7 +61,11 @@ export default function PostCard({
         willChange: 'transform, opacity',
         backfaceVisibility: 'hidden',
         visibility: shouldBeVisible ? 'visible' : 'hidden',
-      }}
+        '--translateY': `${translateY}px`,
+        '--translateZ': `${translateZ}px`,
+        '--rotateX': `${rotateX}deg`,
+        '--scale': scale,
+      } as React.CSSProperties}
     >
       <Link
         href={post.slug ? `/posts/${post.slug}` : post.link}
