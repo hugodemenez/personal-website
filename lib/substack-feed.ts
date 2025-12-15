@@ -79,17 +79,30 @@ function parseArchivePage(html: string): ArchivePost[] {
       let title: string | undefined;
       const h3Match = innerHtml.match(/<h3[^>]*>(.*?)<\/h3>/i);
       const h2Match = innerHtml.match(/<h2[^>]*>(.*?)<\/h2>/i);
-      const titleMatch = h3Match || h2Match;
+      const h1Match = innerHtml.match(/<h1[^>]*>(.*?)<\/h1>/i);
+      const titleMatch = h1Match || h2Match || h3Match;
       
       if (titleMatch) {
         title = titleMatch[1].replace(/<[^>]*>/g, '').trim();
       }
       
       // Try to extract date - look for time elements or date patterns
+      // Search both inside the link and in surrounding context
       let pubDate: string | undefined;
+      
+      // Check for <time> element with datetime attribute
       const timeMatch = innerHtml.match(/<time[^>]*datetime=["']([^"']+)["']/i);
       if (timeMatch) {
         pubDate = timeMatch[1];
+      } else {
+        // Check in the surrounding context (within 500 chars after the link)
+        const contextStart = match.index;
+        const contextEnd = Math.min(contextStart + 500, html.length);
+        const context = html.substring(contextStart, contextEnd);
+        const contextTimeMatch = context.match(/<time[^>]*datetime=["']([^"']+)["']/i);
+        if (contextTimeMatch) {
+          pubDate = contextTimeMatch[1];
+        }
       }
       
       posts.push({
@@ -225,8 +238,8 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
       allPosts.push(rssPost);
     } else {
       // Create minimal post from archive slug
-      // Use a very old date (epoch) so these posts appear at the end when sorted by date
-      // The actual date will be visible when the post is opened via into.md
+      // Use epoch date as fallback to ensure these posts sort to the end
+      // Most archive pages will have extracted dates, but this handles edge cases
       allPosts.push({
         title: archivePost.title || archivePost.slug.replace(/-/g, ' '),
         link: `https://hugodemenez.substack.com/p/${archivePost.slug}`,
