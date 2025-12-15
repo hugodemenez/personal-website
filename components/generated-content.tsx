@@ -46,7 +46,6 @@ export default function GeneratedContent() {
 async function CachedGeneratedContent() {
   "use cache";
   cacheLife("days");
-  await new Promise((resolve) => setTimeout(resolve, 1000));
   const result = await researchAgent.generate({
     prompt: "Who is Hugo Demenez and what are his projects?",
   });
