@@ -21,7 +21,7 @@ export default function PostTable({
       <select
         value={selectedPostIndex}
         onChange={(e) => onSelectPost(Number(e.target.value))}
-        className="w-full p-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors duration-200 cursor-pointer"
+        className="w-full p-3 rounded-t-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-colors duration-200 cursor-pointer"
       >
         {posts.map((post, index) => (
           <option key={post.slug} value={index}>

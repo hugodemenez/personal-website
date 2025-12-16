@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { SubstackPost } from "@/lib/substack-feed";
 import PostStack from "./PostStack";
 import PostTable from "./PostTable";
@@ -21,6 +21,11 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     [posts]
   );
 
+  // Reset selected index when original posts change
+  useEffect(() => {
+    setSelectedPostIndex(0);
+  }, [posts]);
+
   if (!sortedPosts.length) return null;
 
   return (
@@ -30,15 +35,11 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         selectedPostIndex={selectedPostIndex}
         onSelectPost={setSelectedPostIndex}
       />
-      <div className="overflow-x-hidden">
-        <section className="flex items-center justify-center min-h-[500px] md:min-h-[600px] py-4 md:py-8" style={{ overflow: 'visible' }}>
-          <PostStack
-            posts={sortedPosts}
-            selectedPostIndex={selectedPostIndex}
-            onSelectPost={setSelectedPostIndex}
-          />
-        </section>
-      </div>
+      <PostStack
+        posts={sortedPosts}
+        selectedPostIndex={selectedPostIndex}
+        onSelectPost={setSelectedPostIndex}
+      />
     </div>
   );
 }
