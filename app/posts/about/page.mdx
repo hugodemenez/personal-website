@@ -1,8 +1,7 @@
 import Image from 'next/image';
-import SubstackPosts from '../../about/SubstackPosts';
-import YoutubeVideos from '../../about/YoutubeVideos';
-import YearsSince from '@/components/years-parser';
-import { Suspense } from 'react';
+import SubstackPosts from '@/components/posts/SubstackPosts';
+import YoutubeVideos from '@/components/about/YoutubeVideos';
+import YearFromNow from '@/components/year-from-now';
 
 export const metadata = {
   "title": "About me",
@@ -16,7 +15,7 @@ export const metadata = {
 
 ## Programming
 
-For the past <Suspense fallback={<span>...</span>}>{<YearsSince startYear={2018} />}</Suspense> years,
+For the past <YearFromNow year={2018} /> years,
 I have been driven by programming and investing.
 
 ![Wakatime metrics](https://raw.githubusercontent.com/hugodemenez/hugodemenez/main/metrics.plugin.wakatime.svg)
@@ -47,7 +46,7 @@ Without experience in discretionary trading, no one would ever build a sustainab
 You have to understand the basics of macro-economy, market manipulations and orderbook analysis.
 
 So in 2023, I started learning about discretionary trading and practicing everyday.
-For the past <Suspense fallback={<span>...</span>}>{<YearsSince startYear={2023} />}</Suspense> years, I've been focused on discretionary trading strategies for US stocks,
+For the past <YearFromNow year={2023} /> years, I've been focused on discretionary trading strategies for US stocks,
 leveraging volume profile and orderbook analysis.
 
 I find quantitative trading and machine learning to be fascinating fields that continue to inspire and drive my innovation.

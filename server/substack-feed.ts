@@ -1,16 +1,10 @@
+"use server";
 import { cacheLife } from "next/cache";
+import type { SubstackPost } from "@/types/substack-post";
 
 const SUBSTACK_ARCHIVE_API_URL =
   "https://hugodemenez.substack.com/api/v1/archive";
 
-export interface SubstackPost {
-  title: string;
-  link: string;
-  slug: string;
-  image?: string;
-  pubDate: string;
-  description?: string;
-}
 
 interface ArchiveApiPost {
   id: number;
@@ -79,7 +73,7 @@ async function fetchArchiveFromApi(): Promise<SubstackPost[]> {
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
   "use cache";
   cacheLife("hours");
-  
+
   try {
     return await fetchArchiveFromApi();
   } catch (error) {

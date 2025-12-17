@@ -29,15 +29,17 @@
   --border: #E6E2D8;
 }
 
-/* Manual Dark Mode override via class="dark" */
-.dark {
-  --background: #14120b;
-  --surface: #1c1a15;
-  --foreground: #E4E4E4;
-  --muted: #D6D6DD;
-  --accent: #EA580C;
-  --accent-light: #FDBA74;
-  --border: #33302B;
+/* Dark Mode via system preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #14120b;
+    --surface: #1c1a15;
+    --foreground: #E4E4E4;
+    --muted: #D6D6DD;
+    --accent: #EA580C;
+    --accent-light: #FDBA74;
+    --border: #33302B;
+  }
 }
 
 html {
@@ -57,54 +59,10 @@ body {
   color: white;
 }
 
-.next-image {
-  border-radius: 0.5rem;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--border);
-}
-
 /* Smooth View Transitions */
 ::view-transition-group(root) {
   animation-duration: 0.4s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Dialog positioning */
-dialog {
-  position: fixed;
-  margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* Mobile: full screen */
-dialog {
-  inset: 0;
-  max-width: none;
-  max-height: none;
-}
-
-/* Desktop: centered with proper sizing and styling */
-@media (min-width: 768px) {
-  dialog {
-    top: 10%;
-    left: 50%;
-    right: auto;
-    bottom: auto;
-    transform: translateX(-50%);
-    width: 42rem;
-    height: auto;
-    max-width: 42rem; /* max-w-2xl equivalent */
-    max-height: 80vh;
-    border-radius: 0.5rem;
-    border: 1px solid var(--border);
-  }
 }
 
 dialog::backdrop {
@@ -137,20 +95,6 @@ dialog::backdrop {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
-}
-
-/* Shimmer animation for loading states */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
 }
 
 /* Dropdown enter animation */
