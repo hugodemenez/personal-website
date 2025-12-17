@@ -15,7 +15,7 @@ export default function SubstackPosts() {
 
 function SubstackPostsFallback() {
   // We use only our local posts that we compute at build time
-  return <div></div>;
+  return <SubstackVisualizer posts={[]} />;
 }
 
 async function CachedSubstackPosts() {

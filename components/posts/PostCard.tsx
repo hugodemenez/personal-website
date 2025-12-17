@@ -14,13 +14,13 @@ function formatDate(dateString: string): string {
 
 export default function PostCard({ post }: { post: SubstackPost }) {
   return (
-    <div className="rounded-xl shadow-lg border border-border w-full h-fit">
+    <div className="w-full h-fit">
       <Link
         href={post.slug ? `/posts/${post.slug}` : post.link}
         target={post.slug ? undefined : "_blank"}
         rel={post.slug ? undefined : "noopener noreferrer"}
       >
-        <div className="relative w-full overflow-hidden bg-surface aspect-2/1">
+        <div className="relative w-full bg-surface aspect-2/1">
           {post.image ? (
             <Image
               src={post.image}
@@ -49,7 +49,7 @@ export default function PostCard({ post }: { post: SubstackPost }) {
             </div>
           )}
         </div>
-        <div className="p-6 md:p-8">
+        <div className="p-6 md:p-8 bg-background border border-border rounded-b-xl">
           {post.description && (
             <p className="text-sm md:text-base text-muted mb-3 md:mb-4 leading-relaxed line-clamp-1 wrap-break-word">
               {post.description}
