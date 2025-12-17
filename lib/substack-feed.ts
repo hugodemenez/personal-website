@@ -1,4 +1,5 @@
-const SUBSTACK_FEED_URL = 'https://hugodemenez.substack.com/feed';
+const SUBSTACK_ARCHIVE_API_URL =
+  "https://hugodemenez.substack.com/api/v1/archive";
 
 export interface SubstackPost {
   title: string;
@@ -9,119 +10,76 @@ export interface SubstackPost {
   description?: string;
 }
 
-function extractTextBetweenTags(xml: string, tagName: string): string | null {
-  // Handle CDATA sections
-  const regex = new RegExp(`<${tagName}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${tagName}>`, 'i');
-  const match = xml.match(regex);
-  return match ? match[1].trim() : null;
+interface ArchiveApiPost {
+  id: number;
+  slug: string;
+  title?: string;
+  post_date?: string;
+  canonical_url?: string | null;
+  cover_image?: string | null;
+  description?: string | null;
+  truncated_body_text?: string | null;
 }
 
-function extractAttribute(xml: string, tagName: string, attrName: string): string | null {
-  const regex = new RegExp(`<${tagName}[^>]+${attrName}=["']([^"']+)["']`, 'i');
-  const match = xml.match(regex);
-  return match ? match[1] : null;
-}
-
-function extractImageFromContent(content: string): string | null {
-  const imgMatch = content.match(/<img[^>]+src=["']([^"'>]+)["']/i);
-  return imgMatch ? imgMatch[1] : null;
-}
-
-function cleanDescription(html: string): string {
-  // Remove HTML tags
-  const text = html.replace(/<[^>]*>/g, '');
-  // Decode HTML entities (basic ones)
-  const decoded = text
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
-    .replace(/&#8212;/g, '—');
-  
-  // Truncate to ~150 chars
-  if (decoded.length > 150) {
-    return decoded.slice(0, 150).trim() + '...';
-  }
-  return decoded;
-}
-
-function parseRSSFeed(xml: string): SubstackPost[] {
+async function fetchArchiveFromApi(): Promise<SubstackPost[]> {
   const posts: SubstackPost[] = [];
-  const itemRegex = /<item[^>]*>([\s\S]*?)<\/item>/gi;
-  let itemMatch;
 
-  while ((itemMatch = itemRegex.exec(xml)) !== null) {
-    const itemXml = itemMatch[1];
+  const url = new URL(SUBSTACK_ARCHIVE_API_URL);
+  url.searchParams.set("sort", "new");
+  // Substack API limit is 50 posts per request
+  url.searchParams.set("limit", "50");
+  // Fetch posts from the api until there are no more posts
+  while (true) {
+    url.searchParams.set("offset", posts.length.toString());
 
-    const title = extractTextBetweenTags(itemXml, 'title');
-    const link = extractTextBetweenTags(itemXml, 'link');
-    const pubDate = extractTextBetweenTags(itemXml, 'pubDate');
-    const descriptionRaw = extractTextBetweenTags(itemXml, 'description');
-    const contentEncoded = extractTextBetweenTags(itemXml, 'content:encoded');
-
-    if (!title || !link || !pubDate) continue;
-
-    const slugMatch = link.match(/\/p\/([^/?]+)/);
-    const slug = slugMatch ? slugMatch[1] : null;
-
-    if (!slug) continue;
-
-    // Prefer content:encoded for image extraction as it usually has the full content
-    let image: string | undefined;
-
-    const mediaContentMatch = itemXml.match(/<media:content[^>]+url=["']([^"']+)["']/i);
-    if (mediaContentMatch) {
-      image = mediaContentMatch[1];
-    } else {
-      const enclosureUrl = extractAttribute(itemXml, 'enclosure', 'url');
-      if (enclosureUrl) {
-        image = enclosureUrl;
-      } else {
-        if (contentEncoded) {
-          const imgFromContent = extractImageFromContent(contentEncoded);
-          if (imgFromContent) {
-            image = imgFromContent;
-          }
-        }
-      }
-    }
-
-    // Use description tag for the excerpt, falling back to stripped content:encoded
-    let description = '';
-    if (descriptionRaw) {
-      description = cleanDescription(descriptionRaw);
-    } else if (contentEncoded) {
-      description = cleanDescription(contentEncoded);
-    }
-
-    posts.push({
-      title,
-      link,
-      slug,
-      image,
-      pubDate,
-      description,
+    const res = await fetch(url.toString(), {
+      next: { revalidate: 3600 },
     });
-  }
 
+    if (!res.ok) {
+      console.warn(`Failed to fetch archive API: ${res.status}`);
+      break;
+    }
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      // There is no posts in the archive
+      console.warn("No posts in the archive");
+      break;
+    }
+
+    // Parse the posts
+    for (const item of data as ArchiveApiPost[]) {
+      const title = item.title || item.slug.replace(/-/g, " ");
+      const link =
+        item.canonical_url || `https://hugodemenez.substack.com/p/${item.slug}`;
+      const image = item.cover_image ?? undefined;
+
+      const rawDescription = item.truncated_body_text ?? item.description ?? "";
+      const cleanedDescription = rawDescription ? rawDescription.trim() : "";
+      const description =
+        cleanedDescription.length > 150
+          ? `${cleanedDescription.slice(0, 150).trim()}...`
+          : cleanedDescription || undefined;
+
+      posts.push({
+        title,
+        link,
+        slug: item.slug,
+        image,
+        pubDate: item.post_date || "1970-01-01T00:00:00.000Z",
+        description,
+      });
+    }
+    console.warn("Parsed", posts.length, "posts");
+  }
   return posts;
 }
 
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
-  const feedRes = await fetch(SUBSTACK_FEED_URL, {
-    next: { revalidate: 3600 },
-  });
-
-  if (!feedRes.ok) {
-    throw new Error(`Failed to fetch feed: ${feedRes.status}`);
+  try {
+    return await fetchArchiveFromApi();
+  } catch (error) {
+    console.warn("Failed to fetch Substack posts from archive API", error);
+    return [];
   }
-
-  const xml = await feedRes.text();
-  return parseRSSFeed(xml);
 }
-
-
