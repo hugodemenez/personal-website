@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import Link from 'next/link';
-import type { PostMetadata } from '@/lib/posts';
+import { useState, useEffect, useRef, useMemo } from "react";
+import Link from "next/link";
+import type { PostMetadata } from "@/lib/posts";
 
 interface SearchClientProps {
   posts: PostMetadata[];
 }
 
 export function SearchClient({ posts }: SearchClientProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+    new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
 
   const sortedPosts = useMemo(
@@ -31,7 +31,9 @@ export function SearchClient({ posts }: SearchClientProps) {
   // Filter posts - show all if no query, otherwise filter
   const filteredPosts = query
     ? sortedPosts.filter((post) => {
-        const searchContent = `${post.title} ${post.description} ${post.tags.join(' ')}`.toLowerCase();
+        const searchContent = `${post.title} ${
+          post.description
+        } ${post.tags.join(" ")}`.toLowerCase();
         return searchContent.includes(query.toLowerCase());
       })
     : sortedPosts;
@@ -44,7 +46,7 @@ export function SearchClient({ posts }: SearchClientProps) {
 
   const handleClose = () => {
     dialogRef.current?.close();
-    setQuery('');
+    setQuery("");
   };
 
   // Handle backdrop clicks to close dialog
@@ -61,11 +63,11 @@ export function SearchClient({ posts }: SearchClientProps) {
     if (!dialog) return;
 
     const handleCancel = () => {
-      setQuery('');
+      setQuery("");
     };
 
-    dialog.addEventListener('cancel', handleCancel);
-    return () => dialog.removeEventListener('cancel', handleCancel);
+    dialog.addEventListener("cancel", handleCancel);
+    return () => dialog.removeEventListener("cancel", handleCancel);
   }, []);
 
   return (
@@ -107,7 +109,7 @@ export function SearchClient({ posts }: SearchClientProps) {
       >
         <div className="flex flex-col h-full md:h-auto md:max-h-[80vh] relative overflow-hidden md:rounded-lg">
           {/* Input - fixed at top on both mobile and desktop */}
-          <div className="flex items-center px-4 py-3 border-b border-border bg-background flex-shrink-0">
+          <div className="flex items-center px-4 py-3 border-b border-border bg-background shrink-0">
             <svg
               className="text-muted mr-2 shrink-0"
               xmlns="http://www.w3.org/2000/svg"
@@ -134,7 +136,7 @@ export function SearchClient({ posts }: SearchClientProps) {
             />
             <button
               onClick={handleClose}
-              className="text-muted hover:text-foreground ml-2 p-1 flex-shrink-0 rounded transition-colors"
+              className="text-muted hover:text-foreground ml-2 p-1 shrink-0 rounded transition-colors"
               aria-label="Close search"
             >
               <svg
@@ -160,14 +162,18 @@ export function SearchClient({ posts }: SearchClientProps) {
               {filteredPosts.length > 0 ? (
                 filteredPosts.map((post) => (
                   <Link
-                    key={post.slug}
+                    key={post.slug+post.tags.join("-")}
                     href={`/posts/${post.slug}`}
                     onClick={handleClose}
                     className="block px-4 py-3 text-sm hover:bg-surface transition-colors border-b border-border last:border-b-0 focus:outline-none focus:bg-surface"
                   >
                     <div className="flex items-center justify-between">
-                    <div className="font-medium text-foreground">{post.title}</div>
-                    <div className="text-xs text-muted mt-1">{formatDate(post.date)}</div>
+                      <div className="font-medium text-foreground">
+                        {post.title}
+                      </div>
+                      <div className="text-xs text-muted mt-1">
+                        {formatDate(post.date)}
+                      </div>
                     </div>
                     {post.description && (
                       <div className="text-xs text-muted mt-1 line-clamp-1">
@@ -178,7 +184,7 @@ export function SearchClient({ posts }: SearchClientProps) {
                 ))
               ) : (
                 <div className="px-4 py-8 text-sm text-muted text-center">
-                  {query ? 'No results found' : 'No posts available'}
+                  {query ? "No results found" : "No posts available"}
                 </div>
               )}
             </div>

@@ -19,7 +19,7 @@ export async function Search() {
     title: post.title,
     date: post.pubDate,
     description: post.description,
-    tags: [],
+    tags: ['substack'],
     author: 'Hugo Demenez',
   })) as PostMetadata[];
 
