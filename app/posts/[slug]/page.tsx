@@ -1,11 +1,9 @@
 import { Suspense } from "react";
-import { BackButton } from "@/components/back-button";
-import NextButton from "@/components/next-button";
 import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "@/components/mdx-components-list";
 import { cacheLife } from "next/cache";
-import { fetchSubstackPosts } from "@/lib/substack-feed";
+import { fetchSubstackPosts } from "@/server/substack-feed";
 
 interface PageProps {
   params: Promise<{
@@ -33,19 +31,7 @@ export default function Page({ params }: PageProps) {
 async function BlogPost({ params }: PageProps) {
   const { slug } = await params;
 
-  return (
-    <>
-      <div className="
-        flex items-center justify-between mb-2 tracking-tight
-        sticky top-2 left-0 right-0 z-60
-        max-w-4xl mx-auto px-16 md:px-0 pt-3
-        ">
-        <BackButton />
-        <NextButton slug={slug} />
-      </div>
-      <CachedBlogPost slug={slug} />
-    </>
-  );
+  return <CachedBlogPost slug={slug} />;
 }
 
 // Cached component receives slug as prop and caches the fetched content

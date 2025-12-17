@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { SubstackPost } from "@/lib/substack-feed";
+import type { SubstackPost } from "@/types/substack-post";
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString("en-US", {

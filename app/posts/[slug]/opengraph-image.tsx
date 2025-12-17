@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { fetchSubstackPosts } from '@/lib/substack-feed';
+import { fetchSubstackPosts } from '@/server/substack-feed';
 
 export const size = {
   width: 1200,

@@ -1,11 +1,11 @@
 import { ToolLoopAgent, tool } from "ai";
-import { perplexity } from "@ai-sdk/perplexity";
 import { generateText } from "ai";
 import { z } from "zod";
 
 // Perplexity search tool for cross-research
 const perplexitySearchTool = tool({
-  description: "Use Perplexity to perform cross-research and verify information. This provides an additional search perspective to cross-reference findings.",
+  description:
+    "Use Perplexity to perform cross-research and verify information. This provides an additional search perspective to cross-reference findings.",
   inputSchema: z.object({
     query: z.string().describe("The search query to research using Perplexity"),
   }),
@@ -21,7 +21,9 @@ const perplexitySearchTool = tool({
       };
     } catch (error) {
       return {
-        result: `Error performing Perplexity search: ${error instanceof Error ? error.message : String(error)}`,
+        result: `Error performing Perplexity search: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         sources: [],
       };
     }
@@ -29,11 +31,11 @@ const perplexitySearchTool = tool({
 });
 
 export const researchAgent = new ToolLoopAgent({
-    model: "xai/grok-4.1-fast-reasoning",
-    tools: {
-      perplexitySearch: perplexitySearchTool,
-    },
-    instructions: `You are a research assistant tasked with generating a great and interesting short introduction for a portfolio. You have access to web search tools and Perplexity for cross-research.
+  model: "xai/grok-4.1-fast-reasoning",
+  tools: {
+    perplexitySearch: perplexitySearchTool,
+  },
+  instructions: `You are a research assistant tasked with generating a great and interesting short introduction for a portfolio. You have access to web search tools and Perplexity for cross-research.
   
     CRITICAL: Only include information that you can verify from your search results. DO NOT invent, assume, or make up any facts, dates, or details. If information is not found in your sources, do not include it.
   
@@ -90,19 +92,19 @@ export const researchAgent = new ToolLoopAgent({
     - Prefer regional descriptions (e.g., "Northern France", "Southern California", "West Coast") over city names or metropolitan areas
     - Be conservative - it's better to be brief and accurate than to include unverified information
     - The introduction should make the reader want to learn more about this person`,
-    providerOptions: {
-        xai: {
-          searchParameters: {
-            mode: "on", // 'auto', 'on', or 'off'
-            returnCitations: true,
-            maxSearchResults: 20,
-            sources: [
-              {
-                type: "web",
-                safeSearch: true,
-              }
-            ],
+  providerOptions: {
+    xai: {
+      searchParameters: {
+        mode: "on", // 'auto', 'on', or 'off'
+        returnCitations: true,
+        maxSearchResults: 20,
+        sources: [
+          {
+            type: "web",
+            safeSearch: true,
           },
-        },
+        ],
       },
-  });
+    },
+  },
+});

@@ -1,4 +1,4 @@
-import { fetchSubstackPosts } from "@/lib/substack-feed";
+import { fetchSubstackPosts } from "@/server/substack-feed";
 import SubstackVisualizer from "./PostsVisualizer";
 import { cacheLife } from "next/cache";
 import { Suspense } from "react";

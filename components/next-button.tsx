@@ -1,16 +1,17 @@
-import { fetchSubstackPosts } from "@/lib/substack-feed";
-import { cacheLife } from "next/cache";
+'use client';
+
+import { usePathname } from 'next/navigation';
 import Link from "next/link";
+import type { SubstackPost } from "@/types/substack-post";
 
 interface NextButtonProps {
-  slug: string;
+  posts: SubstackPost[];
 }
 
-export default async function NextButton({ slug }: NextButtonProps) {
-  "use cache";
-  cacheLife("max");
-
-  const posts = await fetchSubstackPosts();
+export default function NextButton({ posts }: NextButtonProps) {
+  const pathname = usePathname();
+  const slug = pathname?.split('/').pop() || '';
+  
   const currentIndex = posts.findIndex((post) => post.slug === slug);
   const nextPost =
     currentIndex !== -1 && currentIndex + 1 < posts.length

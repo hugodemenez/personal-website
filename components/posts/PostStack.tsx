@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useEffect, useState } from "react";
-import type { SubstackPost } from "@/lib/substack-feed";
+import type { SubstackPost } from "@/types/substack-post";
 import PostCard from "./PostCard";
 
 interface PostStackProps {

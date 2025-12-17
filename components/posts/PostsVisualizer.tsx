@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { SubstackPost } from "@/lib/substack-feed";
+import type { SubstackPost } from "@/types/substack-post";
 import PostStack from "./PostStack";
 import PostTable from "./PostTable";
 

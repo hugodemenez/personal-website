@@ -1,6 +1,6 @@
 'use client';
 
-import type { SubstackPost } from '@/lib/substack-feed';
+import type { SubstackPost } from '@/types/substack-post';
 
 interface PostTableProps {
   posts: SubstackPost[];

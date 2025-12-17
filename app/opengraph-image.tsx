@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { fetchSubstackPosts } from '@/lib/substack-feed'
+import { fetchSubstackPosts } from '@/server/substack-feed'
 
 export const alt = 'Hugo DEMENEZ - Developer, trader, and entrepreneur'
 export const size = {

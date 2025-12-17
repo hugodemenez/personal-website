@@ -1,6 +1,6 @@
 import { getPosts } from '@/lib/posts';
 import { SearchClient } from './search-client';
-import { fetchSubstackPosts } from '@/lib/substack-feed';
+import { fetchSubstackPosts } from '@/server/substack-feed';
 import { cacheLife } from 'next/cache';
 import { PostMetadata } from '@/lib/posts';
 
