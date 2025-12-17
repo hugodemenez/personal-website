@@ -75,15 +75,17 @@ export const mdxComponents = {
     const isExternal = src.startsWith('http');
     
     return (
-      <Image
-        src={src}
-        alt={typeof alt === 'string' ? alt : ''}
-        width={1456}
-        height={971}
-        className="rounded-lg my-4 scale-105 h-auto border"
-        loading="lazy"
-        unoptimized={isExternal}
-      />
+      <div className="relative w-full aspect-2/1 my-4 overflow-hidden rounded-lg border">
+        <Image
+          src={src}
+          alt={typeof alt === 'string' ? alt : ''}
+          fill
+          className="object-contain scale-105"
+          loading="lazy"
+          unoptimized={isExternal}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+        />
+      </div>
     );
   },
 };
