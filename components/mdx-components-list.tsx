@@ -75,12 +75,12 @@ export const mdxComponents = {
     const isExternal = src.startsWith('http');
     
     return (
-      <div className="relative w-full aspect-2/1 my-4 overflow-hidden rounded-lg border">
+      <div className="relative w-full aspect-2/1 my-4 overflow-hidden rounded-lg border border-border scale-105">
         <Image
           src={src}
           alt={typeof alt === 'string' ? alt : ''}
           fill
-          className="object-contain scale-105"
+          className="object-cover"
           loading="lazy"
           unoptimized={isExternal}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
