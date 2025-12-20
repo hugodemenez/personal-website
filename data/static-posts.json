@@ -1,0 +1,695 @@
+[
+  {
+    "title": "Personal websites",
+    "link": "https://hugodemenez.substack.com/p/personal-websites",
+    "slug": "personal-websites",
+    "image": "https://substackcdn.com/image/fetch/$s_!Dnh3!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F262d4c0d-5cf3-4a32-b77f-6c081cb2205a_1536x1024.png",
+    "pubDate": "2025-12-20T10:39:37.058Z",
+    "description": "You know that itch? The one where you start tinkering with your personal website, telling yourself it’s just a quick experiment."
+  },
+  {
+    "title": "Afraid of failure",
+    "link": "https://hugodemenez.substack.com/p/afraid-of-failure",
+    "slug": "afraid-of-failure",
+    "image": "https://substackcdn.com/image/fetch/$s_!jUbN!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff6450f72-c77f-4607-bbd2-58ed3e13441d_1536x1024.png",
+    "pubDate": "2025-12-12T23:01:54.280Z",
+    "description": "Have you ever woken up with an idea that feels like it's been screaming in your head all night? Not just any idea, but one that could change everythin..."
+  },
+  {
+    "title": "Future",
+    "link": "https://hugodemenez.substack.com/p/future",
+    "slug": "future",
+    "image": "https://substackcdn.com/image/fetch/$s_!bibv!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff19d6d4e-1664-4591-adfc-cf3a8de193cf_1536x1024.png",
+    "pubDate": "2025-12-06T23:35:15.528Z",
+    "description": "Remember that feeling when everything seems possible?"
+  },
+  {
+    "title": "The wrong loop",
+    "link": "https://hugodemenez.substack.com/p/the-wrong-loop",
+    "slug": "the-wrong-loop",
+    "image": "https://substackcdn.com/image/fetch/$s_!0cBY!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F64b4fd18-fb08-4d1c-b508-9288a3f156e3_1536x1024.png",
+    "pubDate": "2025-11-29T13:02:56.901Z",
+    "description": "Ever wake up feeling like the universe is playing a prank on you? One of those mornings where you spill your coffee before it even touches your lips,..."
+  },
+  {
+    "title": "Experimenting ",
+    "link": "https://hugodemenez.substack.com/p/experimenting",
+    "slug": "experimenting",
+    "image": "https://substackcdn.com/image/fetch/$s_!jwtP!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F68a33cd4-bac3-4fba-878c-270acacf6d8e_1536x1024.png",
+    "pubDate": "2025-11-22T13:04:25.728Z",
+    "description": "I often find myself in periods of experimentation, a week or two during the year where I can deep dive into a specific topic."
+  },
+  {
+    "title": "Open position",
+    "link": "https://hugodemenez.substack.com/p/open-position",
+    "slug": "open-position",
+    "image": "https://substackcdn.com/image/fetch/$s_!XZN3!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2d17fe37-95f7-4b31-aca8-935bf06ed67c_1536x1024.png",
+    "pubDate": "2025-11-16T16:43:44.493Z",
+    "description": "For the past 2 years, I have been applying to remote engineering roles that I dream of."
+  },
+  {
+    "title": "Your own thoughts",
+    "link": "https://hugodemenez.substack.com/p/your-own-thoughts",
+    "slug": "your-own-thoughts",
+    "image": "https://substackcdn.com/image/fetch/$s_!OCyu!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff493c183-a15a-4b72-85fb-7523eaa0f20e_1536x1024.png",
+    "pubDate": "2025-11-07T15:01:22.380Z",
+    "description": "I feel like we’re not steering the AI enough."
+  },
+  {
+    "title": "Writing software",
+    "link": "https://hugodemenez.substack.com/p/writing-software",
+    "slug": "writing-software",
+    "image": "https://substackcdn.com/image/fetch/$s_!JVuA!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F6612a544-8e93-4f9f-92b0-8da7b6462bde_1536x1024.jpeg",
+    "pubDate": "2025-11-01T15:13:46.916Z",
+    "description": "Ever feel like you're staring at a blank screen, wondering if you'll ever make sense of all those curly braces and loops?"
+  },
+  {
+    "title": "Taking time off",
+    "link": "https://hugodemenez.substack.com/p/taking-time-off",
+    "slug": "taking-time-off",
+    "image": "https://substackcdn.com/image/fetch/$s_!Y_iO!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F347a5e9b-7e20-4d10-9b3e-de0bd761e6e6_1536x1024.jpeg",
+    "pubDate": "2025-10-25T14:15:10.470Z",
+    "description": "Ever feel like your mind is running on empty, even though you're pushing through every day?"
+  },
+  {
+    "title": "Simple things are hard",
+    "link": "https://hugodemenez.substack.com/p/simple-things-are-hard",
+    "slug": "simple-things-are-hard",
+    "image": "https://substackcdn.com/image/fetch/$s_!_ok_!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff9b475ab-6c49-4e9b-877c-640d49bdf319_1536x1024.png",
+    "pubDate": "2025-10-18T12:43:44.819Z",
+    "description": "Ever had one of those moments where you stare at your screen, convinced you’re about to knock out a quick fix, only to watch hours slip away? That’s m..."
+  },
+  {
+    "title": "What would I do differently if I had to start again",
+    "link": "https://hugodemenez.substack.com/p/what-would-i-do-differently-if-i",
+    "slug": "what-would-i-do-differently-if-i",
+    "image": "https://substackcdn.com/image/fetch/$s_!XBTg!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fdf06b290-5a49-438f-a68b-760728e57ea7_1536x1024.png",
+    "pubDate": "2025-10-09T13:07:52.366Z",
+    "description": "Picture this: it’s late at night, and I’m staring at my laptop screen, tea gone cold."
+  },
+  {
+    "title": "Dreams vs ambitions",
+    "link": "https://hugodemenez.substack.com/p/dreams-vs-ambitions",
+    "slug": "dreams-vs-ambitions",
+    "image": "https://substackcdn.com/image/fetch/$s_!NSKc!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb9f7ff7a-5530-44f6-a7a9-b81100006815_1536x1024.png",
+    "pubDate": "2025-09-29T14:03:50.779Z",
+    "description": "I got this idea while running through a wide-open prairie, the tall grasses whispering against my legs under a vast blue sky. My sneakers kicked up bi..."
+  },
+  {
+    "title": "How to Use AI to Automate Your Weekly Grocery Shopping",
+    "link": "https://hugodemenez.substack.com/p/how-to-use-ai-to-automate-your-weekly",
+    "slug": "how-to-use-ai-to-automate-your-weekly",
+    "image": "https://substackcdn.com/image/fetch/$s_!8BNA!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F9cf76645-bfaf-4055-96d5-482f7e992149_1536x1024.png",
+    "pubDate": "2025-09-27T21:15:38.870Z",
+    "description": "The modern grocery shopping dilemma"
+  },
+  {
+    "title": "I don’t believe in a creator, I believe in destiny",
+    "link": "https://hugodemenez.substack.com/p/i-dont-believe-in-a-creator-i-believe",
+    "slug": "i-dont-believe-in-a-creator-i-believe",
+    "image": "https://substackcdn.com/image/fetch/$s_!FfNV!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fbc8a081e-2556-4846-924d-42c396bd6265_1536x1024.png",
+    "pubDate": "2025-09-22T07:36:17.197Z",
+    "description": "When I first started questioning my faith, I imagined the path would be simple: either I’d stick to what I’d always believed or I’d toss it all aside..."
+  },
+  {
+    "title": "What should I focus on?",
+    "link": "https://hugodemenez.substack.com/p/what-should-i-focus-on",
+    "slug": "what-should-i-focus-on",
+    "image": "https://substackcdn.com/image/fetch/$s_!TAUQ!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4ce38960-9543-4e93-b474-f3262da8787d_1536x1024.png",
+    "pubDate": "2025-09-16T07:32:21.404Z",
+    "description": "When people talk about FOCUS they don't emphasis enough on what to focus on."
+  },
+  {
+    "title": "Ticking life goals",
+    "link": "https://hugodemenez.substack.com/p/ticking-life-goals",
+    "slug": "ticking-life-goals",
+    "image": "https://substackcdn.com/image/fetch/$s_!oZGp!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff7b6535d-2449-4af3-8044-dce68e62bae8_1536x1024.jpeg",
+    "pubDate": "2025-09-11T18:25:08.284Z",
+    "description": "The moment — the goal I ticked"
+  },
+  {
+    "title": "Simple yet difficult",
+    "link": "https://hugodemenez.substack.com/p/simple-yet-difficult",
+    "slug": "simple-yet-difficult",
+    "image": "https://substackcdn.com/image/fetch/$s_!7N5l!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F53a0ef3c-4799-4cc2-9324-aa1fd2aefaa8_1536x1024.jpeg",
+    "pubDate": "2025-09-07T19:35:33.287Z",
+    "description": "Have you ever noticed how adding just one extra button to an app can suddenly make it confusing?"
+  },
+  {
+    "title": "Cleaning",
+    "link": "https://hugodemenez.substack.com/p/cleaning",
+    "slug": "cleaning",
+    "image": "https://substackcdn.com/image/fetch/$s_!WT4h!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F059a08e9-e964-4833-8b3f-578f1e164c0d_1024x1024.png",
+    "pubDate": "2025-09-04T12:26:13.812Z",
+    "description": "Have you ever felt that little itch to just clear everything out? Not just the usual quick tidy-up, but a proper deep clean that shakes things up?"
+  },
+  {
+    "title": "And life goes by",
+    "link": "https://hugodemenez.substack.com/p/and-life-goes-by",
+    "slug": "and-life-goes-by",
+    "image": "https://substackcdn.com/image/fetch/$s_!57VV!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F12a25a7b-8545-4ed0-aa8c-a13ab7716ae0_1536x1024.jpeg",
+    "pubDate": "2025-08-26T13:07:27.153Z",
+    "description": "Have you ever caught yourself thinking, “Where did that hour go?”"
+  },
+  {
+    "title": "Responsibilities",
+    "link": "https://hugodemenez.substack.com/p/responsibilities",
+    "slug": "responsibilities",
+    "image": "https://substackcdn.com/image/fetch/$s_!H6jj!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F0467bff3-4a46-4171-859c-300ec337e026_1536x1024.jpeg",
+    "pubDate": "2025-08-20T08:47:32.211Z",
+    "description": "Going through parenting is a way to remind me of being in charge of things and taking my role in hands"
+  },
+  {
+    "title": "Caring",
+    "link": "https://hugodemenez.substack.com/p/caring",
+    "slug": "caring",
+    "image": "https://substackcdn.com/image/fetch/$s_!Xyoi!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F894d230a-053b-4d90-972c-058a323829b7_1536x1024.jpeg",
+    "pubDate": "2025-08-11T18:16:48.327Z",
+    "description": "Taking care of yourself is number one priority on Maslow’s Pyramid"
+  },
+  {
+    "title": "Don’t panic",
+    "link": "https://hugodemenez.substack.com/p/dont-panic",
+    "slug": "dont-panic",
+    "image": "https://substackcdn.com/image/fetch/$s_!xcb1!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F0c287740-2727-429a-9508-3f2041e3c269_1536x1024.jpeg",
+    "pubDate": "2025-08-07T00:11:50.286Z",
+    "description": "Have you ever felt your heart racing, your thoughts spiraling, just because something unexpected happened? It’s easy to fall into the panic trap"
+  },
+  {
+    "title": "Feelings",
+    "link": "https://hugodemenez.substack.com/p/feelings",
+    "slug": "feelings",
+    "image": "https://substackcdn.com/image/fetch/$s_!qKkQ!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fff4ffc18-d579-4db0-9d84-d0c48db4ce6d_1536x1024.png",
+    "pubDate": "2025-07-31T20:53:02.014Z",
+    "description": "There is a strange mix of emotions inside me right now."
+  },
+  {
+    "title": "Creating at speed of thought",
+    "link": "https://hugodemenez.substack.com/p/creating-at-speed-of-thought",
+    "slug": "creating-at-speed-of-thought",
+    "image": "https://substackcdn.com/image/fetch/$s_!zadi!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F9d1cdc45-7bb8-4bac-8f53-8f8e20bfcad9_1280x720.gif",
+    "pubDate": "2025-07-23T08:58:58.305Z",
+    "description": "Ever had a brilliant idea pop into your head, only to lose it seconds later because you weren’t quick enough to catch it?"
+  },
+  {
+    "title": "Customer pain",
+    "link": "https://hugodemenez.substack.com/p/customer-pain",
+    "slug": "customer-pain",
+    "image": "https://substackcdn.com/image/fetch/$s_!dBbm!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc3d28cde-29e0-4b2f-a198-6168706191ba_1024x1024.png",
+    "pubDate": "2025-07-19T19:49:17.498Z",
+    "description": "It’s easy to think you know what your customers want. But sometimes, the real problems hide beneath the surface."
+  },
+  {
+    "title": "Life",
+    "link": "https://hugodemenez.substack.com/p/life",
+    "slug": "life",
+    "image": "https://substackcdn.com/image/fetch/$s_!YcVZ!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F23456b6b-9ba9-4909-9407-7cd76aed7716_1536x1024.png",
+    "pubDate": "2025-07-12T18:09:11.601Z",
+    "description": "There’s a strange kind of joy in feeling completely drained."
+  },
+  {
+    "title": "Wealth",
+    "link": "https://hugodemenez.substack.com/p/wealth",
+    "slug": "wealth",
+    "image": "https://substackcdn.com/image/fetch/$s_!vSWG!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4868d0dc-a8b6-4837-b93d-124dcfb2422a_1536x1024.png",
+    "pubDate": "2025-07-05T12:52:11.164Z",
+    "description": "We often think of wealth as just money."
+  },
+  {
+    "title": "In a rush",
+    "link": "https://hugodemenez.substack.com/p/in-a-rush",
+    "slug": "in-a-rush",
+    "image": "https://substackcdn.com/image/fetch/$s_!TZNo!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F73a16c3d-5aa6-4cac-9749-83c23849ddd7_1536x1024.png",
+    "pubDate": "2025-06-28T18:18:39.951Z",
+    "description": "Sometimes life feels like a fast-moving river."
+  },
+  {
+    "title": "Going forward",
+    "link": "https://hugodemenez.substack.com/p/going-forward",
+    "slug": "going-forward",
+    "image": "https://substackcdn.com/image/fetch/$s_!AQ5d!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2023c2d3-e93d-42cf-b259-b7996177b8d7_1024x1024.png",
+    "pubDate": "2025-06-22T07:15:27.347Z",
+    "description": "We all want to move forward in life."
+  },
+  {
+    "title": "Hands-on",
+    "link": "https://hugodemenez.substack.com/p/hands-on",
+    "slug": "hands-on",
+    "image": "https://substackcdn.com/image/fetch/$s_!Ycvt!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fda396f04-62a4-4b53-8427-eba58c962d5d_1536x1024.png",
+    "pubDate": "2025-06-14T13:40:33.230Z",
+    "description": "Buying your first house is exciting and a little scary."
+  },
+  {
+    "title": "Lack of recognition",
+    "link": "https://hugodemenez.substack.com/p/lack-of-recognition",
+    "slug": "lack-of-recognition",
+    "image": "https://substackcdn.com/image/fetch/$s_!QjOF!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F317d8b17-e8b6-40f4-8633-d356b490a759_1536x1024.png",
+    "pubDate": "2025-06-08T07:03:00.256Z",
+    "description": "You work hard. You put your heart into what you do."
+  },
+  {
+    "title": "Do not overthink it",
+    "link": "https://hugodemenez.substack.com/p/do-not-overthink-it",
+    "slug": "do-not-overthink-it",
+    "image": "https://substackcdn.com/image/fetch/$s_!edtw!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F602e80e1-aa2d-4533-bd48-abc1716e8e56_1536x1024.png",
+    "pubDate": "2025-06-01T08:35:30.775Z",
+    "description": "Have you ever had a great idea but then hesitated? You thought about it too much. You weighed the risks. You pictured every possible problem. Suddenly..."
+  },
+  {
+    "title": "Nothing is perfect",
+    "link": "https://hugodemenez.substack.com/p/nothing-is-perfect",
+    "slug": "nothing-is-perfect",
+    "image": "https://substackcdn.com/image/fetch/$s_!BJss!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4e8baccf-f0b1-4a4e-9f81-54700715c599_1160x680.webp",
+    "pubDate": "2025-05-25T10:47:17.270Z",
+    "description": "I just stumbled upon this new Dyson innovative vacuum “PencilVac” and it inspired me to write those lines."
+  },
+  {
+    "title": "Simple doesn't mean minimal",
+    "link": "https://hugodemenez.substack.com/p/simple-doesnt-mean-minimal",
+    "slug": "simple-doesnt-mean-minimal",
+    "image": "https://substackcdn.com/image/fetch/$s_!krgT!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fd3cafab7-2e80-4cd4-8050-af34bd5fea7a_1536x1024.png",
+    "pubDate": "2025-05-20T10:22:47.816Z",
+    "description": "Many people treat simplicity and minimalism like they're the same thing. They aren't."
+  },
+  {
+    "title": "Entrepreneurship isn't hard because of the work.",
+    "link": "https://hugodemenez.substack.com/p/entrepreneurship-isnt-hard-because",
+    "slug": "entrepreneurship-isnt-hard-because",
+    "image": "https://substackcdn.com/image/fetch/$s_!MY2y!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe99754b1-8376-4392-9b4f-8d19554c18ee_1536x1024.png",
+    "pubDate": "2025-05-15T10:11:49.440Z",
+    "description": "Starting with assumptions"
+  },
+  {
+    "title": "We can’t handle everything.",
+    "link": "https://hugodemenez.substack.com/p/we-cant-handle-everything",
+    "slug": "we-cant-handle-everything",
+    "image": "https://substackcdn.com/image/fetch/$s_!mXPJ!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc79255cb-f504-451f-8fb3-963cf4e2848d_1536x1024.png",
+    "pubDate": "2025-05-10T13:33:35.392Z",
+    "description": "On November 30th I made a draft about this post. I have added comments 8 months later - now (everything in italic)"
+  },
+  {
+    "title": "Cohesive work",
+    "link": "https://hugodemenez.substack.com/p/cohesive-work",
+    "slug": "cohesive-work",
+    "image": "https://substackcdn.com/image/fetch/$s_!hx_I!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ffe4b4e71-3688-493a-94b6-36fbbfeb5885_1536x1024.png",
+    "pubDate": "2025-05-04T08:33:47.021Z",
+    "description": "What cohesive work really means"
+  },
+  {
+    "title": "What Creates Merit?",
+    "link": "https://hugodemenez.substack.com/p/what-creates-merit",
+    "slug": "what-creates-merit",
+    "image": "https://substackcdn.com/image/fetch/$s_!6uY7!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F914a55aa-414b-40f8-9f95-8a52464a3598_1536x1024.png",
+    "pubDate": "2025-04-30T09:33:44.782Z",
+    "description": "A Shift in the Air"
+  },
+  {
+    "title": "The science of simplicity",
+    "link": "https://hugodemenez.substack.com/p/the-science-of-simplicity",
+    "slug": "the-science-of-simplicity",
+    "image": "https://substackcdn.com/image/fetch/$s_!lcdN!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Feca7fd8a-65e8-4c47-b699-0c1025333693_1792x1024.png",
+    "pubDate": "2025-04-28T13:53:07.669Z",
+    "description": "The first spark: getting ideas out"
+  },
+  {
+    "title": "Motus est vita",
+    "link": "https://hugodemenez.substack.com/p/motus-est-vita",
+    "slug": "motus-est-vita",
+    "image": "https://substackcdn.com/image/fetch/$s_!Rpln!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ffe577062-bee1-4445-b670-db8e82e2da70_1536x1024.png",
+    "pubDate": "2025-04-23T15:15:18.170Z",
+    "description": "What keeps us moving"
+  },
+  {
+    "title": "In the zone",
+    "link": "https://hugodemenez.substack.com/p/in-the-zone",
+    "slug": "in-the-zone",
+    "image": "https://substackcdn.com/image/fetch/$s_!zg61!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fbc9e1edd-f629-4056-9e3f-60beb81cdb80_1536x1024.png",
+    "pubDate": "2025-04-21T10:31:22.490Z",
+    "description": "What vibe coding really means"
+  },
+  {
+    "title": "The fire inside",
+    "link": "https://hugodemenez.substack.com/p/the-fire-inside",
+    "slug": "the-fire-inside",
+    "image": "https://substackcdn.com/image/fetch/$s_!haME!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F32af7e80-7c44-4981-86c6-81d99b639611_1536x1024.png",
+    "pubDate": "2025-04-18T08:43:23.295Z",
+    "description": "The early spark"
+  },
+  {
+    "title": "Burning in",
+    "link": "https://hugodemenez.substack.com/p/burning-in",
+    "slug": "burning-in",
+    "image": "https://substackcdn.com/image/fetch/$s_!gAVk!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F91ff25ae-50b2-479c-87db-fc6576827f2e_1536x1024.png",
+    "pubDate": "2025-04-13T12:20:20.782Z",
+    "description": "The break that didn’t break me"
+  },
+  {
+    "title": "Things we have to let go",
+    "link": "https://hugodemenez.substack.com/p/things-we-have-to-let-go",
+    "slug": "things-we-have-to-let-go",
+    "image": "https://substackcdn.com/image/fetch/$s_!ETDV!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F37684196-6e42-4fc7-8cc3-438ac3af616c_1536x1024.png",
+    "pubDate": "2025-04-07T10:07:44.952Z",
+    "description": "I was clearing the grass after a storm in Portugal."
+  },
+  {
+    "title": "We are artists",
+    "link": "https://hugodemenez.substack.com/p/we-are-artists",
+    "slug": "we-are-artists",
+    "image": "https://substackcdn.com/image/fetch/$s_!_6Rk!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F12a3f554-e7aa-4da2-9514-8dbb5e34bf6e_1536x1024.png",
+    "pubDate": "2025-03-31T17:15:41.104Z",
+    "description": "Entrepreneurs are artists. No doubt about it."
+  },
+  {
+    "title": "Effort relativity",
+    "link": "https://hugodemenez.substack.com/p/effort-relativity",
+    "slug": "effort-relativity",
+    "image": "https://substackcdn.com/image/fetch/$s_!aLzW!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ff8e74a43-5ddf-407f-960e-8058e4d28a36_1536x1024.png",
+    "pubDate": "2025-03-29T11:25:33.332Z",
+    "description": "Everyone has their own definition of effort."
+  },
+  {
+    "title": "Accept you target and focus on the present",
+    "link": "https://hugodemenez.substack.com/p/accept-you-target-and-focus-on-the",
+    "slug": "accept-you-target-and-focus-on-the",
+    "image": "https://substackcdn.com/image/fetch/$s_!lv9Y!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F343ac6ea-1263-456e-9ec3-646d32199243_1408x768.png",
+    "pubDate": "2025-03-23T12:21:37.792Z",
+    "description": "This morning, while running, I thought about my targets, both on the road and in my business."
+  },
+  {
+    "title": "Enjoying Every Bite of Life",
+    "link": "https://hugodemenez.substack.com/p/enjoying-every-bite-of-life",
+    "slug": "enjoying-every-bite-of-life",
+    "image": "https://substackcdn.com/image/fetch/$s_!YaVS!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fccac3e4d-3409-4407-81b1-4d7bafeb0c56_1408x768.png",
+    "pubDate": "2025-03-19T16:16:39.015Z",
+    "description": "The stranded days"
+  },
+  {
+    "title": "Focus and Failures",
+    "link": "https://hugodemenez.substack.com/p/focus-and-failures",
+    "slug": "focus-and-failures",
+    "image": "https://substack-post-media.s3.amazonaws.com/public/images/5ee1e434-31de-4213-863b-3e6ae4f5bbc5_2048x1423.jpeg",
+    "pubDate": "2025-03-15T10:19:54.466Z",
+    "description": "Life as an entrepreneur is wild."
+  },
+  {
+    "title": "Leveraging AI",
+    "link": "https://hugodemenez.substack.com/p/leveraging-ai",
+    "slug": "leveraging-ai",
+    "image": "https://substackcdn.com/image/fetch/$s_!4bEw!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F34d0fdd4-3115-40ce-9428-77f50fd0176c_1536x768.png",
+    "pubDate": "2025-03-08T12:28:11.111Z",
+    "description": "Today, I want to share my thoughts on the incredible new tools powered by AI."
+  },
+  {
+    "title": "Working hard, long enough for success",
+    "link": "https://hugodemenez.substack.com/p/working-hard-long-enough-for-success",
+    "slug": "working-hard-long-enough-for-success",
+    "image": "https://substackcdn.com/image/fetch/$s_!oViN!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ffdc74892-4a1d-4b5c-85f2-d3fa612230c3_1536x768.png",
+    "pubDate": "2025-03-05T16:05:05.834Z",
+    "description": "Questioning the Promise"
+  },
+  {
+    "title": "The game of life",
+    "link": "https://hugodemenez.substack.com/p/the-game-of-life",
+    "slug": "the-game-of-life",
+    "image": "https://substackcdn.com/image/fetch/$s_!-fsW!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fdc9f6632-24ae-4c35-bb5f-4303d4e3e99a_1536x768.png",
+    "pubDate": "2025-02-28T08:05:49.630Z",
+    "description": "The Gamer Who Lost Joy"
+  },
+  {
+    "title": "Master your destiny",
+    "link": "https://hugodemenez.substack.com/p/master-your-destiny",
+    "slug": "master-your-destiny",
+    "image": "https://substackcdn.com/image/fetch/$s_!6z5E!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F28e08154-4d52-46b9-a24f-276408971ee0_1536x768.png",
+    "pubDate": "2025-02-17T12:54:56.738Z",
+    "description": "You might have heard this before."
+  },
+  {
+    "title": "No need to speak, just do.",
+    "link": "https://hugodemenez.substack.com/p/no-need-to-speak-just-do",
+    "slug": "no-need-to-speak-just-do",
+    "image": "https://substackcdn.com/image/fetch/$s_!Nf8I!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2671dcdb-9cba-47fe-981c-0e793682b97b_1536x768.png",
+    "pubDate": "2025-02-12T16:19:34.607Z",
+    "description": "Inspiration from Northern French Entrepreneurs"
+  },
+  {
+    "title": "Appealing product",
+    "link": "https://hugodemenez.substack.com/p/appealing-product",
+    "slug": "appealing-product",
+    "image": "https://substackcdn.com/image/fetch/$s_!lQtg!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F32f3bda8-d404-40d0-a37f-966c64ad1441_2048x2048.jpeg",
+    "pubDate": "2025-02-08T12:29:42.406Z",
+    "description": "I once believed in the saying that a good product will make for itself."
+  },
+  {
+    "title": "Building with purpose",
+    "link": "https://hugodemenez.substack.com/p/building-with-purpose",
+    "slug": "building-with-purpose",
+    "image": "https://substackcdn.com/image/fetch/$s_!b50L!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb46600c5-a5a0-4706-9cfc-1664f6d710af_1536x768.png",
+    "pubDate": "2025-02-01T10:21:09.579Z",
+    "description": "Through my Harvard studies, I have learned that products should solve pain points."
+  },
+  {
+    "title": "The strange rhythm of exhaustion",
+    "link": "https://hugodemenez.substack.com/p/the-strange-rhythm-of-exhaustion",
+    "slug": "the-strange-rhythm-of-exhaustion",
+    "image": "https://substackcdn.com/image/fetch/$s_!jVNy!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8c1920ba-7aad-477a-ac9e-a67f0e5996c7_1536x768.png",
+    "pubDate": "2025-01-25T08:48:16.913Z",
+    "description": "Past weeks were energizing."
+  },
+  {
+    "title": "Customer support and getting traction",
+    "link": "https://hugodemenez.substack.com/p/customer-support-and-getting-traction",
+    "slug": "customer-support-and-getting-traction",
+    "image": "https://substackcdn.com/image/fetch/$s_!pRA0!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F62390910-edd7-4850-926d-e7c070d1b78e_1536x768.png",
+    "pubDate": "2025-01-17T18:16:12.606Z",
+    "description": "As I made my first “marketing” move last week by conducting an interview, I noticed something remarkable. Customers started coming in. This small step..."
+  },
+  {
+    "title": "Life Must Be Lived, Not Believed",
+    "link": "https://hugodemenez.substack.com/p/life-must-be-lived-not-believed",
+    "slug": "life-must-be-lived-not-believed",
+    "image": "https://substackcdn.com/image/fetch/$s_!o0NT!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe71a35ae-6839-4b4c-9811-fcae2f5eb2d7_1536x768.png",
+    "pubDate": "2025-01-08T18:26:25.159Z",
+    "description": "Yesterday, I watched an interview that left a deep impression on me."
+  },
+  {
+    "title": "Is marketing needed for a good product?",
+    "link": "https://hugodemenez.substack.com/p/is-marketing-needed-for-a-good-product",
+    "slug": "is-marketing-needed-for-a-good-product",
+    "image": "https://substackcdn.com/image/fetch/$s_!Hn99!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8edefbf1-c631-4058-9395-e1124398b829_1536x768.png",
+    "pubDate": "2025-01-04T16:40:49.234Z",
+    "description": "Some people believe marketing is just fluff. Others argue it can make or break a product."
+  },
+  {
+    "title": "Learning is fundamental",
+    "link": "https://hugodemenez.substack.com/p/learning-is-fundamental",
+    "slug": "learning-is-fundamental",
+    "image": "https://substackcdn.com/image/fetch/$s_!tUi3!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe08d8624-a002-484a-885e-e110aeb5a20d_1917x1077.jpeg",
+    "pubDate": "2024-12-29T11:11:16.665Z",
+    "description": "Do you really think Einstein stopped learning once he established the special theory of relativity?"
+  },
+  {
+    "title": "here we go again",
+    "link": "https://hugodemenez.substack.com/p/here-we-go-again",
+    "slug": "here-we-go-again",
+    "image": "https://substackcdn.com/image/fetch/$s_!8Yaf!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fabe8aebf-70e4-46fe-9326-966f52eb7b29_4032x3024.jpeg",
+    "pubDate": "2024-12-28T14:04:59.020Z",
+    "description": "After so many weeks/months asking myself if it would be worth the price…"
+  },
+  {
+    "title": "Coding with AI, an endeavor",
+    "link": "https://hugodemenez.substack.com/p/coding-with-ai-an-endeavor",
+    "slug": "coding-with-ai-an-endeavor",
+    "image": "https://substackcdn.com/image/youtube/w_728,c_limit/oFfVt3S51T4",
+    "pubDate": "2024-12-21T10:09:07.915Z",
+    "description": "For years, coding has been about building things brick by brick."
+  },
+  {
+    "title": "Price of losing focus",
+    "link": "https://hugodemenez.substack.com/p/price-of-losing-focus",
+    "slug": "price-of-losing-focus",
+    "image": "https://substackcdn.com/image/fetch/$s_!2UZe!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe120ac71-b54e-43c4-b443-8492243bb777_1920x1080.png",
+    "pubDate": "2024-12-15T11:51:51.745Z",
+    "description": "The past year has been a rollercoaster, rough yet rewarding, frustrating but enlightening."
+  },
+  {
+    "title": "Organisation is key",
+    "link": "https://hugodemenez.substack.com/p/organisation-is-key",
+    "slug": "organisation-is-key",
+    "pubDate": "2024-12-08T18:59:46.204Z",
+    "description": "Last week, I started writing about what was on my mind."
+  },
+  {
+    "title": "AI for better or worse: a reflection",
+    "link": "https://hugodemenez.substack.com/p/ai-for-better-or-worse-a-reflection",
+    "slug": "ai-for-better-or-worse-a-reflection",
+    "pubDate": "2024-11-30T13:50:08.529Z",
+    "description": "After reading Dario Amodei’s letter “Machine of Loving grace\", I wanted to share my thoughts on this complex topic."
+  },
+  {
+    "title": "How to build a \"good\" product?",
+    "link": "https://hugodemenez.substack.com/p/how-to-build-a-good-product",
+    "slug": "how-to-build-a-good-product",
+    "pubDate": "2024-11-23T14:19:25.961Z",
+    "description": "I started writing this thought two weeks ago. But today, I stumbled upon a LinkedIn post announcing a new startup."
+  },
+  {
+    "title": "Seeing tiny* things differently",
+    "link": "https://hugodemenez.substack.com/p/seeing-tiny-things-differently",
+    "slug": "seeing-tiny-things-differently",
+    "image": "https://substackcdn.com/image/fetch/$s_!AFiV!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F1d55ef14-0fe1-4eee-b788-7ef1a85bbc99_3072x1536.png",
+    "pubDate": "2024-11-13T07:16:42.136Z",
+    "description": "Recently, I made the choice to share my journey on LinkedIn."
+  },
+  {
+    "title": "Won't you take a break?",
+    "link": "https://hugodemenez.substack.com/p/wont-you-take-a-break",
+    "slug": "wont-you-take-a-break",
+    "image": "https://substackcdn.com/image/fetch/$s_!CuQ7!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F93769622-75df-4b7c-ac48-0bee38c04c19_3072x1536.png",
+    "pubDate": "2024-11-09T09:00:06.921Z",
+    "description": "“True success is not the absence of failure; it is the refusal to surrender.”"
+  },
+  {
+    "title": "Should you be passionate about your work to succeed ?",
+    "link": "https://hugodemenez.substack.com/p/should-you-be-passionate-about-your",
+    "slug": "should-you-be-passionate-about-your",
+    "image": "https://substackcdn.com/image/fetch/$s_!CAWt!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc9ee9823-1ed2-4622-b40c-bf84c3ceba2f_3072x1536.png",
+    "pubDate": "2024-11-05T14:59:05.753Z",
+    "description": "Recently, I found myself stuck on this question."
+  },
+  {
+    "title": "Just showing up isn't enough",
+    "link": "https://hugodemenez.substack.com/p/just-showing-up-isnt-enough",
+    "slug": "just-showing-up-isnt-enough",
+    "image": "https://substackcdn.com/image/fetch/$s_!rRwf!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe998b6de-eddd-49e0-8470-8999bc1210fa_1536x768.png",
+    "pubDate": "2024-10-30T08:09:00.993Z",
+    "description": "During my last year of engineering school, I made a promise to myself: I’d show up for every class. I stuck with it, no matter how early, no matter ho..."
+  },
+  {
+    "title": "Should you look at others? ",
+    "link": "https://hugodemenez.substack.com/p/should-you-look-at-others",
+    "slug": "should-you-look-at-others",
+    "image": "https://substackcdn.com/image/fetch/$s_!3trj!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F2e120fe1-b7d2-4e74-8966-9f80142e724a_3072x1536.png",
+    "pubDate": "2024-10-26T10:36:40.875Z",
+    "description": "As we worked on finding product-market fit for App-Prove, it felt natural to look around at the market, understand what competitors were doing, and se..."
+  },
+  {
+    "title": "What makes you happy ?",
+    "link": "https://hugodemenez.substack.com/p/what-makes-you-happy",
+    "slug": "what-makes-you-happy",
+    "image": "https://substackcdn.com/image/fetch/$s_!ELBZ!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F56c0f0a1-a117-46ec-b4d1-3b189bf7c286_1536x768.png",
+    "pubDate": "2024-10-19T15:25:56.822Z",
+    "description": "This morning, while showering, I had one of those reflective moments thinking about what truly makes me happy today. It wasn’t a casual thought; it’s..."
+  },
+  {
+    "title": "Pen or pencil",
+    "link": "https://hugodemenez.substack.com/p/pen-or-pencil",
+    "slug": "pen-or-pencil",
+    "image": "https://substackcdn.com/image/fetch/f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F1906e05c-3b17-415d-896e-91fed8cac63e_1536x768.png",
+    "pubDate": "2024-10-16T06:05:47.156Z",
+    "description": "Well… I wrote this blog title a year ago, and only now am I getting around to it."
+  },
+  {
+    "title": "The virtue of universal honesty",
+    "link": "https://hugodemenez.substack.com/p/the-virtue-of-universal-honesty",
+    "slug": "the-virtue-of-universal-honesty",
+    "image": "https://substackcdn.com/image/fetch/$s_!aByj!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F4e00a075-c95f-47b4-b13d-c72bd9cf7395_1456x832.png",
+    "pubDate": "2024-10-12T07:41:48.919Z",
+    "description": "What if everyone was honest all the time? What if you could be sure no one was lying and trying to hide something from you?"
+  },
+  {
+    "title": "Find your target",
+    "link": "https://hugodemenez.substack.com/p/find-your-target",
+    "slug": "find-your-target",
+    "image": "https://substackcdn.com/image/fetch/$s_!ZibS!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F9f22f4a4-87e6-4df4-8ae7-3885617fd241_1456x832.png",
+    "pubDate": "2024-03-15T15:41:04.781Z",
+    "description": "It has been a while since my last writing... I had started writing this one a long time ago but didn’t find the inspiration and thoughts to finish it...."
+  },
+  {
+    "title": "How to find motivation",
+    "link": "https://hugodemenez.substack.com/p/how-to-find-motivation",
+    "slug": "how-to-find-motivation",
+    "image": "https://substack-post-media.s3.amazonaws.com/public/images/1e62d7dc-4174-474c-a7bd-3f9abc691e3e_1456x832.png",
+    "pubDate": "2024-02-18T22:19:18.497Z",
+    "description": "I have read tons of articles, books, and research on the topic."
+  },
+  {
+    "title": "The importance of failure",
+    "link": "https://hugodemenez.substack.com/p/the-importance-of-failure",
+    "slug": "the-importance-of-failure",
+    "image": "https://substackcdn.com/image/fetch/$s_!-ac9!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F27910f4c-8a52-4448-ac5b-8d043141a5b6_1260x720.webp",
+    "pubDate": "2024-02-06T14:20:39.947Z",
+    "description": "The following is a reflection about a recent failure I faced, which I now see as very valuable."
+  },
+  {
+    "title": "Setting up goals",
+    "link": "https://hugodemenez.substack.com/p/settings-up-goals",
+    "slug": "settings-up-goals",
+    "image": "https://substackcdn.com/image/fetch/$s_!Dbj4!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc1f2d259-cbc5-4ae7-8c26-d55e6994c2c7_1456x832.png",
+    "pubDate": "2024-01-29T15:26:23.894Z",
+    "description": "I recently read a book discussing the effectiveness of objectives."
+  },
+  {
+    "title": "Using the blockchain",
+    "link": "https://hugodemenez.substack.com/p/using-the-blockchain",
+    "slug": "using-the-blockchain",
+    "image": "https://substackcdn.com/image/fetch/$s_!XFXp!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F8dc6a813-52a6-42ad-a485-bdd216a2b4e7_1456x832.png",
+    "pubDate": "2024-01-23T15:08:16.097Z",
+    "description": "The following is an introduction to my learnings about blockchains, crypto-assets, and programming. For the past few years, I have been exploring the..."
+  },
+  {
+    "title": "Harmful plan B",
+    "link": "https://hugodemenez.substack.com/p/harmful-plan-b",
+    "slug": "harmful-plan-b",
+    "image": "https://substackcdn.com/image/fetch/$s_!CSY-!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Ffdf17a3c-f08d-44c8-9b68-53c81813fa2c_1456x832.png",
+    "pubDate": "2023-12-31T13:10:45.662Z",
+    "description": "The following is a reflexion about having multiple options. I recently realized that having too many ideas could make more pain than good. We will try..."
+  },
+  {
+    "title": "Beyond the classroom",
+    "link": "https://hugodemenez.substack.com/p/beyond-the-classroom",
+    "slug": "beyond-the-classroom",
+    "image": "https://substackcdn.com/image/fetch/$s_!k9_A!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F0a764d40-54da-48c7-88de-676afa56fef2_1134x648.png",
+    "pubDate": "2023-12-19T09:54:26.029Z",
+    "description": "The following is a discussion of my experiences as a newly graduated student. Facing the reality that learning doesn't stop after school. We'll explor..."
+  },
+  {
+    "title": "Riding the Wave of Innovation",
+    "link": "https://hugodemenez.substack.com/p/riding-the-wave-of-innovation",
+    "slug": "riding-the-wave-of-innovation",
+    "image": "https://substackcdn.com/image/fetch/$s_!ZuA0!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fec1ebd6e-62b0-4307-a163-178e9893d861_1456x832.png",
+    "pubDate": "2023-11-24T21:33:50.677Z",
+    "description": "The following is a discussion on the implications of new technologies in the field of technology and their impact on the current understanding of soft..."
+  },
+  {
+    "title": "Hub of success",
+    "link": "https://hugodemenez.substack.com/p/hub-of-success",
+    "slug": "hub-of-success",
+    "image": "https://substackcdn.com/image/fetch/$s_!9zwi!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc8636711-e465-4047-8737-7efa4633a9a1_1456x832.png",
+    "pubDate": "2023-11-23T20:56:54.894Z",
+    "description": "The following article discusses the different seeds that shaped the entrepreneurial mindset of a generation. Through the lens of personal insights, we..."
+  },
+  {
+    "title": "From concept to kitchen",
+    "link": "https://hugodemenez.substack.com/p/from-concept-to-kitchen",
+    "slug": "from-concept-to-kitchen",
+    "image": "https://substackcdn.com/image/fetch/$s_!Z67m!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F091e3a4a-6a42-4b24-9dac-502107e4e036.heic",
+    "pubDate": "2023-11-22T17:41:45.381Z",
+    "description": "This article discusses my experiences in developing a product, emphasizing the challenges of making progress when there's widespread skepticism about..."
+  },
+  {
+    "title": "A unique coding journey",
+    "link": "https://hugodemenez.substack.com/p/a-unique-coding-journey",
+    "slug": "a-unique-coding-journey",
+    "image": "https://substackcdn.com/image/fetch/$s_!kuLe!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F22556c8c-6339-482e-a552-f3bb5f6da6bb_1456x832.png",
+    "pubDate": "2023-11-21T12:42:10.133Z",
+    "description": "IDE Started from the bottom"
+  },
+  {
+    "title": "Friendship",
+    "link": "https://hugodemenez.substack.com/p/friendship",
+    "slug": "friendship",
+    "image": "https://substackcdn.com/image/fetch/$s_!7Ivs!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F1ff92e93-b4db-4c4b-9915-38ff85195e55_1456x832.png",
+    "pubDate": "2023-11-20T12:46:51.487Z",
+    "description": "How it started"
+  }
+]

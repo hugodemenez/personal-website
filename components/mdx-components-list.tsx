@@ -80,7 +80,7 @@ export const mdxComponents = {
           src={src}
           alt={typeof alt === 'string' ? alt : ''}
           fill
-          className="object-cover"
+          className="object-fit"
           loading="lazy"
           unoptimized={isExternal}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"

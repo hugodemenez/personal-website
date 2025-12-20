@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState } from "react";
 import type { SubstackPost } from "@/types/substack-post";
-import PostCard from "./PostCard";
+import PostCard from "./post-card";
 
 interface PostStackProps {
   posts: SubstackPost[];
@@ -163,7 +163,7 @@ export default function PostStack({
           return (
             <article
               key={post.slug}
-              className="absolute inset-0 w-full touch-pan-y"
+              className={`inset-0 w-full touch-pan-y ${isSelected ? "" : "absolute"}`}
               style={{
                 transform: `translateX(${translateX}px) scale(${baseScale})`,
                 opacity,

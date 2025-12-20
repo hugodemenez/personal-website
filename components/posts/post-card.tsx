@@ -20,7 +20,7 @@ export default function PostCard({ post }: { post: SubstackPost }) {
         target={post.slug ? undefined : "_blank"}
         rel={post.slug ? undefined : "noopener noreferrer"}
       >
-        <div className="relative w-full bg-surface aspect-2/1">
+        <div className="relative w-full bg-surface aspect-2/1 group-focus-within:border-accent border-l border-r border-border">
           {post.image ? (
             <Image
               src={post.image}
@@ -49,7 +49,7 @@ export default function PostCard({ post }: { post: SubstackPost }) {
             </div>
           )}
         </div>
-        <div className="p-6 md:p-8 bg-background border border-border rounded-b-xl">
+        <div className="p-6 md:p-8 bg-background border border-border border-t-0 group-focus-within:border-accent rounded-b-xl transition-colors duration-200">
           {post.description && (
             <p className="text-sm md:text-base text-muted mb-3 md:mb-4 leading-relaxed line-clamp-1 wrap-break-word">
               {post.description}

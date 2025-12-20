@@ -1,5 +1,5 @@
 import { fetchSubstackPosts } from "@/server/substack-feed";
-import SubstackVisualizer from "./PostsVisualizer";
+import SubstackVisualizer from "./post-visualizer";
 import { cacheLife } from "next/cache";
 import { Suspense } from "react";
 import "./post.css";
@@ -7,21 +7,19 @@ import "./post.css";
 // We have to create a wrapper with a suspense fallback
 export default function SubstackPosts() {
   return (
-    <Suspense fallback={<SubstackPostsFallback />}>
+    <Suspense fallback={<SubstackVisualizer posts={[]} />}>
       <CachedSubstackPosts />
     </Suspense>
   );
 }
 
-function SubstackPostsFallback() {
-  // We use only our local posts that we compute at build time
-  return <SubstackVisualizer posts={[]} />;
-}
-
 async function CachedSubstackPosts() {
   "use cache";
-  cacheLife("weeks");
+  // We cache the result and revalidate it every minute
+  cacheLife("minutes");
+  await new Promise((resolve) => setTimeout(resolve, 10000));
   try {
+    // This function is cached (build time purpose) and revalidated every minute
     const posts = await fetchSubstackPosts();
     if (!posts.length) {
       return <p className="text-muted">No posts available right now.</p>;
