@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import type { SubstackPost } from "@/types/substack-post";
-import PostStack from "./PostStack";
-import PostTable from "./PostTable";
+import PostStack from "./post-stack";
+import PostTable from "./post-selector";
 
 interface PostsVisualizerProps {
   posts: SubstackPost[];

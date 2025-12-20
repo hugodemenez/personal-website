@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import PreviousButton from "@/components/previous-button";
-import NextButton from "@/components/next-button";
+import PreviousButton from "@/components/posts/post-previous-button";
+import NextButton from "@/components/posts/post-next-button";
 import { fetchSubstackPosts } from "@/server/substack-feed";
 import { cacheLife } from "next/cache";
 

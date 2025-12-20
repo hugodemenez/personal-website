@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import type { SubstackPost } from '@/types/substack-post';
+import type { SubstackPost } from "@/types/substack-post";
 
-interface PostTableProps {
+interface PostSelectorProps {
   posts: SubstackPost[];
   selectedPostIndex: number;
   onSelectPost: (index: number) => void;
 }
 
-export default function PostTable({
+export default function PostSelector({
   posts,
   selectedPostIndex,
   onSelectPost,
-}: PostTableProps) {
+}: PostSelectorProps) {
   return (
     <div className="w-full h-full flex flex-col min-h-0">
       <h3 className="text-xl font-semibold mb-4 text-foreground shrink-0">
@@ -26,7 +26,9 @@ export default function PostTable({
         >
           {posts.map((post, index) => (
             <option key={post.slug} value={index}>
-              {post.title.length > 60 ? `${post.title.slice(0, 60)}...` : post.title}
+              {post.title.length > 60
+                ? `${post.title.slice(0, 60)}...`
+                : post.title}
             </option>
           ))}
         </select>

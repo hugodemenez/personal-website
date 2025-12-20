@@ -1,5 +1,5 @@
 import GeneratedContent from "@/components/generated-content";
-import SubstackPosts from "@/components/posts/SubstackPosts";
+import SubstackPosts from "@/components/posts/substack-posts";
 
 export default async function Home() {
   return (
