@@ -29,7 +29,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   if (!sortedPosts.length) return null;
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="w-full flex flex-col group">
       <PostTable
         posts={sortedPosts}
         selectedPostIndex={selectedPostIndex}

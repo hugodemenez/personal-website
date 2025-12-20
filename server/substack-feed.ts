@@ -5,7 +5,6 @@ import type { SubstackPost } from "@/types/substack-post";
 const SUBSTACK_ARCHIVE_API_URL =
   "https://hugodemenez.substack.com/api/v1/archive";
 
-
 interface ArchiveApiPost {
   id: number;
   slug: string;
@@ -71,8 +70,10 @@ async function fetchArchiveFromApi(): Promise<SubstackPost[]> {
 
 // Cache the function to prevent duplicate fetches across workers during build
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
+  // We cache the function so it is cached during build time
+  // prevents duplicate fetches across workers during build
   "use cache";
-  cacheLife("hours");
+  cacheLife("minutes");
 
   try {
     return await fetchArchiveFromApi();

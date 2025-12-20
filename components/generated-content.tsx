@@ -1,8 +1,9 @@
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { researchAgent } from "@/server/search-agent";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "./mdx-components-list";
 import { Suspense } from "react";
+import { RefreshButton } from "./refresh-button";
 
 export default function GeneratedContent() {
   return (
@@ -22,7 +23,9 @@ export default function GeneratedContent() {
             >
               deltalytix.app
             </a>
-            ), a web-based trading journal that syncs with brokers like Rithmic, analyzes performance with AI insights, and helps futures traders track progress across accounts.
+            ), a web-based trading journal that syncs with brokers like Rithmic,
+            analyzes performance with AI insights, and helps futures traders
+            track progress across accounts.
           </p>
           <p className="mb-4 leading-relaxed text-muted">
             Through{" "}
@@ -34,8 +37,11 @@ export default function GeneratedContent() {
             >
               my site
             </a>
-            , Substack, and GitHub, I share on discretionary trading, quant strategies, and building tools like SteinPrograms for automated trading.
+            , Substack, and GitHub, I share on discretionary trading, quant
+            strategies, and building tools like SteinPrograms for automated
+            trading.
           </p>
+          <GeneratedContentFooter cachedAt={new Date('2025-12-20T12:00:00Z')} />
         </div>
       }
     >
@@ -43,10 +49,26 @@ export default function GeneratedContent() {
     </Suspense>
   );
 }
+
+function GeneratedContentFooter({ cachedAt }: { cachedAt: Date }) {
+  return (
+    <footer className="flex items-center gap-2">
+      <p className="text-muted text-sm">
+        Generated on {cachedAt.toLocaleString()}
+      </p>
+      <span className="text-muted text-sm">|</span>
+      <RefreshButton />
+    </footer>
+  );
+}
 async function CachedGeneratedContent() {
   "use cache";
   cacheLife("days");
-  
+  cacheTag("generated-content");
+
+  // Save time it was cached
+  const cachedAt = new Date();
+
   // In development mode, skip the expensive AI call and return fallback content
   // The cache doesn't work in dev mode, so this prevents slow page loads
   if (process.env.NODE_ENV === "development") {
@@ -65,7 +87,9 @@ async function CachedGeneratedContent() {
           >
             deltalytix.app
           </a>
-          ), a web-based trading journal that syncs with brokers like Rithmic, analyzes performance with AI insights, and helps futures traders track progress across accounts.
+          ), a web-based trading journal that syncs with brokers like Rithmic,
+          analyzes performance with AI insights, and helps futures traders track
+          progress across accounts.
         </p>
         <p className="mb-4 leading-relaxed text-muted">
           Through{" "}
@@ -77,8 +101,11 @@ async function CachedGeneratedContent() {
           >
             my site
           </a>
-          , Substack, and GitHub, I share on discretionary trading, quant strategies, and building tools like SteinPrograms for automated trading.
+          , Substack, and GitHub, I share on discretionary trading, quant
+          strategies, and building tools like SteinPrograms for automated
+          trading.
         </p>
+        <GeneratedContentFooter cachedAt={cachedAt} />
       </div>
     );
   }
@@ -93,5 +120,10 @@ async function CachedGeneratedContent() {
     components: mdxComponents,
   });
 
-  return <div>{content}</div>;
+  return (
+    <div>
+      {content}
+      <GeneratedContentFooter cachedAt={cachedAt} />
+    </div>
+  );
 }

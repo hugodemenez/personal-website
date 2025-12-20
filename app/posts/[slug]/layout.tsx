@@ -19,8 +19,8 @@ export default async function SlugLayout({ children }: LayoutProps) {
     <>
       <div className="
         flex items-center justify-between mb-2 tracking-tight
-        sticky top-2 left-0 right-0 z-60
-        max-w-4xl mx-auto px-16 md:px-0 pt-3
+        sticky top-2 left-0 right-0 z-2
+        max-w-4xl mx-16 md:px-0 pt-3
         ">
         <Suspense fallback={null}>
           <PostsNavigation />
