@@ -25,7 +25,7 @@ export default function PostSelector({
           className="appearance-none w-full p-3 pr-10 rounded-t-lg border border-border border-b-0 bg-background text-foreground focus:outline-none focus:border-accent transition-colors duration-200 cursor-pointer"
         >
           {posts.map((post, index) => (
-            <option key={post.slug} value={index}>
+            <option key={post.slug+index} value={index}>
               {post.title.length > 60
                 ? `${post.title.slice(0, 60)}...`
                 : post.title}

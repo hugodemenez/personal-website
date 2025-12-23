@@ -1,7 +1,7 @@
 import { ComponentPropsWithoutRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Tweet } from "react-tweet";
+import { Tweet } from "./tweet/Tweet";
+import { ImageGalleryImage } from "./image-gallery-image";
 
 export const mdxComponents = {
   Tweet: ({ id }: { id: string }) => <Tweet id={id} />,
@@ -83,21 +83,6 @@ export const mdxComponents = {
   },
   img: ({ src, alt, ...props }: ComponentPropsWithoutRef<"img">) => {
     if (!src || typeof src !== "string") return null;
-
-    const isExternal = src.startsWith("http");
-
-    return (
-      <span className="block relative w-full bg-surface my-4 overflow-hidden rounded-lg border border-border aspect-3/2 scale-105">
-          <Image
-            src={src}
-            alt={typeof alt === "string" ? alt : ""}
-            fill
-            className="object-contain"
-            sizes="(max-width: 768px) 90vw, 700px"
-            loading="lazy"
-            unoptimized={isExternal}
-          />
-      </span>
-    );
+    return <ImageGalleryImage src={src} alt={alt} {...props} />;
   },
 };

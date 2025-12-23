@@ -160,9 +160,9 @@ export function SearchClient({ posts }: SearchClientProps) {
           <div className="flex-1 overflow-y-auto min-h-0 overscroll-contain pb-80 md:pb-0">
             <div className="py-2">
               {filteredPosts.length > 0 ? (
-                filteredPosts.map((post) => (
+                filteredPosts.map((post, index) => (
                   <Link
-                    key={post.slug+post.tags.join("-")}
+                    key={post.slug+post.tags.join("-")+index}
                     href={`/posts/${post.slug}`}
                     onClick={handleClose}
                     className="block px-4 py-3 text-sm hover:bg-surface transition-colors border-b border-border last:border-b-0 focus:outline-none focus:bg-surface"

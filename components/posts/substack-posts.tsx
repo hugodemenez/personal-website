@@ -17,7 +17,6 @@ async function CachedSubstackPosts() {
   "use cache";
   // We cache the result and revalidate it every minute
   cacheLife("minutes");
-  await new Promise((resolve) => setTimeout(resolve, 10000));
   try {
     // This function is cached (build time purpose) and revalidated every minute
     const posts = await fetchSubstackPosts();

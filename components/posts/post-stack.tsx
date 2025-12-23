@@ -162,7 +162,7 @@ export default function PostStack({
 
           return (
             <article
-              key={post.slug}
+              key={post.slug+index}
               className={`inset-0 w-full touch-pan-y ${isSelected ? "" : "absolute"}`}
               style={{
                 transform: `translateX(${translateX}px) scale(${baseScale})`,

@@ -3,7 +3,6 @@ import { researchAgent } from "@/server/search-agent";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "./mdx-components-list";
 import { Suspense } from "react";
-import { RefreshButton } from "./refresh-button";
 
 export default function GeneratedContent() {
   return (
@@ -41,7 +40,7 @@ export default function GeneratedContent() {
             strategies, and building tools like SteinPrograms for automated
             trading.
           </p>
-          <GeneratedContentFooter cachedAt={new Date('2025-12-20T12:00:00Z')} />
+          <GeneratedContentFooter cachedAt={new Date("2025-12-20T12:00:00Z")} />
         </div>
       }
     >
@@ -56,14 +55,12 @@ function GeneratedContentFooter({ cachedAt }: { cachedAt: Date }) {
       <p className="text-muted text-sm">
         Generated on {cachedAt.toLocaleString()}
       </p>
-      <span className="text-muted text-sm">|</span>
-      <RefreshButton />
     </footer>
   );
 }
 async function CachedGeneratedContent() {
   "use cache";
-  cacheLife("days");
+  cacheLife("weeks");
   cacheTag("generated-content");
 
   // Save time it was cached

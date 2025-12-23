@@ -28,7 +28,6 @@ export default function PostCard({ post }: { post: SubstackPost }) {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 90vw, 700px"
-              unoptimized
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-surface text-muted/20">

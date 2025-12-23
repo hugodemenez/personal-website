@@ -2,8 +2,22 @@
 import { cacheLife } from "next/cache";
 import type { SubstackPost } from "@/types/substack-post";
 
+const SUBSTACK_POSTS_API_URL =
+  "https://hugodemenez.substack.com/api/v1/posts";
 const SUBSTACK_ARCHIVE_API_URL =
   "https://hugodemenez.substack.com/api/v1/archive";
+
+interface PostsApiPost {
+  id: number;
+  slug: string;
+  title?: string;
+  post_date?: string;
+  canonical_url?: string | null;
+  cover_image?: string | null;
+  description?: string | null;
+  truncated_body_text?: string | null;
+  is_published?: boolean;
+}
 
 interface ArchiveApiPost {
   id: number;
@@ -14,6 +28,58 @@ interface ArchiveApiPost {
   cover_image?: string | null;
   description?: string | null;
   truncated_body_text?: string | null;
+}
+
+function parsePost(item: PostsApiPost | ArchiveApiPost): SubstackPost {
+  const title = item.title || item.slug.replace(/-/g, " ");
+  const link =
+    item.canonical_url || `https://hugodemenez.substack.com/p/${item.slug}`;
+  const image = item.cover_image ?? undefined;
+
+  const rawDescription = item.truncated_body_text ?? item.description ?? "";
+  const cleanedDescription = rawDescription ? rawDescription.trim() : "";
+  const description =
+    cleanedDescription.length > 150
+      ? `${cleanedDescription.slice(0, 150).trim()}...`
+      : cleanedDescription || undefined;
+
+  return {
+    title,
+    link,
+    slug: item.slug,
+    image,
+    pubDate: item.post_date || "1970-01-01T00:00:00.000Z",
+    description,
+  };
+}
+
+async function fetchPostsFromApi(): Promise<SubstackPost[]> {
+  const res = await fetch(SUBSTACK_POSTS_API_URL, {
+    next: { revalidate: 3600 },
+  });
+
+  if (!res.ok) {
+    console.warn(`Failed to fetch posts API: ${res.status}`);
+    return [];
+  }
+
+  const data = await res.json();
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  // Filter only published posts and parse them
+  const posts: SubstackPost[] = [];
+  for (const item of data as PostsApiPost[]) {
+    // Only include published posts
+    if (item.is_published === false) {
+      continue;
+    }
+
+    posts.push(parsePost(item));
+  }
+
+  return posts;
 }
 
 async function fetchArchiveFromApi(): Promise<SubstackPost[]> {
@@ -43,29 +109,41 @@ async function fetchArchiveFromApi(): Promise<SubstackPost[]> {
 
     // Parse the posts
     for (const item of data as ArchiveApiPost[]) {
-      const title = item.title || item.slug.replace(/-/g, " ");
-      const link =
-        item.canonical_url || `https://hugodemenez.substack.com/p/${item.slug}`;
-      const image = item.cover_image ?? undefined;
-
-      const rawDescription = item.truncated_body_text ?? item.description ?? "";
-      const cleanedDescription = rawDescription ? rawDescription.trim() : "";
-      const description =
-        cleanedDescription.length > 150
-          ? `${cleanedDescription.slice(0, 150).trim()}...`
-          : cleanedDescription || undefined;
-
-      posts.push({
-        title,
-        link,
-        slug: item.slug,
-        image,
-        pubDate: item.post_date || "1970-01-01T00:00:00.000Z",
-        description,
-      });
+      posts.push(parsePost(item));
     }
   }
   return posts;
+}
+
+async function fetchAndMergePosts(): Promise<SubstackPost[]> {
+  // Fetch from both endpoints in parallel
+  const [postsFromApi, postsFromArchive] = await Promise.all([
+    fetchPostsFromApi(),
+    fetchArchiveFromApi(),
+  ]);
+
+  // Use a Map to deduplicate by slug (posts API takes precedence for latest posts)
+  const postsMap = new Map<string, SubstackPost>();
+
+  // First add archive posts (older posts)
+  for (const post of postsFromArchive) {
+    postsMap.set(post.slug, post);
+  }
+
+  // Then add/override with posts API (latest posts, including the most recent)
+  for (const post of postsFromApi) {
+    postsMap.set(post.slug, post);
+  }
+
+  // Convert to array and sort by date (newest first)
+  const mergedPosts = Array.from(postsMap.values());
+  mergedPosts.sort((a, b) => {
+    const dateA = new Date(a.pubDate).getTime();
+    const dateB = new Date(b.pubDate).getTime();
+    return dateB - dateA;
+  });
+
+  return mergedPosts;
 }
 
 // Cache the function to prevent duplicate fetches across workers during build
@@ -76,9 +154,9 @@ export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
   cacheLife("minutes");
 
   try {
-    return await fetchArchiveFromApi();
+    return await fetchAndMergePosts();
   } catch (error) {
-    console.warn("Failed to fetch Substack posts from archive API", error);
+    console.warn("Failed to fetch Substack posts", error);
     return [];
   }
 }
