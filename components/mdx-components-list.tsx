@@ -5,6 +5,24 @@ import { Tweet } from "./tweet/Tweet";
 
 export const mdxComponents = {
   Tweet: ({ id }: { id: string }) => <Tweet id={id} />,
+  Date: ({ date }: { date: string }) => {
+    const dateObj = new Date(date);
+    const formattedDate = isNaN(dateObj.getTime())
+      ? date
+      : dateObj.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        });
+    return (
+      <div className="flex items-center gap-2 mb-6 -mt-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+        <time className="text-muted text-sm font-medium tracking-wide">
+          {formattedDate}
+        </time>
+      </div>
+    );
+  },
   h1: ({ children, ...props }: ComponentPropsWithoutRef<"h1">) => (
     <h1 className="text-4xl font-bold mt-8 mb-4 text-foreground" {...props}>
       {children}
