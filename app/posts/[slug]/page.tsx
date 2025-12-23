@@ -4,9 +4,6 @@ import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "@/components/mdx-components-list";
 import { cacheLife } from "next/cache";
 import { fetchSubstackPosts } from "@/server/substack-feed";
-import { ImageGalleryProvider } from "@/components/image-gallery-context";
-import { ImageGalleryDialog } from "@/components/image-gallery-dialog";
-import type { ImageData } from "@/components/image-gallery-context";
 
 interface PageProps {
   params: Promise<{
@@ -61,18 +58,6 @@ async function CachedBlogPost({ slug }: { slug: string }) {
 
   const markdown = body;
 
-  // Extract images from markdown before processing
-  const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-  const images: ImageData[] = [];
-  let match;
-  while ((match = imageRegex.exec(markdown)) !== null) {
-    const alt = match[1] || "";
-    const src = match[2];
-    if (src) {
-      images.push({ src, alt });
-    }
-  }
-
   // Preprocess markdown to fix specific formatting issues from into.md
   const processedMarkdown = markdown
     // Fix images wrapped in broken links with newlines: [ \n ![](...) \n ](...)
@@ -92,12 +77,9 @@ async function CachedBlogPost({ slug }: { slug: string }) {
       components: mdxComponents,
     });
     return (
-      <ImageGalleryProvider images={images}>
         <article className="prose prose-stone dark:prose-invert wrap-break-word">
           {content}
         </article>
-        <ImageGalleryDialog />
-      </ImageGalleryProvider>
     );
   } catch (error) {
     console.error("Error fetching blog post:", error);
