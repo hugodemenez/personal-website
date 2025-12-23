@@ -3,6 +3,14 @@ import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
   pageExtensions: ['mdx', 'ts', 'tsx'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'substackcdn.com',
+      },
+    ],
+  },
   cacheComponents: true,
   allowedDevOrigins: ['localhost', '192.168.1.25'],
   experimental: {

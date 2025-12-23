@@ -74,7 +74,7 @@ async function TweetContent({ id }: { id: string }) {
   const userUrl = `https://x.com/${tweet.user.screen_name}`;
 
   return (
-    <article className="bg-surface border border-border rounded-lg p-4 hover:border-accent/30 transition-colors duration-200 ease">
+    <article className="bg-surface border border-border rounded-lg p-4">
       {/* Header */}
       <header className="flex items-start gap-3 mb-3">
         <Link
