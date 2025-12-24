@@ -1,10 +1,13 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "@/components/mdx-components-list";
 import { cacheLife } from "next/cache";
 import { fetchSubstackPosts } from "@/server/substack-feed";
+import { fetchSubstackPostBySlug } from "@/server/substack-post";
+import { htmlToMarkdown } from "@/lib/html-to-markdown";
 import { ImageGallery } from "@/components/image-gallery";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -40,27 +43,47 @@ async function CachedBlogPost({ slug }: { slug: string }) {
   "use cache";
   cacheLife("max");
 
-  const substackUrl = `https://hugodemenez.substack.com/p/${slug}`;
-  // into.md usage: https://into.md/https://hugodemenez.substack.com/p/slug
-  const intoMdUrl = `https://into.md/${substackUrl}`;
+  // Fetch post data from Substack API
+  const postData = await fetchSubstackPostBySlug(slug);
 
-  const res = await fetch(intoMdUrl);
-
-  if (!res.ok) {
-    console.error(`Failed to fetch post from ${intoMdUrl}: ${res.status}`);
+  if (!postData) {
+    console.error(`Failed to fetch post ${slug} from Substack API`);
     notFound();
   }
 
-  const body = await res.text();
-  // 2. Handle “Conversion Failed” HTML specifically
-  if (body.includes("Conversion Failed") || body.includes("<!DOCTYPE html>")) {
-    notFound();
+  // Check if content is available (not paywalled or missing)
+  const bodyHtml = postData.body_html;
+  if (!bodyHtml || bodyHtml.trim() === "") {
+    // Redirect to canonical Substack URL if content is missing/paywalled
+    const canonicalUrl =
+      postData.canonical_url || `https://hugodemenez.substack.com/p/${slug}`;
+    redirect(canonicalUrl);
   }
 
-  const markdown = body;
+  // Convert HTML to Markdown
+  const markdown = htmlToMarkdown(bodyHtml);
+  // Prepend the title as an h1 heading if it exists
+  let finalMarkdown = markdown;
+  if (postData.title && postData.title.trim()) {
+    // Always ensure title is at the very start of the markdown
+    // Remove any existing heading at the start, then prepend our title
+    const trimmedMarkdown = markdown.trim();
+    
+    // Check if markdown starts with a heading (^ without 'm' flag = start of string only)
+    if (/^#+\s/.test(trimmedMarkdown)) {
+      // Remove the first heading line (and any trailing newlines on that line)
+      // Keep any content that follows
+      finalMarkdown = trimmedMarkdown.replace(/^#+\s+[^\n]*\n?/, '');
+      // Prepend title with proper spacing
+      finalMarkdown = `# ${postData.title.trim()}\n\n${finalMarkdown.trimStart()}`;
+    } else {
+      // No heading at start, just prepend the title
+      finalMarkdown = `# ${postData.title.trim()}\n\n${trimmedMarkdown}`;
+    }
+  }
 
-  // Preprocess markdown to fix specific formatting issues from into.md
-  let processedMarkdown = markdown
+  // Preprocess markdown to fix specific formatting issues
+  let processedMarkdown = finalMarkdown
     // Fix images wrapped in broken links with newlines: [ \n ![](...) \n ](...)
     .replace(/\[\s*(!\[.*?\]\(.*?\))\s*\]\(.*?\)/g, "$1")
     // Convert Twitter/X links (plain or markdown format) on their own line to Tweet components
@@ -94,6 +117,7 @@ async function CachedBlogPost({ slug }: { slug: string }) {
       <>
       <article className="prose prose-stone dark:prose-invert wrap-break-word">
         {content}
+        <Link href={`https://hugodemenez.substack.com/p/${slug}`}>View on Substack</Link>
       <ImageGallery />
       </article>
       </>

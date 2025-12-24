@@ -13,7 +13,7 @@ This is my personal portfolio and blog, built with the latest web technologies.
 
 - **Substack Integration**: 
   - Leverages **Server Component Caching** (`use cache` directive) for optimal performance.
-  - Uses [into.md](https://into.md/) to scrape and retrieve Substack posts, rendering them directly as MDX on the blog.
+  - Fetches posts directly from Substack's API (`/api/v1/posts/{slug}`) and converts HTML to Markdown using a zero-dependency converter, rendering them as MDX on the blog.
   
 - **AI Assistant**:
   - Includes an AI-powered assistant that uses the **Sonar model** to provide relevant information about my current work and background.

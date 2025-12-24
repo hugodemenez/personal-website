@@ -238,7 +238,15 @@ export function ImageGallery() {
   };
 
   const handleDialogClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    // If click is directly on the dialog element (backdrop), close it
     if (e.target === dialogRef.current) {
+      handleClose();
+    }
+  };
+
+  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If click is on the outer container (backdrop area), close the dialog
+    if (e.target === e.currentTarget) {
       handleClose();
     }
   };
@@ -248,47 +256,31 @@ export function ImageGallery() {
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-0 box-border h-full w-full max-h-none max-w-none overflow-hidden border-0 bg-background/95 backdrop-blur-sm p-0 transition-opacity duration-200 ease-out"
+      className="fixed inset-0 m-0 box-border h-full w-full max-h-none max-w-none overflow-hidden border-0 bg-background p-0 transition-opacity"
       onClose={handleClose}
       onClick={handleDialogClick}
       onCancel={handleClose}
     >
-      <div className="relative h-full w-full flex items-center justify-center p-2 md:p-8">
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-2 right-2 md:top-4 md:right-4 z-10 p-3 md:p-2 text-muted hover:text-foreground transition-colors duration-200 ease rounded-full bg-background/80 backdrop-blur-sm border border-border focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-          style={{ touchAction: "manipulation" }}
-          aria-label="Close gallery"
+      <div 
+        className="relative h-full w-full flex items-center justify-center p-2 md:p-8"
+        onClick={handleContentClick}
+      >
+        {/* Top controls - Share, Download, Close */}
+        <div 
+          className="absolute top-2 right-2 md:top-4 md:right-4 z-10 flex items-center gap-2"
+          onClick={(e) => e.stopPropagation()}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-
-        {/* Previous button */}
-        {!isFirst && (
           <button
-            onClick={handlePrevious}
-            className="absolute left-2 md:left-4 z-10 p-4 md:p-3 text-muted hover:text-foreground transition-colors duration-200 ease rounded-full bg-background/80 backdrop-blur-sm border border-border focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            onClick={handleShare}
+            disabled={isSharing}
+            className="p-2 text-muted hover:text-foreground transition-colors duration-200 ease rounded focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ touchAction: "manipulation" }}
-            aria-label="Previous image"
+            aria-label="Share image"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -296,23 +288,25 @@ export function ImageGallery() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="m15 18-6-6 6-6" />
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
           </button>
-        )}
 
-        {/* Next button */}
-        {!isLast && (
           <button
-            onClick={handleNext}
-            className="absolute right-2 md:right-4 z-10 p-4 md:p-3 text-muted hover:text-foreground transition-colors duration-200 ease rounded-full bg-background/80 backdrop-blur-sm border border-border focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="p-2 text-muted hover:text-foreground transition-colors duration-200 ease rounded focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ touchAction: "manipulation" }}
-            aria-label="Next image"
+            aria-label="Download image"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -320,13 +314,40 @@ export function ImageGallery() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="m9 18 6-6-6-6" />
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </button>
-        )}
+
+          <button
+            onClick={handleClose}
+            className="p-2 text-muted hover:text-foreground transition-colors duration-200 ease rounded focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+            style={{ touchAction: "manipulation" }}
+            aria-label="Close gallery"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
 
         {/* Image container */}
-        <div className="relative w-full h-full max-w-7xl max-h-[90vh] flex items-center justify-center px-2 md:px-0">
+        <div 
+          className="relative w-full h-full max-w-7xl max-h-[90vh] flex items-center justify-center px-2 md:px-0"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="relative w-full h-full bg-surface rounded-lg md:border border-border overflow-hidden">
             <Image
               src={currentImage.src}
@@ -337,70 +358,66 @@ export function ImageGallery() {
               priority
               unoptimized={isExternal}
             />
-          </div>
-        </div>
 
-        {/* Bottom controls */}
-        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3">
-          {/* Share and Download buttons */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleShare}
-              disabled={isSharing}
-              className="p-3 md:p-2.5 text-muted hover:text-foreground transition-colors duration-200 ease rounded-full bg-background/80 backdrop-blur-sm border border-border focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ touchAction: "manipulation" }}
-              aria-label="Share image"
+            {/* Bottom controls - Previous, Counter, Next */}
+            <div 
+              className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3"
+              onClick={(e) => e.stopPropagation()}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              {/* Previous button */}
+              <button
+                onClick={handlePrevious}
+                disabled={isFirst}
+                className="p-2 text-muted hover:text-foreground transition-colors duration-200 ease rounded focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ touchAction: "manipulation" }}
+                aria-label="Previous image"
               >
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-              </svg>
-            </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
 
-            <button
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className="p-3 md:p-2.5 text-muted hover:text-foreground transition-colors duration-200 ease rounded-full bg-background/80 backdrop-blur-sm border border-border focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ touchAction: "manipulation" }}
-              aria-label="Download image"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              {/* Image counter */}
+              {images.length > 1 && (
+                <div className="px-4 py-2 rounded bg-surface text-sm text-muted">
+                  {currentIndex + 1} / {images.length}
+                </div>
+              )}
+
+              {/* Next button */}
+              <button
+                onClick={handleNext}
+                disabled={isLast}
+                className="p-2 text-muted hover:text-foreground transition-colors duration-200 ease rounded focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ touchAction: "manipulation" }}
+                aria-label="Next image"
               >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Image counter */}
-          {images.length > 1 && (
-            <div className="px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-background/80 backdrop-blur-sm border border-border text-xs md:text-sm text-muted">
-              {currentIndex + 1} / {images.length}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </dialog>
