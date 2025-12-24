@@ -11,11 +11,13 @@ interface ImageData {
 
 export function ImageGallery() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
   const [images, setImages] = useState<ImageData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number; timestamp: number } | null>(null);
 
   // Scan DOM for images and make them clickable
   useEffect(() => {
@@ -109,6 +111,82 @@ export function ImageGallery() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, currentIndex, images.length]);
+
+  // Swipe gesture handling
+  useEffect(() => {
+    if (!isOpen || !imageContainerRef.current) return;
+
+    const container = imageContainerRef.current;
+    const SWIPE_THRESHOLD = 50; // Minimum distance in pixels to trigger swipe
+    const SWIPE_VELOCITY_THRESHOLD = 0.3; // Minimum velocity for quick swipes
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) {
+        touchStartRef.current = { 
+          x: touch.clientX, 
+          y: touch.clientY,
+          timestamp: Date.now()
+        };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!touchStartRef.current) return;
+
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      const deltaX = touch.clientX - touchStartRef.current.x;
+      const deltaY = touch.clientY - touchStartRef.current.y;
+
+      // Only prevent default if it's a horizontal swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!touchStartRef.current) return;
+
+      const touch = e.changedTouches[0];
+      if (!touch) {
+        touchStartRef.current = null;
+        return;
+      }
+
+      const deltaX = touch.clientX - touchStartRef.current.x;
+      const deltaY = touch.clientY - touchStartRef.current.y;
+      const distance = Math.abs(deltaX);
+      const timeDelta = Date.now() - touchStartRef.current.timestamp || 300;
+      const velocity = distance / timeDelta;
+
+      // Check if it's a horizontal swipe (more horizontal than vertical)
+      const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+
+      if (isHorizontalSwipe && (distance > SWIPE_THRESHOLD || velocity > SWIPE_VELOCITY_THRESHOLD)) {
+        if (deltaX > 0 && currentIndex > 0) {
+          // Swipe right - previous image
+          setCurrentIndex((prev) => Math.max(prev - 1, 0));
+        } else if (deltaX < 0 && currentIndex < images.length - 1) {
+          // Swipe left - next image
+          setCurrentIndex((prev) => Math.min(prev + 1, images.length - 1));
+        }
+      }
+
+      touchStartRef.current = null;
+    };
+
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
+    container.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchmove", handleTouchMove);
+      container.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [isOpen, currentIndex, images.length]);
 
   const currentImage = images[currentIndex];
@@ -345,8 +423,10 @@ export function ImageGallery() {
 
         {/* Image container */}
         <div 
+          ref={imageContainerRef}
           className="relative w-full h-full max-w-7xl max-h-[90vh] flex items-center justify-center px-2 md:px-0"
           onClick={(e) => e.stopPropagation()}
+          style={{ touchAction: "pan-y pinch-zoom" }}
         >
           <div className="relative w-full h-full bg-surface rounded-lg md:border border-border overflow-hidden">
             <Image

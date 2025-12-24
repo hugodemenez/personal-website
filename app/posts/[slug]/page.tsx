@@ -117,7 +117,7 @@ async function CachedBlogPost({ slug }: { slug: string }) {
       <>
       <article className="prose prose-stone dark:prose-invert wrap-break-word">
         {content}
-        <Link href={`https://hugodemenez.substack.com/p/${slug}`}>View on Substack</Link>
+        <Link href={`https://hugodemenez.substack.com/p/${slug}`} className="text-muted hover:text-accent transition-colors flex items-center gap-2 text-sm cursor-pointer underline underline-offset-2">View on Substack</Link>
       <ImageGallery />
       </article>
       </>
