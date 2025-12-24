@@ -4,7 +4,7 @@ import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "@/components/mdx-components-list";
 import { cacheLife } from "next/cache";
 import { fetchSubstackPosts } from "@/server/substack-feed";
-import { fetchSubstackPostBySlug } from "@/server/substack-post";
+import { fetchSubstackPostBySlug, type SubstackPostData } from "@/server/substack-post";
 import { htmlToMarkdown } from "@/lib/html-to-markdown";
 import { ImageGallery } from "@/components/image-gallery";
 import Link from "next/link";
@@ -15,10 +15,36 @@ interface PageProps {
   }>;
 }
 
+// Build-time cache to store fetched post data and avoid duplicate fetches
+// Note: We can't pass data through params because Next.js route params are strictly
+// tied to the folder structure ([slug] only). The cache persists during build time.
+const buildTimePostCache = new Map<string, SubstackPostData>();
+
 // Build-time static params for "known" Substack posts
+// Only includes posts that can be successfully fetched (excludes rate-limited or failed posts)
 export async function generateStaticParams() {
   const posts = await fetchSubstackPosts();
-  return posts.map((post) => ({ slug: post.slug }));
+  const validSlugs: { slug: string }[] = [];
+
+  // Fetch each post individually to verify it can be accessed
+  // If rate limited or failed, exclude it from static generation
+  // Store successfully fetched posts in cache to avoid refetching
+  for (const post of posts) {
+    const postData = await fetchSubstackPostBySlug(post.slug);
+    if (postData) {
+      // Store in cache for reuse during page generation
+      buildTimePostCache.set(post.slug, postData);
+      validSlugs.push({ slug: post.slug });
+    } else {
+      console.warn(
+        `Excluding post ${post.slug} from static generation (failed to fetch or rate limited)`
+      );
+    }
+    // Add a small delay between requests to avoid rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  return validSlugs;
 }
 
 // Page component (default export) wraps BlogPost with Suspense
@@ -43,8 +69,15 @@ async function CachedBlogPost({ slug }: { slug: string }) {
   "use cache";
   cacheLife("max");
 
-  // Fetch post data from Substack API
-  const postData = await fetchSubstackPostBySlug(slug);
+  // Check build-time cache first, then fetch if not available
+  const prefetchedData = buildTimePostCache.get(slug);
+  let postData = prefetchedData;
+  if (!postData) {
+    const fetchedData = await fetchSubstackPostBySlug(slug, 3);
+    if (fetchedData) {
+      postData = fetchedData;
+    }
+  }
 
   if (!postData) {
     console.error(`Failed to fetch post ${slug} from Substack API`);
