@@ -81,6 +81,19 @@ export function PostDrawer({
 
   const motionClasses = prefersReducedMotion ? "" : "transition-[height] duration-200 ease-out";
 
+  const emitScrollProgress = (target: HTMLDivElement | null) => {
+    if (!target || typeof window === "undefined") return;
+    const progress =
+      target.scrollHeight > target.clientHeight
+        ? target.scrollTop / (target.scrollHeight - target.clientHeight)
+        : 0;
+    window.dispatchEvent(
+      new CustomEvent("post-drawer-scroll", {
+        detail: { progress: Math.min(Math.max(progress, 0), 1) },
+      })
+    );
+  };
+
   const DrawerContent = (
     <div className="space-y-4">
       <div className="space-y-1">
@@ -103,7 +116,12 @@ export function PostDrawer({
 
   return (
     <div className="relative w-full lg:w-[420px] xl:w-[480px] lg:border-l lg:border-border lg:bg-surface/90 lg:backdrop-blur">
-      <div className="hidden h-screen overflow-y-auto px-6 py-8 lg:block">{DrawerContent}</div>
+      <div
+        className="hidden h-screen overflow-y-auto px-6 py-8 lg:block"
+        onScroll={(event) => emitScrollProgress(event.currentTarget)}
+      >
+        {DrawerContent}
+      </div>
 
       <div className="fixed inset-x-0 bottom-0 z-20 lg:hidden">
         <div
@@ -126,6 +144,7 @@ export function PostDrawer({
             className={`h-[calc(100%-24px)] overflow-y-auto px-4 pb-6 pt-1 ${
               prefersReducedMotion ? "" : "transition-colors duration-200"
             }`}
+            onScroll={(event) => emitScrollProgress(event.currentTarget)}
           >
             {DrawerContent}
           </div>

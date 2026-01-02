@@ -8,6 +8,7 @@ function hashImage(url: string): string {
 export async function GET(request: NextRequest) {
   const slug = request.nextUrl.searchParams.get("slug");
   const imageUrl = request.nextUrl.searchParams.get("imageUrl");
+  const demo = request.nextUrl.searchParams.get("demo") === "1";
 
   if (!slug || !imageUrl) {
     return NextResponse.json(
@@ -28,6 +29,24 @@ export async function GET(request: NextRequest) {
   const imageHash = hashImage(imageUrl);
   const cacheKey = `${slug}:${imageHash}`;
   const proxiedPreview = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+
+  if (demo) {
+    return NextResponse.json(
+      {
+        status: "ready",
+        plyUrl: "/ply/demo.ply",
+        previewImageUrl: proxiedPreview,
+        cacheKey,
+        demo: true,
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
+  }
 
   // Placeholder response; wire to Modal + storage in a follow-up iteration.
   return NextResponse.json(

@@ -1,0 +1,19 @@
+ply
+format ascii 1.0
+comment Demo PLY for SHARP viewer placeholder
+element vertex 8
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+end_header
+-0.6 -0.6 -0.6 255 120 90
+-0.6 -0.6 0.6 255 180 110
+-0.6 0.6 -0.6 230 140 200
+-0.6 0.6 0.6 255 210 160
+0.6 -0.6 -0.6 120 190 255
+0.6 -0.6 0.6 140 230 255
+0.6 0.6 -0.6 180 255 160
+0.6 0.6 0.6 255 255 180
