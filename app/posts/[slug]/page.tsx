@@ -7,7 +7,9 @@ import { fetchSubstackPosts } from "@/server/substack-feed";
 import { fetchSubstackPostBySlug, type SubstackPostData } from "@/server/substack-post";
 import { htmlToMarkdown } from "@/lib/html-to-markdown";
 import { ImageGallery } from "@/components/image-gallery";
-import Link from "next/link";
+import { deriveHeroImage } from "@/lib/hero-image";
+import { HeroSharpViewer } from "@/components/sharp/hero-sharp-viewer";
+import { PostDrawer } from "@/components/posts/post-drawer";
 
 interface PageProps {
   params: Promise<{
@@ -146,14 +148,27 @@ async function CachedBlogPost({ slug }: { slug: string }) {
       options: { parseFrontmatter: true },
       components: mdxComponents,
     });
+
+    const heroImage = deriveHeroImage(postData);
+
     return (
-      <>
-      <article className="prose prose-stone dark:prose-invert wrap-break-word">
-        {content}
-        <Link href={`https://hugodemenez.substack.com/p/${slug}`} className="text-muted hover:text-accent transition-colors flex items-center gap-2 text-sm cursor-pointer underline underline-offset-2">View on Substack</Link>
-      <ImageGallery />
-      </article>
-      </>
+      <div className="relative min-h-screen bg-background">
+        <div className="relative flex min-h-screen flex-col lg:flex-row">
+          <div className="relative h-[52vh] w-full overflow-hidden border-b border-border lg:h-screen lg:flex-1 lg:border-0">
+            <HeroSharpViewer
+              slug={slug}
+              heroImageUrl={heroImage.proxiedImageUrl}
+              originalImageUrl={heroImage.imageUrl}
+            />
+          </div>
+          <PostDrawer slug={slug} title={postData.title} heroSource={heroImage.source}>
+            <>
+              {content}
+              <ImageGallery />
+            </>
+          </PostDrawer>
+        </div>
+      </div>
     );
   } catch (error) {
     console.error("Error fetching blog post:", error);
