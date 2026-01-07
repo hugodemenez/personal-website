@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ViewTransition } from "react";
 import { Header } from "../components/app-header";
+import { SpotifyFooter } from "../components/spotify-footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="antialiased bg-background text-foreground">
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col pb-24">
           <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 container grow">
             <Header />
             <div className="mt-4 sm:mt-12  max-w-xl mx-auto">
@@ -32,6 +33,7 @@ export default function RootLayout({
               </ViewTransition>
             </div>
           </main>
+          <SpotifyFooter />
         </div>
       </body>
     </html>
