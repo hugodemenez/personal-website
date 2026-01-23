@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         hostname: 'substackcdn.com',
       },
     ],
+    localPatterns: [
+      {
+        pathname: '/api/image-proxy**',
+      },
+    ],
   },
   cacheComponents: true,
   allowedDevOrigins: ['localhost', '192.168.1.25'],
