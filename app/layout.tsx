@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ViewTransition } from "react";
 import { Header } from "../components/app-header";
-import { SpotifyFooter } from "../components/spotify-footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,11 +28,10 @@ export default function RootLayout({
             <Header />
             <div className="mt-4 sm:mt-12  max-w-xl mx-auto">
               <ViewTransition>
-                  {children}
+                {children}
               </ViewTransition>
             </div>
           </main>
-          <SpotifyFooter />
         </div>
       </body>
     </html>
