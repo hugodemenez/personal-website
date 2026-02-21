@@ -1,0 +1,50 @@
+---
+title: "Open sourcing"
+date: "2026-02-01T12:04:42.897Z"
+description: "I have been working intensively on open source contributions for the past three weeks."
+available: true
+image: "https://substackcdn.com/image/fetch/$s_!Alqg!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe7884bbb-0e3f-41f1-b64a-7cfa12848d31_960x540.gif"
+link: "https://hugodemenez.substack.com/p/open-sourcing"
+---
+
+# Open sourcing
+
+<Date date="2026-02-01T12:04:42.897Z" />
+
+
+I have been working intensively on open source contributions for the past three weeks.
+
+For a long time, I was simply publishing my own code and waiting for others to contribute to one of my repositories.
+
+I realized that if I wasn’t even making contributions myself, who would care to contribute to my projects?
+
+So I examined the most active public repository of a tool I use every day: Raycast.
+
+The public repository hosts all the extensions available and built by the community. I started with the Spotify extension.
+
+I had a persistent issue with it.
+
+When generating a playlist using AI, there were problems such as:
+-
+
+Always receiving the same recommendations (the model wasn’t performing web searches)
+
+-
+
+Inability to access my last generated playlist
+
+-
+
+Inability to customize a playlist after generation (required re-generating with a more tailored prompt)
+
+So I dove in, cloned the repository, and began tinkering. While AI agents are excellent for navigating new codebases and understanding their structure, I found myself enjoying opening files and tracing cascades of function declarations.
+
+![](https://substackcdn.com/image/fetch/$s_!Alqg!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fe7884bbb-0e3f-41f1-b64a-7cfa12848d31_960x540.gif)
+
+![](https://substackcdn.com/image/fetch/$s_!d6Ez!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fcec991f3-cb1e-4434-8ef4-ab6cfbef7b58_958x540.gif)
+
+I used AI agents to research topics, how to address the issue with the most effective approach, etc. It helped significantly!
+
+An example is the Download Manager extension.
+
+I discovered that Quick Look on macOS provides a command-line interface to generate images of the Quick Look preview, which we could then save as a base64 string to render the image in Raycast’s markdown preview.

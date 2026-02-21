@@ -1,19 +1,12 @@
 import { getPosts } from '@/lib/posts';
 import { SearchClient } from './search-client';
 import { fetchSubstackPosts } from '@/server/substack-feed';
-import { cacheLife } from 'next/cache';
 import { PostMetadata } from '@/lib/posts';
 
 export async function Search() {
-  'use cache';
-  cacheLife('days');
-  // Local posts
   const posts = await getPosts();
-
-  // External posts
   const externalPosts = await fetchSubstackPosts();
 
-  // Parse external posts to PostMetadata
   const parsedExternalPosts: PostMetadata[] = externalPosts.map((post) => ({
     slug: post.slug,
     title: post.title,
@@ -21,6 +14,7 @@ export async function Search() {
     description: post.description,
     tags: ['substack'],
     author: 'Hugo Demenez',
+    available: post.available,
   })) as PostMetadata[];
 
   const allPosts = [...posts, ...parsedExternalPosts].sort(
@@ -28,4 +22,3 @@ export async function Search() {
   );
   return <SearchClient posts={allPosts} />;
 }
-

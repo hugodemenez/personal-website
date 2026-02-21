@@ -6,4 +6,5 @@ export interface SubstackPost {
   image?: string;
   pubDate: string;
   description?: string;
+  available?: boolean;
 }

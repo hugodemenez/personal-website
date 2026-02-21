@@ -8,6 +8,7 @@ export interface PostMetadata {
   description: string;
   tags: string[];
   author?: string;
+  available?: boolean;
 }
 
 const POSTS_DIRECTORY = path.join(process.cwd(), 'app/posts');

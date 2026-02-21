@@ -1,0 +1,31 @@
+name: Sync Substack Posts
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Weekly Monday 6am UTC
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx tsx scripts/sync-substack-posts.ts
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add content/substack/
+          git diff --staged --quiet || (git commit -m "sync: update substack posts" && git push)

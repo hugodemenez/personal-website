@@ -1,162 +1,53 @@
-"use server";
-import { cacheLife } from "next/cache";
+import fs from "node:fs";
+import path from "node:path";
 import type { SubstackPost } from "@/types/substack-post";
 
-const SUBSTACK_POSTS_API_URL =
-  "https://hugodemenez.substack.com/api/v1/posts";
-const SUBSTACK_ARCHIVE_API_URL =
-  "https://hugodemenez.substack.com/api/v1/archive";
+const CONTENT_DIR = path.join(process.cwd(), "content", "substack");
 
-interface PostsApiPost {
-  id: number;
-  slug: string;
-  title?: string;
-  post_date?: string;
-  canonical_url?: string | null;
-  cover_image?: string | null;
-  description?: string | null;
-  truncated_body_text?: string | null;
-  is_published?: boolean;
-}
-
-interface ArchiveApiPost {
-  id: number;
-  slug: string;
-  title?: string;
-  post_date?: string;
-  canonical_url?: string | null;
-  cover_image?: string | null;
-  description?: string | null;
-  truncated_body_text?: string | null;
-}
-
-function parsePost(item: PostsApiPost | ArchiveApiPost): SubstackPost {
-  const title = item.title || item.slug.replace(/-/g, " ");
-  const link =
-    item.canonical_url || `https://hugodemenez.substack.com/p/${item.slug}`;
-  const image = item.cover_image ?? undefined;
-
-  const rawDescription = item.truncated_body_text ?? item.description ?? "";
-  const cleanedDescription = rawDescription ? rawDescription.trim() : "";
-  const description =
-    cleanedDescription.length > 150
-      ? `${cleanedDescription.slice(0, 150).trim()}...`
-      : cleanedDescription || undefined;
-
-  return {
-    title,
-    link,
-    slug: item.slug,
-    image,
-    pubDate: item.post_date || "1970-01-01T00:00:00.000Z",
-    description,
-  };
-}
-
-async function fetchPostsFromApi(): Promise<SubstackPost[]> {
-  const res = await fetch(SUBSTACK_POSTS_API_URL, {
-    next: { revalidate: 3600 },
-  });
-
-  if (!res.ok) {
-    console.warn(`Failed to fetch posts API: ${res.status}`);
-    return [];
-  }
-
-  const data = await res.json();
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  // Filter only published posts and parse them
-  const posts: SubstackPost[] = [];
-  for (const item of data as PostsApiPost[]) {
-    // Only include published posts
-    if (item.is_published === false) {
-      continue;
+function parseFrontmatter(content: string): Record<string, string> {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return {};
+  const fm: Record<string, string> = {};
+  for (const line of match[1].split("\n")) {
+    const idx = line.indexOf(":");
+    if (idx === -1) continue;
+    const key = line.slice(0, idx).trim();
+    let value = line.slice(idx + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
     }
-
-    posts.push(parsePost(item));
+    fm[key] = value;
   }
-
-  return posts;
+  return fm;
 }
 
-async function fetchArchiveFromApi(): Promise<SubstackPost[]> {
-  const posts: SubstackPost[] = [];
-
-  const url = new URL(SUBSTACK_ARCHIVE_API_URL);
-  url.searchParams.set("sort", "new");
-  // Substack API limit is 50 posts per request
-  url.searchParams.set("limit", "50");
-  // Fetch posts from the api until there are no more posts
-  while (true) {
-    url.searchParams.set("offset", posts.length.toString());
-
-    const res = await fetch(url.toString(), {
-      next: { revalidate: 3600 },
-    });
-
-    if (!res.ok) {
-      console.warn(`Failed to fetch archive API: ${res.status}`);
-      break;
-    }
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) {
-      // There is no posts in the archive
-      break;
-    }
-
-    // Parse the posts
-    for (const item of data as ArchiveApiPost[]) {
-      posts.push(parsePost(item));
-    }
-  }
-  return posts;
-}
-
-async function fetchAndMergePosts(): Promise<SubstackPost[]> {
-  // Fetch from both endpoints in parallel
-  const [postsFromApi, postsFromArchive] = await Promise.all([
-    fetchPostsFromApi(),
-    fetchArchiveFromApi(),
-  ]);
-
-  // Use a Map to deduplicate by slug (posts API takes precedence for latest posts)
-  const postsMap = new Map<string, SubstackPost>();
-
-  // First add archive posts (older posts)
-  for (const post of postsFromArchive) {
-    postsMap.set(post.slug, post);
-  }
-
-  // Then add/override with posts API (latest posts, including the most recent)
-  for (const post of postsFromApi) {
-    postsMap.set(post.slug, post);
-  }
-
-  // Convert to array and sort by date (newest first)
-  const mergedPosts = Array.from(postsMap.values());
-  mergedPosts.sort((a, b) => {
-    const dateA = new Date(a.pubDate).getTime();
-    const dateB = new Date(b.pubDate).getTime();
-    return dateB - dateA;
-  });
-
-  return mergedPosts;
-}
-
-// Cache the function to prevent duplicate fetches across workers during build
 export async function fetchSubstackPosts(): Promise<SubstackPost[]> {
-  // We cache the function so it is cached during build time
-  // prevents duplicate fetches across workers during build
-  "use cache";
-  cacheLife("minutes");
+  if (!fs.existsSync(CONTENT_DIR)) return [];
 
-  try {
-    return await fetchAndMergePosts();
-  } catch (error) {
-    console.warn("Failed to fetch Substack posts", error);
-    return [];
+  const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith(".mdx"));
+  const posts: SubstackPost[] = [];
+
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(CONTENT_DIR, file), "utf-8");
+    const fm = parseFrontmatter(content);
+    const slug = file.replace(".mdx", "");
+
+    posts.push({
+      title: fm.title || slug.replace(/-/g, " "),
+      link: fm.link || `https://hugodemenez.substack.com/p/${slug}`,
+      slug,
+      image: fm.image || undefined,
+      pubDate: fm.date || "1970-01-01T00:00:00.000Z",
+      description: fm.description || undefined,
+      available: fm.available !== "false",
+    });
   }
+
+  posts.sort(
+    (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
+  );
+  return posts;
 }
