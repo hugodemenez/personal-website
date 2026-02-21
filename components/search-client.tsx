@@ -163,9 +163,7 @@ export function SearchClient({ posts }: SearchClientProps) {
                 filteredPosts.map((post, index) => (
                   <Link
                     key={post.slug+post.tags.join("-")+index}
-                    href={post.available === false ? `https://hugodemenez.substack.com/p/${post.slug}` : `/posts/${post.slug}`}
-                    target={post.available === false ? "_blank" : undefined}
-                    rel={post.available === false ? "noopener noreferrer" : undefined}
+                    href={`/posts/${post.slug}`}
                     onClick={handleClose}
                     className={`block px-4 py-3 text-sm hover:bg-surface transition-colors border-b border-border last:border-b-0 focus:outline-none focus:bg-surface ${post.available === false ? "opacity-60" : ""}`}
                   >
@@ -173,7 +171,7 @@ export function SearchClient({ posts }: SearchClientProps) {
                       <div className="font-medium text-foreground flex items-center gap-2">
                         {post.title}
                         {post.available === false && (
-                          <span className="text-[10px] font-normal text-muted bg-surface px-1.5 py-0.5 rounded">Substack</span>
+                          <span className="text-[10px] font-normal text-muted bg-surface px-1.5 py-0.5 rounded">Unavailable</span>
                         )}
                       </div>
                       <div className="text-xs text-muted mt-1">
