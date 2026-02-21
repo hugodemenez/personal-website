@@ -23,6 +23,41 @@ const FALLBACK_DATA: SpotifyData = {
   topTracks: [],
 };
 
+async function getAccessToken(): Promise<string> {
+  const response = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${Buffer.from(
+        `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+      ).toString("base64")}`,
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: process.env.SPOTIFY_REFRESH_TOKEN!,
+    }),
+  });
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+function formatTrack(item: {
+  name: string;
+  external_urls: { spotify: string };
+  artists: { name: string }[];
+  album: { images: { url: string }[] };
+}): Track {
+  return {
+    name: item.name,
+    artist: item.artists.map((a) => a.name).join(", "),
+    albumArt:
+      "/api/image-proxy?url=" +
+      encodeURIComponent(item.album.images[1]?.url ?? item.album.images[0]?.url),
+    url: item.external_urls.spotify,
+  };
+}
+
 export async function getSpotifyData(): Promise<SpotifyData> {
   "use cache";
   cacheLife("minutes");
@@ -33,12 +68,24 @@ export async function getSpotifyData(): Promise<SpotifyData> {
   }
 
   try {
-    // TODO: Implement Spotify API fetch when service is available
-    // 1. Refresh access token using SPOTIFY_REFRESH_TOKEN
-    // 2. Fetch /me/player/recently-played
-    // 3. Fetch /me/top/tracks?limit=5&time_range=medium_term
-    // 4. Return formatted SpotifyData
-    return FALLBACK_DATA;
+    const accessToken = await getAccessToken();
+    const headers = { Authorization: `Bearer ${accessToken}` };
+
+    const [recentRes, topRes] = await Promise.all([
+      fetch("https://api.spotify.com/v1/me/player/recently-played?limit=1", { headers }),
+      fetch("https://api.spotify.com/v1/me/top/tracks?limit=5&time_range=medium_term", { headers }),
+    ]);
+
+    const recentData = await recentRes.json();
+    const topData = await topRes.json();
+
+    const recentTrack = recentData.items?.[0]?.track
+      ? formatTrack(recentData.items[0].track)
+      : FALLBACK_DATA.recentTrack;
+
+    const topTracks = topData.items?.map(formatTrack) ?? [];
+
+    return { recentTrack, topTracks };
   } catch {
     return FALLBACK_DATA;
   }
