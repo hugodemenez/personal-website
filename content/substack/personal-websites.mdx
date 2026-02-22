@@ -1,0 +1,73 @@
+---
+title: "Personal websites"
+date: "2025-12-20T10:39:37.058Z"
+description: "You know that itch? The one where you start tinkering with your personal website, telling yourself it’s just a quick experiment."
+available: true
+image: "https://substackcdn.com/image/fetch/$s_!Dnh3!,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F262d4c0d-5cf3-4a32-b77f-6c081cb2205a_1536x1024.png"
+link: "https://hugodemenez.substack.com/p/personal-websites"
+---
+
+# Personal websites
+
+<Date date="2025-12-20T10:39:37.058Z" />
+
+
+You know that itch? The one where you start tinkering with your personal website, telling yourself it’s just a quick experiment.
+
+Two or three weeks later, you’ve sunk evenings into it, and your real projects are gathering dust.
+
+It’s a classic developer trap. Even as a senior, I fell right back in.
+
+![](https://substackcdn.com/image/fetch/$s_!Dnh3!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F262d4c0d-5cf3-4a32-b77f-6c081cb2205a_1536x1024.png)
+
+**Diving into AI Magic**
+
+I wanted to overhaul my MDX-based site to play with AI.
+
+A few weeks back, I wrote about my first experiments (check it out:[experimenting](https://www.hugodemenez.fr/posts/experimenting)).
+
+This time, I aimed deeper: best practices with the latest [AI SDK](https://ai-sdk.dev), providers, middleware for caching, and AI gateways.
+
+The result? A site that generated a custom version on the fly, pulling my latest work via Perplexity Sonar and Grok searches. It cross-checked news about me for freshness. Cool, right?
+
+What hooked me most was tool streaming through a custom writer. I could show the AI thinking and writing in real time, like watching a brain unfold on screen. But I added [caching middleware](https://ai-sdk.dev/cookbook/next/caching-middleware#middleware) for speed after that first load. Felt innovative.
+
+![](https://substackcdn.com/image/fetch/$s_!ShnJ!,w_1456,c_limit,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fdad16b6a-3ab4-4872-9dde-c95aa59d0438_1920x1080.gif)
+
+**The Wake-Up Call**
+
+Something nagged at me. It wasn’t quite right.
+
+Personal websites shouldn’t make visitors wait for AI to spin up text or animations. They need to load instantly and just... tell your story. You can highlight your skills cleanly, like those slick components on [https://www.uilabs.dev](https://www.uilabs.dev). But no frills that slow things down.
+
+Fast. Static. Done.
+
+**Switching to Cached Power**
+
+I scrapped it all. Rewrote using [Next.js cached components](https://nextjs.org/docs/app/getting-started/cache-components). These tap React Server Components and smart caching for the win.
+
+Now, feedback hits instantly. Content stays dynamic, auto-invalidating cache weekly for fresh updates on my work.
+
+See it in action below with a custom refresh button I added to highlight the content update.
+
+![](https://substackcdn.com/image/fetch/$s_!gTO2!,w_1456,c_limit,f_auto,q_auto:good,fl_lossy/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fb0d18f62-0e9f-4a04-bf9d-402ff23f70d3_1920x1080.gif)
+
+**Nailing the Posts Problem**
+
+One snag remained.
+
+I pull all my Substack posts with cached components too. Initial loads dragged, though. Caching felt wasteful, memory-hogging for static stuff that rarely changes. Minor edits? I can rebuild if needed.
+
+Best fix: static generation at build time.
+
+During builds, it fetches every post from Substack using [into.md](https://into.md) by [Timo Lins](https://x.com/timolins).
+
+For the search feature, the cached component grabs recent post urls, creating dynamic routes via [slugs in Next.js app router](https://nextjs.org/docs/app/getting-started/project-structure#dynamic-routes).
+
+Combo achieved. Static core for speed, cached smarts where it counts.
+
+![](https://substackcdn.com/image/fetch/$s_!pgDL!,w_1456,c_limit,f_auto,q_auto:good,fl_lossy/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fc85b428a-45dd-49f8-a35a-1a3737d65668_1920x1080.gif)
+
+In the end, it’s about balance. Experiment wildly, sure, but deliver what users expect: quick, clear windows into your world. Next time that itch hits, I’ll scratch it smarter.
+
+What’s your personal site trap?
