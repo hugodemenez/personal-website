@@ -33,6 +33,11 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const FETCH_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+};
+
 async function fetchPostsList(): Promise<ApiPost[]> {
   const postsMap = new Map<string, ApiPost>();
 
@@ -44,9 +49,9 @@ async function fetchPostsList(): Promise<ApiPost[]> {
 
   while (true) {
     archiveUrl.searchParams.set("offset", offset.toString());
-    const res = await fetch(archiveUrl.toString());
+    const res = await fetch(archiveUrl.toString(), { headers: FETCH_HEADERS });
     if (!res.ok) {
-      console.warn(`Archive API failed: ${res.status}`);
+      console.warn(`Archive API failed: ${res.status}, falling back to v1/posts only`);
       break;
     }
     const data = await res.json();
@@ -58,7 +63,9 @@ async function fetchPostsList(): Promise<ApiPost[]> {
   }
 
   // Fetch from posts API (latest, overrides archive)
-  const postsRes = await fetch(`${SUBSTACK_BASE_URL}/api/v1/posts`);
+  const postsRes = await fetch(`${SUBSTACK_BASE_URL}/api/v1/posts`, {
+    headers: FETCH_HEADERS,
+  });
   if (postsRes.ok) {
     const data = await postsRes.json();
     if (Array.isArray(data)) {
@@ -68,6 +75,8 @@ async function fetchPostsList(): Promise<ApiPost[]> {
         }
       }
     }
+  } else {
+    console.warn(`Posts API failed: ${postsRes.status}`);
   }
 
   const sorted = Array.from(postsMap.values()).sort((a, b) => {
@@ -96,12 +105,7 @@ async function fetchPostContent(
     }
 
     try {
-      const res = await fetch(endpoint, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        },
-      });
+      const res = await fetch(endpoint, { headers: FETCH_HEADERS });
 
       if (res.status === 404) return null;
 
