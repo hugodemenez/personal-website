@@ -4,6 +4,8 @@ import { htmlToMarkdown } from "../lib/html-to-markdown";
 
 const SUBSTACK_BASE_URL = "https://hugodemenez.substack.com";
 const CONTENT_DIR = path.join(process.cwd(), "content", "substack");
+/** Only check this many latest posts; only missing .mdx files are created. */
+const RECENT_POSTS_LIMIT = 10;
 
 interface ApiPost {
   id: number;
@@ -29,26 +31,6 @@ interface FullPost {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function parseFrontmatter(content: string): Record<string, string> {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
-  const fm: Record<string, string> = {};
-  for (const line of match[1].split("\n")) {
-    const idx = line.indexOf(":");
-    if (idx === -1) continue;
-    const key = line.slice(0, idx).trim();
-    let value = line.slice(idx + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    fm[key] = value;
-  }
-  return fm;
 }
 
 async function fetchPostsList(): Promise<ApiPost[]> {
@@ -88,11 +70,18 @@ async function fetchPostsList(): Promise<ApiPost[]> {
     }
   }
 
-  return Array.from(postsMap.values()).sort((a, b) => {
+  const sorted = Array.from(postsMap.values()).sort((a, b) => {
     const dateA = new Date(a.post_date || "1970-01-01").getTime();
     const dateB = new Date(b.post_date || "1970-01-01").getTime();
     return dateB - dateA;
   });
+  return sorted;
+}
+
+/** Fetch only the most recent N posts (by date). */
+async function fetchRecentPosts(limit: number): Promise<ApiPost[]> {
+  const all = await fetchPostsList();
+  return all.slice(0, limit);
 }
 
 async function fetchPostContent(
@@ -213,55 +202,32 @@ function buildMdxContent(listPost: ApiPost, fullPost: FullPost | null): string {
 async function main() {
   fs.mkdirSync(CONTENT_DIR, { recursive: true });
 
-  console.log("Fetching posts list from Substack...");
-  const posts = await fetchPostsList();
-  console.log(`Found ${posts.length} posts`);
+  console.log("Fetching latest posts from Substack...");
+  const posts = await fetchRecentPosts(RECENT_POSTS_LIMIT);
+  console.log(`Checking ${posts.length} most recent posts for missing .mdx files`);
 
-  // Read existing MDX files
-  const existingFiles = new Set<string>();
-  for (const file of fs.readdirSync(CONTENT_DIR)) {
-    if (file.endsWith(".mdx")) {
-      existingFiles.add(file.replace(".mdx", ""));
-    }
-  }
-
-  const apiSlugs = new Set(posts.map((p) => p.slug));
-
-  // Delete files for posts no longer in API (unpublished)
-  for (const slug of existingFiles) {
-    if (!apiSlugs.has(slug)) {
-      console.log(`Deleting removed post: ${slug}`);
-      fs.unlinkSync(path.join(CONTENT_DIR, `${slug}.mdx`));
-    }
-  }
-
-  // Sync posts (incremental: skip if date unchanged)
-  let synced = 0;
+  let created = 0;
   let skipped = 0;
 
   for (const post of posts) {
     const filePath = path.join(CONTENT_DIR, `${post.slug}.mdx`);
 
     if (fs.existsSync(filePath)) {
-      const existing = fs.readFileSync(filePath, "utf-8");
-      const fm = parseFrontmatter(existing);
-      if (fm.date === post.post_date) {
-        skipped++;
-        continue;
-      }
+      skipped++;
+      continue;
     }
 
-    console.log(`Syncing: ${post.slug}`);
+    console.log(`Creating missing: ${post.slug} — ${post.title ?? post.slug}`);
     const fullPost = await fetchPostContent(post.slug);
     const mdxContent = buildMdxContent(post, fullPost);
     fs.writeFileSync(filePath, mdxContent, "utf-8");
-    synced++;
+    created++;
 
     await sleep(200);
   }
 
   console.log(
-    `\nDone! Synced: ${synced}, Skipped (up-to-date): ${skipped}, Total: ${posts.length}`
+    `\nDone! Created: ${created}, Skipped (already exist): ${skipped}, Checked: ${posts.length}`
   );
 }
 
