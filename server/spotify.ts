@@ -1,4 +1,5 @@
 "use server";
+import { createHash } from "node:crypto";
 import { cacheLife } from "next/cache";
 
 export interface Track {
@@ -23,22 +24,57 @@ const FALLBACK_DATA: SpotifyData = {
   topTracks: [],
 };
 
-async function getAccessToken(): Promise<string> {
+interface SpotifyTokenResponse {
+  access_token?: string;
+  error?: string;
+  error_description?: string;
+}
+
+const rejectedRefreshTokens = new Set<string>();
+
+function tokenFingerprint(refreshToken: string): string {
+  return createHash("sha256").update(refreshToken).digest("hex");
+}
+
+async function getAccessToken(
+  clientId: string,
+  clientSecret: string,
+  refreshToken: string
+): Promise<string> {
+  const fingerprint = tokenFingerprint(refreshToken);
+  if (rejectedRefreshTokens.has(fingerprint)) {
+    throw new Error("Spotify refresh token has expired; reauthorization is required");
+  }
+
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: `Basic ${Buffer.from(
-        `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+        `${clientId}:${clientSecret}`
       ).toString("base64")}`,
     },
     body: new URLSearchParams({
       grant_type: "refresh_token",
-      refresh_token: process.env.SPOTIFY_REFRESH_TOKEN!,
+      refresh_token: refreshToken,
     }),
   });
 
-  const data = await response.json();
+  const data = (await response.json()) as SpotifyTokenResponse;
+  if (!response.ok || !data.access_token) {
+    if (data.error === "invalid_grant") {
+      // Do not retry an expired token in this process. A changed environment token
+      // has a different fingerprint and will be accepted after redeployment.
+      rejectedRefreshTokens.add(fingerprint);
+    }
+
+    throw new Error(
+      data.error === "invalid_grant"
+        ? "Spotify refresh token has expired; reauthorization is required"
+        : `Spotify token refresh failed (${data.error ?? response.status})`
+    );
+  }
+
   return data.access_token;
 }
 
@@ -68,7 +104,11 @@ export async function getSpotifyData(): Promise<SpotifyData> {
   }
 
   try {
-    const accessToken = await getAccessToken();
+    const accessToken = await getAccessToken(
+      SPOTIFY_CLIENT_ID,
+      SPOTIFY_CLIENT_SECRET,
+      SPOTIFY_REFRESH_TOKEN
+    );
     const headers = { Authorization: `Bearer ${accessToken}` };
 
     const [recentRes, topRes] = await Promise.all([
