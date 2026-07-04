@@ -8,47 +8,69 @@ interface PostSelectorProps {
   onSelectPost: (index: number) => void;
 }
 
+function formatShortDate(dateString: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(dateString));
+}
+
 export default function PostSelector({
   posts,
   selectedPostIndex,
   onSelectPost,
 }: PostSelectorProps) {
+  const activePost = posts[selectedPostIndex];
+
   return (
-    <div className="w-full h-full flex flex-col min-h-0">
-      <h3 className="text-xl font-semibold mb-4 text-foreground shrink-0">
-        All Posts
-      </h3>
-      <div className="relative">
-        <select
-          value={selectedPostIndex}
-          onChange={(e) => onSelectPost(Number(e.target.value))}
-          className="appearance-none w-full p-3 pr-10 rounded-t-lg border border-border border-b-0 bg-background text-foreground focus:outline-none focus:border-accent transition-colors duration-200 cursor-pointer"
-        >
-          {posts.map((post, index) => (
-            <option key={post.slug+index} value={index}>
-              {post.title.length > 60
-                ? `${post.title.slice(0, 60)}...`
-                : post.title}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg
-            className="w-5 h-5 text-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+    <section
+      className="post-navigator mb-4 overflow-hidden rounded-xl border border-border bg-surface/70 shadow-sm"
+      aria-label="Blog post navigator"
+    >
+      <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 md:px-5">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+            Blog navigator
+          </p>
+          <h3 className="mt-1 text-lg font-semibold text-foreground md:text-xl">
+            {activePost?.title ?? "All posts"}
+          </h3>
         </div>
+        <span className="shrink-0 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted">
+          {selectedPostIndex + 1}/{posts.length}
+        </span>
       </div>
-    </div>
+
+      <div
+        className="post-navigator__rail"
+        role="listbox"
+        aria-label="Choose a blog post"
+      >
+        {posts.map((post, index) => {
+          const isSelected = index === selectedPostIndex;
+
+          return (
+            <button
+              key={`${post.slug}${index}`}
+              type="button"
+              role="option"
+              aria-selected={isSelected}
+              className="post-navigator__item"
+              onClick={() => onSelectPost(index)}
+            >
+              <span className="post-navigator__index">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="post-navigator__content">
+                <span className="post-navigator__title">{post.title}</span>
+                <span className="post-navigator__meta">
+                  {formatShortDate(post.pubDate)}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
