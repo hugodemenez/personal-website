@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type MouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { SubstackPost } from "@/types/substack-post";
 
 interface PostsVisualizerProps {
@@ -13,6 +19,15 @@ const IMAGE_SIZES = "(max-width: 768px) 92vw, 700px";
 
 function getPostHref(post: SubstackPost): string {
   return post.slug ? `/posts/${post.slug}` : post.link;
+}
+
+function formatPostDate(pubDate: string): string {
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(pubDate));
 }
 
 export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
@@ -105,6 +120,17 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
       Math.min(sortedPosts.length, selectedPostIndex + 3)
     );
 
+  const returnToWritingStart = (event: MouseEvent<HTMLButtonElement>) => {
+    const shouldReduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    sectionRef.current?.scrollIntoView({
+      behavior: shouldReduceMotion || event.detail === 0 ? "auto" : "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <section
       ref={sectionRef}
@@ -116,7 +142,14 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           id="posts-heading"
           className="font-serif text-3xl tracking-[-0.035em] text-foreground"
         >
-          Writing
+          <button
+            aria-label="Return to the beginning of Writing"
+            className="-mx-2 min-h-11 cursor-pointer px-2 text-left transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
+            onClick={returnToWritingStart}
+            type="button"
+          >
+            Writing
+          </button>
         </h2>
         <p className="text-sm tabular-nums text-muted/70">
           {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
@@ -157,7 +190,16 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 rel={post.slug ? undefined : "noopener noreferrer"}
                 target={post.slug ? undefined : "_blank"}
               >
-                {post.title}
+                <span>
+                  {post.title}
+                  <span
+                    className={`ml-2 whitespace-nowrap text-sm font-normal tracking-normal ${
+                      isSelected ? "text-muted/70" : "text-muted/45"
+                    }`}
+                  >
+                    • {formatPostDate(post.pubDate)}
+                  </span>
+                </span>
               </Link>
             </li>
           );
@@ -194,8 +236,8 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           {deckPosts.map(({ post, index }) => {
             const offset = index - selectedPostIndex;
             const isSelected = offset === 0;
-            const translateY = offset < 0 ? "-12%" : `${offset * 100}%`;
-            const scale = offset < 0 ? 1.015 : 1 - offset * 0.025;
+            const translateY = offset < 0 ? "100%" : `${offset * 100}%`;
+            const scale = offset < 0 ? 0.975 : 1 - offset * 0.025;
             const opacity = offset < 0 ? 0 : 1 - offset * 0.14;
 
             return (
