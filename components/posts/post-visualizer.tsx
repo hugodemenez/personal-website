@@ -166,10 +166,10 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
       <div
         data-writing-deck
-        className={`fixed inset-x-4 bottom-[env(safe-area-inset-bottom)] z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden transition-[transform,opacity] duration-200 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
+        className={`fixed inset-x-4 bottom-[env(safe-area-inset-bottom)] z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
           isWritingVisible
-            ? "translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-8 opacity-0"
+            ? "[transform:translateY(0)] opacity-100"
+            : "pointer-events-none [transform:translateY(100%)] opacity-0"
         }`}
       >
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0">
@@ -194,7 +194,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           {deckPosts.map(({ post, index }) => {
             const offset = index - selectedPostIndex;
             const isSelected = offset === 0;
-            const translateY = offset < 0 ? -32 : offset * 12;
+            const translateY = offset < 0 ? "-12%" : `${offset * 100}%`;
             const scale = offset < 0 ? 1.015 : 1 - offset * 0.025;
             const opacity = offset < 0 ? 0 : 1 - offset * 0.14;
 
@@ -202,7 +202,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
               <Link
                 key={`deck-${post.slug}`}
                 aria-hidden={isSelected ? undefined : true}
-                className={`absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg transition-[transform,opacity] duration-200 [transition-timing-function:cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none ${
+                className={`absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none ${
                   isSelected
                     ? "pointer-events-auto"
                     : "pointer-events-none"
@@ -211,7 +211,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 rel={post.slug ? undefined : "noopener noreferrer"}
                 style={{
                   opacity,
-                  transform: `translateY(${translateY}px) scale(${scale})`,
+                  transform: `translateY(${translateY}) scale(${scale})`,
                   transformOrigin: "center top",
                   zIndex: 40 - offset,
                 }}
