@@ -10,7 +10,7 @@
   "dependencies": {
     "@next/mdx": "^16.0.0",
     "@tailwindcss/postcss": "^4.1.3",
-    "next": "^16.0.10",
+    "next": "^16.2.12",
     "next-mdx-remote": "^6.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
