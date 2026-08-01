@@ -5,8 +5,6 @@ import {
   parseLocationUpdate,
 } from "@/server/location-data";
 
-export const runtime = "nodejs";
-
 function json(body: object, status: number) {
   return NextResponse.json(body, {
     status,
