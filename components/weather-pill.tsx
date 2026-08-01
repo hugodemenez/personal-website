@@ -69,7 +69,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
   return (
     <span
       ref={rootRef}
-      className="relative mb-1 inline-flex"
+      className="relative inline-flex"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false);
       }}
