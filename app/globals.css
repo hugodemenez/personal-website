@@ -182,7 +182,10 @@ dialog::backdrop {
 .writing-deck {
   --writing-deck-height: clamp(10rem, 38vw, 14rem);
   top: calc(75dvh - var(--writing-deck-height) / 2);
+  right: 0.5rem;
+  width: min(calc(100vw - 2rem), 36rem);
   height: var(--writing-deck-height);
+  transform-origin: right center;
 }
 
 .artwork-stack-in,

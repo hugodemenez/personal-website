@@ -335,10 +335,10 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
       <div
         data-writing-deck
-        className={`writing-deck fixed inset-x-4 z-30 mx-auto max-w-xl overflow-visible will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
+        className={`writing-deck fixed z-30 overflow-visible will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
           isWritingVisible
-            ? "[transform:translateX(0)] opacity-100"
-            : "pointer-events-none [transform:translateX(calc(100%+1rem))] opacity-0"
+            ? "[transform:translateX(0)_scale(0.5)] opacity-100"
+            : "pointer-events-none [transform:translateX(calc(100%+1rem))_scale(0.5)] opacity-0"
         }`}
       >
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0">
@@ -364,7 +364,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
             <Link
               key={`previous-${previousPost.slug}-${selection.transitionId}`}
               aria-hidden="true"
-              className={`pointer-events-none absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg ${
+              className={`pointer-events-none absolute inset-0 overflow-hidden rounded-xs border border-border bg-surface shadow-lg ${
                 selection.direction === "forward"
                   ? "artwork-stack-under z-10"
                   : "artwork-destack-out z-20"
@@ -393,7 +393,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
           <Link
             key={`deck-${selectedPost.slug}-${selection.transitionId}`}
-            className={`absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg ${
+            className={`absolute inset-0 overflow-hidden rounded-xs border border-border bg-surface shadow-lg ${
               selection.direction === "forward"
                 ? "artwork-stack-in z-20"
                 : selection.direction === "backward"
