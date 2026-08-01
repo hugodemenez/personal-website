@@ -1,5 +1,6 @@
 import { getLisbonWeather } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
+import WeatherPill from "@/components/weather-pill";
 
 function XIcon() {
   return (
@@ -55,38 +56,12 @@ export default async function GeneratedContent() {
         <h1 className="font-serif text-5xl leading-[0.95] tracking-[-0.04em] text-foreground sm:text-6xl">
           Hugo Demenez
         </h1>
-        <p className="mt-2 font-serif text-xl tracking-[-0.02em] text-muted">
-          Software writer
-        </p>
-      </div>
-      <div>
-        <div
-          aria-label="Current location and weather"
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-surface px-4 py-3 text-[clamp(0.8rem,3.5vw,1.125rem)] tracking-[-0.02em] text-muted sm:gap-3 sm:px-6"
-        >
-          <span className="whitespace-nowrap">{weather?.location ?? "Lisbon"}</span>
-          <span aria-hidden="true" className="text-foreground/30">
-            •
-          </span>
-          <span className="whitespace-nowrap">{weather?.time ?? "Local time"}</span>
-          <span aria-hidden="true" className="text-foreground/30">
-            •
-          </span>
-          <span className="whitespace-nowrap">
-            {weather ? `${weather.temperature}°C, ${weather.condition}` : "Weather unavailable"}
-          </span>
+        <div className="mt-2 flex items-center gap-2.5">
+          <p className="font-serif text-xl tracking-[-0.02em] text-muted">
+            Software writer
+          </p>
+          <WeatherPill weather={weather} />
         </div>
-        <p className="mt-2 text-center text-xs text-muted/60">
-          Weather by{" "}
-          <a
-            className="underline decoration-border underline-offset-2 transition-colors hover:text-muted"
-            href="https://open-meteo.com/"
-            rel="noreferrer"
-            target="_blank"
-          >
-            Open-Meteo
-          </a>
-        </p>
       </div>
       <p className="leading-relaxed">
         I build practical software for trading and analytics—journals, network
