@@ -335,6 +335,10 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         })}
       </ol>
 
+      {/* Held at opacity 0.99 rather than 1 while visible: Safari 26 clips a
+          fully opaque fixed layer at the top edge of its floating toolbar, so
+          the artwork stopped dead at the bar. Any value below 1 composites the
+          layer separately and lets it run to the bottom of the screen. */}
       <div
         data-writing-deck
         className={`fixed inset-x-4 bottom-0 z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden motion-reduce:transition-none ${
@@ -343,7 +347,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
             : "transition-none"
         } ${
           isWritingVisible
-            ? "[transform:translateY(0)] opacity-100"
+            ? "[transform:translateY(0)] opacity-[0.99]"
             : isFirstArtwork
               ? "pointer-events-none [transform:translateY(100%)] opacity-0"
               : "pointer-events-none [transform:translateY(0)] opacity-0"
