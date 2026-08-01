@@ -32,9 +32,18 @@ function roundedCoordinate(
   minimum: number,
   maximum: number
 ): number | undefined {
-  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
-  if (value < minimum || value > maximum) return undefined;
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  // Apple Shortcuts may serialize location details as JSON strings. Accept the
+  // plain decimal forms it produces while still rejecting ambiguous values.
+  const coordinate =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && /^-?\d+(?:[.,]\d+)?$/.test(value.trim())
+        ? Number(value.trim().replace(",", "."))
+        : Number.NaN;
+
+  if (!Number.isFinite(coordinate)) return undefined;
+  if (coordinate < minimum || coordinate > maximum) return undefined;
+  return Math.round((coordinate + Number.EPSILON) * 100) / 100;
 }
 
 export function parseLocationUpdate(

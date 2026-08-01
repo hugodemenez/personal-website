@@ -62,10 +62,12 @@ The initial store item is optional. When present, its key is
 ```
 
 The protected endpoint accepts `POST /api/location/update` with a bearer token.
-It validates city and country names, rounds coordinates to two decimals, and
-upserts the record through Vercel's authenticated Global Config API. Never expose
-`GLOBAL_CONFIG_WRITE_TOKEN` to the Shortcut. Give the token access only to this
-project, set an expiration, and record its rotation date in Vercel.
+It validates city and country names, accepts the numeric or plain-text decimal
+coordinates produced by Apple Shortcuts, rounds them to two decimals, and
+resolves unexpectedly coarse whole-degree values from the nearest matching city
+before upserting the record through Vercel's authenticated Global Config API.
+Never expose `GLOBAL_CONFIG_WRITE_TOKEN` to the Shortcut. Give the token access
+only to this project, set an expiration, and record its rotation date in Vercel.
 
 #### iPhone Shortcut
 
@@ -73,6 +75,8 @@ Create a Shortcut named **Update website location**:
 
 1. Add **Get Current Location**.
 2. Read **City**, **Country**, **Latitude**, and **Longitude** from that location.
+   The weather service uses latitude and longitude directly, so small localities
+   such as Azeitão do not need to be replaced with a nearby large city.
 3. Add **Get Contents of URL** using
    `https://www.hugodemenez.fr/api/location/update`.
 4. Choose `POST`, set the request body to JSON, and add the four fields as

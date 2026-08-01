@@ -31,6 +31,28 @@ test("validates, normalizes, and rounds a location update", () => {
   );
 });
 
+test("accepts decimal coordinates serialized as text by Apple Shortcuts", () => {
+  assert.deepEqual(
+    parseLocationUpdate(
+      {
+        city: "Azeitão",
+        country: "Portugal",
+        latitude: "38,52",
+        longitude: "-9.02",
+      },
+      now
+    ),
+    {
+      version: 1,
+      city: "Azeitão",
+      country: "Portugal",
+      latitude: 38.52,
+      longitude: -9.02,
+      updatedAt: now.toISOString(),
+    }
+  );
+});
+
 test("rejects malformed locations and oversized names", () => {
   assert.equal(parseLocationUpdate(null, now), null);
   assert.equal(
@@ -46,6 +68,13 @@ test("rejects malformed locations and oversized names", () => {
   );
   assert.equal(
     parseLocationUpdate({ city: "Lisbon", latitude: 1, longitude: -181 }, now),
+    null
+  );
+  assert.equal(
+    parseLocationUpdate(
+      { city: "Lisbon", latitude: "38.72 north", longitude: "-9.14" },
+      now
+    ),
     null
   );
 });
