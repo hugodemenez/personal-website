@@ -11,7 +11,7 @@ function InfoIcon() {
   return (
     <svg
       aria-hidden="true"
-      className="size-3.5"
+      className="size-3"
       fill="none"
       viewBox="0 0 16 16"
     >
@@ -76,7 +76,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
     >
       <span
         aria-label="Current location and weather"
-        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-surface py-1 pl-3 pr-1 text-xs tracking-[-0.01em] text-muted"
+        className="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface pl-2.5 pr-0.5 text-[0.6875rem] tracking-[-0.01em] text-muted"
       >
         <span className="whitespace-nowrap">{weather?.location ?? "Lisbon"}</span>
         {weather ? (
