@@ -38,15 +38,6 @@ export async function POST(request: Request) {
   if (!location) {
     return json({ ok: false, error: "Invalid location payload" }, 400);
   }
-  if (
-    Number.isInteger(location.latitude) ||
-    Number.isInteger(location.longitude)
-  ) {
-    return json(
-      { ok: false, error: "Coordinates must include decimal precision" },
-      400
-    );
-  }
 
   const writeRequest = createGlobalConfigWriteRequest(location, {
     GLOBAL_CONFIG_ID: process.env.GLOBAL_CONFIG_ID,
