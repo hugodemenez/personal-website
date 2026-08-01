@@ -430,10 +430,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           </Link>
         </div>
 
-        <div
-          aria-hidden="true"
-          className="artwork-bottom-veil pointer-events-none absolute inset-x-0 bottom-0 z-30 h-7"
-        />
       </div>
     </section>
   );

@@ -197,21 +197,6 @@ dialog::backdrop {
   animation-name: artworkDestackReveal;
 }
 
-/* Let imagery meet iOS Safari's translucent chrome without a hard edge. */
-.artwork-bottom-veil {
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
-  background: linear-gradient(to top, rgb(253 251 247 / 14%), transparent);
-  -webkit-mask-image: linear-gradient(to top, black, transparent);
-  mask-image: linear-gradient(to top, black, transparent);
-}
-
-@media (prefers-color-scheme: dark) {
-  .artwork-bottom-veil {
-    background: linear-gradient(to top, rgb(20 18 11 / 16%), transparent);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
