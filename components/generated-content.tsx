@@ -56,7 +56,7 @@ export default async function GeneratedContent() {
         <h1 className="font-serif text-5xl leading-[0.95] tracking-[-0.04em] text-foreground sm:text-6xl">
           Hugo Demenez
         </h1>
-        <div className="mt-2 flex items-baseline gap-2.5">
+        <div className="mt-2 flex items-end gap-2.5">
           <p className="font-serif text-xl tracking-[-0.02em] text-muted">
             Software writer
           </p>
