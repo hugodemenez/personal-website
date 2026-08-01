@@ -113,12 +113,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     preloadBatchStart,
     preloadBatchStart + 3
   );
-  const deckPosts = sortedPosts
-    .map((post, index) => ({ post, index }))
-    .slice(
-      Math.max(0, selectedPostIndex - 1),
-      Math.min(sortedPosts.length, selectedPostIndex + 3)
-    );
+  const isFirstArtwork = selectedPostIndex === 0;
 
   const returnToWritingStart = (event: MouseEvent<HTMLButtonElement>) => {
     const shouldReduceMotion = window.matchMedia(
@@ -208,10 +203,16 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
       <div
         data-writing-deck
-        className={`fixed inset-x-4 bottom-[env(safe-area-inset-bottom)] z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
+        className={`fixed inset-x-4 bottom-[env(safe-area-inset-bottom)] z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden motion-reduce:transition-none ${
+          isFirstArtwork
+            ? "will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)]"
+            : "transition-none"
+        } ${
           isWritingVisible
             ? "[transform:translateY(0)] opacity-100"
-            : "pointer-events-none [transform:translateY(100%)] opacity-0"
+            : isFirstArtwork
+              ? "pointer-events-none [transform:translateY(100%)] opacity-0"
+              : "pointer-events-none [transform:translateY(0)] opacity-0"
         }`}
       >
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0">
@@ -233,51 +234,29 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         </div>
 
         <div className="relative h-[150%] w-full">
-          {deckPosts.map(({ post, index }) => {
-            const offset = index - selectedPostIndex;
-            const isSelected = offset === 0;
-            const translateY = offset < 0 ? "100%" : `${offset * 100}%`;
-            const scale = offset < 0 ? 0.975 : 1 - offset * 0.025;
-            const opacity = offset < 0 ? 0 : 1 - offset * 0.14;
-
-            return (
-              <Link
-                key={`deck-${post.slug}`}
-                aria-hidden={isSelected ? undefined : true}
-                className={`absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.77,0,0.175,1)] motion-reduce:transition-none ${
-                  isSelected
-                    ? "pointer-events-auto"
-                    : "pointer-events-none"
-                }`}
-                href={getPostHref(post)}
-                rel={post.slug ? undefined : "noopener noreferrer"}
-                style={{
-                  opacity,
-                  transform: `translateY(${translateY}) scale(${scale})`,
-                  transformOrigin: "center top",
-                  zIndex: 40 - offset,
-                }}
-                tabIndex={isSelected ? undefined : -1}
-                target={post.slug ? undefined : "_blank"}
-              >
-                {post.image ? (
-                  <Image
-                    alt={post.title}
-                    className="object-cover"
-                    fill
-                    loading={isSelected ? "eager" : "lazy"}
-                    sizes={IMAGE_SIZES}
-                    src={post.image}
-                    unoptimized
-                  />
-                ) : (
-                  <span className="flex h-full items-center justify-center px-8 text-center font-serif text-2xl text-muted">
-                    {post.title}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+          <Link
+            key={`deck-${selectedPost.slug}`}
+            className="absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg"
+            href={getPostHref(selectedPost)}
+            rel={selectedPost.slug ? undefined : "noopener noreferrer"}
+            target={selectedPost.slug ? undefined : "_blank"}
+          >
+            {selectedPost.image ? (
+              <Image
+                alt={selectedPost.title}
+                className="object-cover"
+                fill
+                loading="eager"
+                sizes={IMAGE_SIZES}
+                src={selectedPost.image}
+                unoptimized
+              />
+            ) : (
+              <span className="flex h-full items-center justify-center px-8 text-center font-serif text-2xl text-muted">
+                {selectedPost.title}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
     </section>
