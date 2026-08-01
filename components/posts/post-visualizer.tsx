@@ -18,6 +18,34 @@ interface PostsVisualizerProps {
 
 const IMAGE_SIZES = "(max-width: 768px) 92vw, 700px";
 
+interface TimelineMilestone {
+  date: string;
+  id: string;
+  label: string;
+  text: string;
+}
+
+const TIMELINE_MILESTONES: TimelineMilestone[] = [
+  {
+    date: "2026-02-01T00:00:00.000Z",
+    id: "first-developer-role",
+    label: "February 2026",
+    text: "Started my first developer role at a large technology company.",
+  },
+  {
+    date: "2025-07-01T00:00:00.000Z",
+    id: "became-a-father",
+    label: "July 2025",
+    text: "Became a father.",
+  },
+  {
+    date: "2024-09-01T00:00:00.000Z",
+    id: "founded-deltalytix",
+    label: "September 2024",
+    text: "Founded Deltalytix, which I still operate today.",
+  },
+];
+
 type SelectionDirection = "forward" | "backward" | null;
 
 interface SelectionState {
@@ -86,6 +114,25 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
       ),
     [posts]
+  );
+  const timelineEntries = useMemo(
+    () =>
+      [
+        ...sortedPosts.map((post, postIndex) => ({
+          date: post.pubDate,
+          kind: "post" as const,
+          post,
+          postIndex,
+        })),
+        ...TIMELINE_MILESTONES.map((milestone) => ({
+          date: milestone.date,
+          kind: "milestone" as const,
+          milestone,
+        })),
+      ].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      ),
+    [sortedPosts]
   );
 
   useEffect(() => {
@@ -200,17 +247,51 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
       </div>
 
       <ol className="relative px-1 pb-[calc(14rem+25vh)] before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
-        {sortedPosts.map((post, index) => {
-          const isSelected = index === selectedPostIndex;
+        {timelineEntries.map((entry) => {
+          if (entry.kind === "milestone") {
+            const { milestone } = entry;
+
+            return (
+              <li
+                key={milestone.id}
+                className="relative grid min-h-28 grid-cols-[1.5rem_1fr] items-center gap-3 sm:grid-cols-[1.75rem_1fr] sm:gap-4"
+                data-timeline-highlight={milestone.id}
+              >
+                <span
+                  aria-hidden="true"
+                  className="relative z-10 mx-auto size-3 rounded-full border-2 border-background bg-accent shadow-[0_0_0_1px_var(--accent)]"
+                />
+                <div className="my-4 rounded-xl border border-accent/20 bg-accent/[0.07] px-4 py-3.5">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-accent">
+                      Highlight
+                    </span>
+                    <time
+                      className="text-xs font-medium tabular-nums text-muted/60"
+                      dateTime={milestone.date}
+                    >
+                      {milestone.label}
+                    </time>
+                  </div>
+                  <p className="mt-1.5 font-serif text-lg leading-snug tracking-[-0.015em] text-foreground">
+                    {milestone.text}
+                  </p>
+                </div>
+              </li>
+            );
+          }
+
+          const { post, postIndex } = entry;
+          const isSelected = postIndex === selectedPostIndex;
 
           return (
             <li
-              key={`${post.slug}-${index}`}
+              key={`${post.slug}-${postIndex}`}
               ref={(node) => {
-                postRefs.current[index] = node;
+                postRefs.current[postIndex] = node;
               }}
               className="relative grid min-h-20 grid-cols-[1.5rem_1fr] items-center gap-3 sm:grid-cols-[1.75rem_1fr] sm:gap-4"
-              data-post-index={index}
+              data-post-index={postIndex}
             >
               <span
                 aria-hidden="true"
@@ -231,7 +312,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 onFocus={() =>
                   dispatchSelection({
                     type: "select",
-                    index,
+                    index: postIndex,
                     animate: false,
                   })
                 }
