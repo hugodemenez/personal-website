@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Header } from "../components/app-header";
+import { SafariThemeSampler } from "../components/safari-theme-sampler";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="antialiased bg-background text-foreground">
-        <span className="safari-theme-sampler" aria-hidden="true" />
+        <SafariThemeSampler />
         <div className="min-h-screen flex flex-col pb-[calc(6rem+env(safe-area-inset-bottom))]">
           <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 container grow">
             <Header />
