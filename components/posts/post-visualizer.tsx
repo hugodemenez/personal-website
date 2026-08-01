@@ -337,7 +337,8 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
       <div
         data-writing-deck
-        className={`fixed inset-x-4 bottom-0 z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden motion-reduce:transition-none ${
+        // The 150%-tall card deliberately continues beneath Safari's floating tab bar.
+        className={`fixed inset-x-4 bottom-0 z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-visible motion-reduce:transition-none ${
           isFirstArtwork
             ? "will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)]"
             : "transition-none"
