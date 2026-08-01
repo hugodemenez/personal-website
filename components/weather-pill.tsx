@@ -24,8 +24,26 @@ function InfoIcon() {
 
 export default function WeatherPill({ weather }: WeatherPillProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [localTime, setLocalTime] = useState(weather?.time ?? "local time");
   const rootRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const updateLocalTime = () => {
+      setLocalTime(
+        new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          timeZone: "Europe/Lisbon",
+        }).format(new Date())
+      );
+    };
+
+    updateLocalTime();
+    const interval = window.setInterval(updateLocalTime, 30_000);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -89,20 +107,19 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
         id="weather-details"
         aria-label="Lisbon weather details"
         aria-hidden={!isOpen}
-        className={`absolute right-0 top-[calc(100%+0.5rem)] z-40 w-56 origin-top-right rounded-xl border border-border bg-background px-3.5 py-3 text-left text-xs leading-relaxed text-muted shadow-lg transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
+        className={`absolute right-0 top-[calc(100%+0.5rem)] z-40 w-64 max-w-[calc(100vw-2rem)] origin-top-right rounded-xl border border-border bg-background px-3.5 py-3 text-left text-xs leading-relaxed text-muted shadow-lg transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
           isOpen
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "pointer-events-none -translate-y-1 scale-[0.97] opacity-0"
         }`}
         role="dialog"
       >
-        <span className="block font-medium text-foreground">
+        <span className="block text-foreground">
+          I am currently based in Lisbon. Here, it’s {localTime}
           {weather
-            ? `${weather.time} · ${weather.temperature}°C, ${weather.condition}`
-            : "Current weather is unavailable"}
-        </span>
-        <span className="mt-1 block text-muted/65">
-          Data by{" "}
+            ? `, and the weather is ${weather.condition.toLowerCase()} at ${weather.temperature}°C`
+            : ", though the current weather is unavailable"}
+          . The data comes from{" "}
           <a
             className="underline decoration-border underline-offset-2 transition-colors hover:text-foreground"
             href="https://open-meteo.com/"
@@ -112,6 +129,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
           >
             Open-Meteo
           </a>
+          .
         </span>
       </span>
     </span>
