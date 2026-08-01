@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import PreviousButton from "@/components/posts/post-previous-button";
 import NextButton from "@/components/posts/post-next-button";
 import { fetchSubstackPosts } from "@/server/substack-feed";
@@ -8,6 +7,8 @@ interface LayoutProps {
 }
 
 export default async function SlugLayout({ children }: LayoutProps) {
+  const posts = await fetchSubstackPosts();
+
   return (
     <>
       <div
@@ -17,22 +18,10 @@ export default async function SlugLayout({ children }: LayoutProps) {
         max-w-4xl mx-16 md:px-0 pt-3
         "
       >
-        <Suspense fallback={null}>
-          <PostsNavigation />
-        </Suspense>
+        <PreviousButton posts={posts} />
+        <NextButton posts={posts} />
       </div>
       {children}
-    </>
-  );
-}
-
-async function PostsNavigation() {
-  const posts = await fetchSubstackPosts();
-
-  return (
-    <>
-      <PreviousButton posts={posts} />
-      <NextButton posts={posts} />
     </>
   );
 }
