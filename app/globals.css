@@ -131,21 +131,21 @@ dialog::backdrop {
   from {
     filter: blur(6px);
     opacity: 0.55;
-    transform: translateY(18%) scale(0.94);
+    transform: translateX(18%) scale(0.96);
   }
   to {
     filter: blur(0);
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
 }
 
 @keyframes artworkStackUnder {
   from {
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
   to {
-    transform: translateY(-1.5%) scale(0.975);
+    transform: translateX(-1.5%) scale(0.975);
   }
 }
 
@@ -153,21 +153,21 @@ dialog::backdrop {
   from {
     filter: blur(0);
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
   to {
     filter: blur(6px);
     opacity: 0;
-    transform: translateY(18%) scale(0.94);
+    transform: translateX(18%) scale(0.96);
   }
 }
 
 @keyframes artworkDestackReveal {
   from {
-    transform: translateY(-1.5%) scale(0.975);
+    transform: translateX(-1.5%) scale(0.975);
   }
   to {
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
 }
 
@@ -175,8 +175,14 @@ dialog::backdrop {
 .artwork-stack-under,
 .artwork-destack-out,
 .artwork-destack-reveal {
-  transform-origin: center top;
+  transform-origin: center;
   will-change: filter, opacity, transform;
+}
+
+.writing-deck {
+  --writing-deck-height: clamp(10rem, 38vw, 14rem);
+  top: calc(75dvh - var(--writing-deck-height) / 2);
+  height: var(--writing-deck-height);
 }
 
 .artwork-stack-in,

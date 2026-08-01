@@ -207,8 +207,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     preloadBatchStart,
     preloadBatchStart + 3
   );
-  const isFirstArtwork = selectedPostIndex === 0;
-
   const returnToWritingStart = (event: MouseEvent<HTMLButtonElement>) => {
     const shouldReduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -337,17 +335,10 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
       <div
         data-writing-deck
-        // The 150%-tall card deliberately continues beneath Safari's floating tab bar.
-        className={`fixed inset-x-4 bottom-0 z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-visible motion-reduce:transition-none ${
-          isFirstArtwork
-            ? "will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)]"
-            : "transition-none"
-        } ${
+        className={`writing-deck fixed inset-x-4 z-30 mx-auto max-w-xl overflow-visible will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
           isWritingVisible
-            ? "[transform:translateY(0)] opacity-100"
-            : isFirstArtwork
-              ? "pointer-events-none [transform:translateY(100%)] opacity-0"
-              : "pointer-events-none [transform:translateY(0)] opacity-0"
+            ? "[transform:translateX(0)] opacity-100"
+            : "pointer-events-none [transform:translateX(calc(100%+1rem))] opacity-0"
         }`}
       >
         <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0">
@@ -368,7 +359,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           )}
         </div>
 
-        <div className="relative h-[150%] w-full">
+        <div className="relative h-full w-full">
           {previousPost ? (
             <Link
               key={`previous-${previousPost.slug}-${selection.transitionId}`}
