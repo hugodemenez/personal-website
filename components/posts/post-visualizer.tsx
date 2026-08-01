@@ -6,6 +6,7 @@ import {
   type MouseEvent,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -16,6 +17,46 @@ interface PostsVisualizerProps {
 }
 
 const IMAGE_SIZES = "(max-width: 768px) 92vw, 700px";
+
+type SelectionDirection = "forward" | "backward" | null;
+
+interface SelectionState {
+  currentIndex: number;
+  previousIndex: number | null;
+  direction: SelectionDirection;
+  transitionId: number;
+}
+
+type SelectionAction =
+  | { type: "reset" }
+  | { type: "select"; index: number; animate?: boolean };
+
+const initialSelection: SelectionState = {
+  currentIndex: 0,
+  previousIndex: null,
+  direction: null,
+  transitionId: 0,
+};
+
+function selectionReducer(
+  state: SelectionState,
+  action: SelectionAction
+): SelectionState {
+  if (action.type === "reset") return initialSelection;
+  if (action.index === state.currentIndex) return state;
+
+  return {
+    currentIndex: action.index,
+    previousIndex: action.animate === false ? null : state.currentIndex,
+    direction:
+      action.animate === false
+        ? null
+        : action.index > state.currentIndex
+          ? "forward"
+          : "backward",
+    transitionId: state.transitionId + 1,
+  };
+}
 
 function getPostHref(post: SubstackPost): string {
   return post.slug ? `/posts/${post.slug}` : post.link;
@@ -31,7 +72,10 @@ function formatPostDate(pubDate: string): string {
 }
 
 export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
-  const [selectedPostIndex, setSelectedPostIndex] = useState(0);
+  const [selection, dispatchSelection] = useReducer(
+    selectionReducer,
+    initialSelection
+  );
   const [isWritingVisible, setIsWritingVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const postRefs = useRef<Array<HTMLLIElement | null>>([]);
@@ -45,7 +89,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   );
 
   useEffect(() => {
-    setSelectedPostIndex(0);
+    dispatchSelection({ type: "reset" });
   }, [posts]);
 
   useEffect(() => {
@@ -81,9 +125,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         }
       });
 
-      setSelectedPostIndex((current) =>
-        current === nearestIndex ? current : nearestIndex
-      );
+      dispatchSelection({ type: "select", index: nearestIndex });
     };
 
     const scheduleSelection = () => {
@@ -104,7 +146,12 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
   if (!sortedPosts.length) return null;
 
+  const selectedPostIndex = selection.currentIndex;
   const selectedPost = sortedPosts[selectedPostIndex] ?? sortedPosts[0];
+  const previousPost =
+    selection.previousIndex === null
+      ? null
+      : sortedPosts[selection.previousIndex];
   const preloadBatchStart =
     selectedPostIndex === 0
       ? 1
@@ -181,7 +228,13 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     : "font-normal text-muted/65 hover:text-foreground"
                 }`}
                 href={getPostHref(post)}
-                onFocus={() => setSelectedPostIndex(index)}
+                onFocus={() =>
+                  dispatchSelection({
+                    type: "select",
+                    index,
+                    animate: false,
+                  })
+                }
                 rel={post.slug ? undefined : "noopener noreferrer"}
                 target={post.slug ? undefined : "_blank"}
               >
@@ -234,9 +287,46 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         </div>
 
         <div className="relative h-[150%] w-full">
+          {previousPost ? (
+            <Link
+              key={`previous-${previousPost.slug}-${selection.transitionId}`}
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg ${
+                selection.direction === "forward"
+                  ? "artwork-stack-under z-10"
+                  : "artwork-destack-out z-20"
+              }`}
+              href={getPostHref(previousPost)}
+              rel={previousPost.slug ? undefined : "noopener noreferrer"}
+              tabIndex={-1}
+              target={previousPost.slug ? undefined : "_blank"}
+            >
+              {previousPost.image ? (
+                <Image
+                  alt=""
+                  className="object-cover"
+                  fill
+                  sizes={IMAGE_SIZES}
+                  src={previousPost.image}
+                  unoptimized
+                />
+              ) : (
+                <span className="flex h-full items-center justify-center px-8 text-center font-serif text-2xl text-muted">
+                  {previousPost.title}
+                </span>
+              )}
+            </Link>
+          ) : null}
+
           <Link
-            key={`deck-${selectedPost.slug}`}
-            className="absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg"
+            key={`deck-${selectedPost.slug}-${selection.transitionId}`}
+            className={`absolute inset-0 overflow-hidden rounded-t-2xl border border-border bg-surface shadow-lg ${
+              selection.direction === "forward"
+                ? "artwork-stack-in z-20"
+                : selection.direction === "backward"
+                  ? "artwork-destack-reveal z-10"
+                  : "z-10"
+            }`}
             href={getPostHref(selectedPost)}
             rel={selectedPost.slug ? undefined : "noopener noreferrer"}
             target={selectedPost.slug ? undefined : "_blank"}
