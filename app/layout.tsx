@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light dark",
-  height: "device-height",
   viewportFit: "cover",
 };
 
@@ -28,14 +27,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="antialiased bg-background text-foreground">
-        <div className="flex min-h-lvh flex-col">
-          <main className="container mx-auto max-w-4xl grow px-4 pt-12 sm:px-8">
-            <Header />
-            <div className="mt-4 sm:mt-12  max-w-xl mx-auto">
-              {children}
-            </div>
-          </main>
-        </div>
+        <main className="container mx-auto min-h-lvh max-w-4xl overflow-visible px-4 pt-12 sm:px-8">
+          <Header />
+          <div className="mx-auto mt-4 max-w-xl overflow-visible sm:mt-12">
+            {children}
+          </div>
+        </main>
       </body>
     </html>
   );
