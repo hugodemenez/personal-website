@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="mx-auto py-8">
+    <main className="mx-auto max-w-xl px-4 pb-8 pt-16 sm:px-0 sm:pt-24">
     <div className="mb-8">
         <BackButton />
       </div>
@@ -19,6 +19,6 @@ export default function NotFound() {
           Return to Home
         </Link>
       </article>
-    </div>
+    </main>
   );
 }

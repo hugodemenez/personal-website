@@ -224,7 +224,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     <section
       ref={sectionRef}
       aria-labelledby="posts-heading"
-      className="relative w-full"
+      className="relative mx-auto mt-8 w-full max-w-xl overflow-visible px-4 sm:px-0"
     >
       <div className="sticky top-0 z-20 -mx-2 flex items-baseline justify-between gap-4 bg-background/90 px-2 py-4 backdrop-blur-sm">
         <h2

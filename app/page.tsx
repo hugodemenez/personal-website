@@ -4,11 +4,13 @@ import { Suspense } from "react";
 
 export default async function Home() {
   return (
-    <div className="mt-4 flex flex-col gap-8 overflow-visible">
-      <Suspense fallback={null}>
-        <GeneratedContent />
-        <SubstackPosts />
-      </Suspense>
-    </div>
+    <>
+      <main className="mx-auto max-w-xl overflow-visible px-4 pt-16 sm:px-0 sm:pt-24">
+        <Suspense fallback={null}>
+          <GeneratedContent />
+        </Suspense>
+      </main>
+      <SubstackPosts />
+    </>
   );
 }

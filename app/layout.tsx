@@ -27,12 +27,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="antialiased bg-background text-foreground">
-        <main className="container mx-auto min-h-lvh max-w-4xl overflow-visible px-4 pt-12 sm:px-8">
-          <Header />
-          <div className="mx-auto mt-4 max-w-xl overflow-visible sm:mt-12">
-            {children}
-          </div>
-        </main>
+        <Header />
+        {children}
       </body>
     </html>
   );

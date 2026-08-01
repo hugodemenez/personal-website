@@ -45,14 +45,14 @@
 html {
   background-color: var(--background);
   color-scheme: light dark;
-  min-height: 100%;
+  min-height: 100vh;
   min-width: 360px;
   overflow: visible;
   scrollbar-gutter: stable;
 }
 
 body {
-  min-height: 100%;
+  min-height: 100vh;
   overflow: visible;
   text-rendering: optimizeLegibility;
   background-color: var(--background);
