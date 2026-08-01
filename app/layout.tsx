@@ -12,28 +12,11 @@ export const metadata: Metadata = {
     template: "%s | Hugo Demenez",
   },
   description: "Developer, trader, and entrepreneur.",
-  manifest: "/manifest.webmanifest",
-  // Added to the Home Screen, the page runs the full height of the display:
-  // no bottom toolbar, and a translucent status bar with content behind it.
-  appleWebApp: {
-    capable: true,
-    title: "Hugo Demenez",
-    statusBarStyle: "black-translucent",
-  },
-  other: {
-    // Next emits the standardized mobile-web-app-capable; iOS before 16.4
-    // only recognizes the Apple-prefixed spelling.
-    "apple-mobile-web-app-capable": "yes",
-  },
 };
 
 export const viewport: Viewport = {
-  // Safari tints its status bar and bottom toolbar with these instead of
-  // falling back to its own opaque chrome, so the page reads edge to edge.
-  themeColor: [
-    { color: "#FDFBF7", media: "(prefers-color-scheme: light)" },
-    { color: "#14120b", media: "(prefers-color-scheme: dark)" },
-  ],
+  // Deliberately no themeColor: declaring one makes Safari paint solid bars
+  // over its chrome. Left unset, it samples the page and runs edge to edge.
   viewportFit: "cover",
 };
 
@@ -45,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="antialiased bg-background text-foreground">
+        <span className="safari-theme-sampler" aria-hidden="true" />
         <div className="min-h-screen flex flex-col pb-[calc(6rem+env(safe-area-inset-bottom))]">
           <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 container grow">
             <Header />
