@@ -133,44 +133,26 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
   }
 });
 
-test("resolves whole-degree Shortcut coordinates from the nearby city", async () => {
+test("rejects whole-degree coordinates instead of guessing a location", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
   process.env.GLOBAL_CONFIG_ID = "ecfg_test";
   process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
 
   const originalFetch = globalThis.fetch;
-  let sentBody: unknown;
-  globalThis.fetch = async (input, init) => {
-    if (String(input).startsWith("https://geocoding-api.open-meteo.com/")) {
-      return Response.json({
-        results: [
-          {
-            name: "Lisboa",
-            latitude: 38.72509,
-            longitude: -9.1498,
-            country: "Portugal",
-          },
-        ],
-      });
-    }
-    sentBody = JSON.parse(String(init?.body));
-    return new Response(null, { status: 200 });
+  globalThis.fetch = async () => {
+    throw new Error("Coarse coordinates must not reach storage");
   };
 
   try {
     const response = await POST(
       request({ city: "Lisboa", latitude: 38, longitude: -9 })
     );
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 400);
     assert.deepEqual(
-      (sentBody as { items: Array<{ value: { latitude: number; longitude: number } }> })
-        .items[0].value,
+      await response.json(),
       {
-        version: 1,
-        city: "Lisboa",
-        latitude: 38.73,
-        longitude: -9.15,
-        updatedAt: (await response.json()).location.updatedAt,
+        ok: false,
+        error: "Coordinates must include decimal precision",
       }
     );
   } finally {
