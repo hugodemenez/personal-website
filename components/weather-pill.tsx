@@ -118,7 +118,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
         id="weather-details"
         aria-label={`${weather?.location ?? "Lisbon"} weather details`}
         aria-hidden={!isOpen}
-        className={`absolute right-0 top-[calc(100%+0.5rem)] z-40 w-64 max-w-[calc(100vw-2rem)] origin-top-right rounded-xl border border-border bg-background px-3.5 py-3 text-left text-xs leading-relaxed text-muted shadow-lg transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
+        className={`absolute left-0 right-auto top-[calc(100%+0.5rem)] z-40 w-64 max-w-[calc(100vw-2rem)] origin-top-left rounded-xl border border-border bg-background px-3.5 py-3 text-left text-xs leading-relaxed text-muted shadow-lg transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none sm:left-auto sm:right-0 sm:origin-top-right ${
           isOpen
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
             : "pointer-events-none -translate-y-1 scale-[0.97] opacity-0"

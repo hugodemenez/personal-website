@@ -1,7 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ViewTransition } from "react";
 import { Header } from "../components/app-header";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -27,9 +26,7 @@ export default function RootLayout({
           <main className="max-w-4xl mx-auto px-4 sm:px-8 py-12 container grow">
             <Header />
             <div className="mt-4 sm:mt-12  max-w-xl mx-auto">
-              <ViewTransition>
-                {children}
-              </ViewTransition>
+              {children}
             </div>
           </main>
         </div>
