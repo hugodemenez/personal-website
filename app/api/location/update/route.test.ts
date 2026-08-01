@@ -133,36 +133,30 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
   }
 });
 
-test("accepts valid whole-number coordinates", async () => {
+test("rejects coordinates without decimal precision", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
   process.env.GLOBAL_CONFIG_ID = "ecfg_test";
   process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
 
   const originalFetch = globalThis.fetch;
-  let sentBody: unknown;
-  globalThis.fetch = async (_input, init) => {
-    sentBody = JSON.parse(String(init?.body));
-    return new Response(null, { status: 200 });
+  globalThis.fetch = async () => {
+    throw new Error("Unvalidated coordinates must not reach storage");
   };
 
   try {
-    const response = await POST(
+    const numericResponse = await POST(
       request({ city: "Lisboa", latitude: 38, longitude: -9 })
     );
-    assert.equal(response.status, 200);
-    const body = await response.json();
-    assert.equal(body.ok, true);
-    assert.deepEqual(
-      (sentBody as { items: Array<{ value: { latitude: number; longitude: number } }> })
-        .items[0].value,
-      {
-        version: 1,
-        city: "Lisboa",
-        latitude: 38,
-        longitude: -9,
-        updatedAt: body.location.updatedAt,
-      }
+    assert.equal(numericResponse.status, 400);
+    assert.deepEqual(await numericResponse.json(), {
+      ok: false,
+      error: "Coordinates must include decimal precision",
+    });
+
+    const textResponse = await POST(
+      request({ city: "Lisboa", latitude: "38", longitude: "-9" })
     );
+    assert.equal(textResponse.status, 400);
   } finally {
     globalThis.fetch = originalFetch;
   }
