@@ -133,26 +133,34 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
   }
 });
 
-test("rejects whole-degree coordinates instead of guessing a location", async () => {
+test("accepts valid whole-number coordinates", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
   process.env.GLOBAL_CONFIG_ID = "ecfg_test";
   process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
 
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => {
-    throw new Error("Coarse coordinates must not reach storage");
+  let sentBody: unknown;
+  globalThis.fetch = async (_input, init) => {
+    sentBody = JSON.parse(String(init?.body));
+    return new Response(null, { status: 200 });
   };
 
   try {
     const response = await POST(
       request({ city: "Lisboa", latitude: 38, longitude: -9 })
     );
-    assert.equal(response.status, 400);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.ok, true);
     assert.deepEqual(
-      await response.json(),
+      (sentBody as { items: Array<{ value: { latitude: number; longitude: number } }> })
+        .items[0].value,
       {
-        ok: false,
-        error: "Coordinates must include decimal precision",
+        version: 1,
+        city: "Lisboa",
+        latitude: 38,
+        longitude: -9,
+        updatedAt: body.location.updatedAt,
       }
     );
   } finally {
