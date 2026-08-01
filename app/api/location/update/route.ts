@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  createEdgeConfigWriteRequest,
+  createGlobalConfigWriteRequest,
   hasValidBearerToken,
   parseLocationUpdate,
 } from "@/server/location-data";
@@ -41,10 +41,10 @@ export async function POST(request: Request) {
     return json({ ok: false, error: "Invalid location payload" }, 400);
   }
 
-  const writeRequest = createEdgeConfigWriteRequest(location, {
-    EDGE_CONFIG_ID: process.env.EDGE_CONFIG_ID,
-    EDGE_CONFIG_WRITE_TOKEN: process.env.EDGE_CONFIG_WRITE_TOKEN,
-    EDGE_CONFIG_TEAM_ID: process.env.EDGE_CONFIG_TEAM_ID,
+  const writeRequest = createGlobalConfigWriteRequest(location, {
+    GLOBAL_CONFIG_ID: process.env.GLOBAL_CONFIG_ID,
+    GLOBAL_CONFIG_WRITE_TOKEN: process.env.GLOBAL_CONFIG_WRITE_TOKEN,
+    GLOBAL_CONFIG_TEAM_ID: process.env.GLOBAL_CONFIG_TEAM_ID,
   });
   if (!writeRequest) {
     return json({ ok: false, error: "Location storage unavailable" }, 503);
@@ -52,9 +52,9 @@ export async function POST(request: Request) {
 
   try {
     const response = await fetch(writeRequest.url, writeRequest.init);
-    if (!response.ok) throw new Error("Edge Config write failed");
+    if (!response.ok) throw new Error("Global Config write failed");
   } catch {
-    console.error("Unable to update the current location in Edge Config");
+    console.error("Unable to update the current location in Global Config");
     return json({ ok: false, error: "Location storage unavailable" }, 503);
   }
 

@@ -1,4 +1,4 @@
-import { createClient } from "@vercel/edge-config";
+import { createClient } from "@vercel/global-config";
 import { cacheLife } from "next/cache";
 import {
   CURRENT_LOCATION_KEY,
@@ -72,16 +72,16 @@ async function readCurrentLocation(): Promise<StoredLocation | null> {
   "use cache";
   cacheLife("seconds");
 
-  if (!process.env.EDGE_CONFIG) return null;
+  if (!process.env.GLOBAL_CONFIG) return null;
 
   try {
-    const edgeConfig = createClient(process.env.EDGE_CONFIG, {
+    const globalConfig = createClient(process.env.GLOBAL_CONFIG, {
       cache: "no-store",
       disableDevelopmentCache: true,
     });
-    return parseStoredLocation(await edgeConfig.get(CURRENT_LOCATION_KEY));
+    return parseStoredLocation(await globalConfig.get(CURRENT_LOCATION_KEY));
   } catch {
-    console.error("Unable to read the current location from Edge Config");
+    console.error("Unable to read the current location from Global Config");
     return null;
   }
 }

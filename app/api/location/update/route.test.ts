@@ -48,17 +48,17 @@ test("rejects malformed JSON and invalid coordinates", async () => {
   );
 });
 
-test("returns 503 when Edge Config is unavailable", async () => {
+test("returns 503 when Global Config is unavailable", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
-  delete process.env.EDGE_CONFIG_ID;
-  delete process.env.EDGE_CONFIG_WRITE_TOKEN;
+  delete process.env.GLOBAL_CONFIG_ID;
+  delete process.env.GLOBAL_CONFIG_WRITE_TOKEN;
   assert.equal((await POST(request(validPayload))).status, 503);
 });
 
 test("writes the rounded location and returns its public summary", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
-  process.env.EDGE_CONFIG_ID = "ecfg_test";
-  process.env.EDGE_CONFIG_WRITE_TOKEN = "write-token";
+  process.env.GLOBAL_CONFIG_ID = "ecfg_test";
+  process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
 
   const originalFetch = globalThis.fetch;
   let sentBody: unknown;
@@ -94,10 +94,10 @@ test("writes the rounded location and returns its public summary", async () => {
   }
 });
 
-test("returns 503 when the Edge Config write fails", async () => {
+test("returns 503 when the Global Config write fails", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
-  process.env.EDGE_CONFIG_ID = "ecfg_test";
-  process.env.EDGE_CONFIG_WRITE_TOKEN = "write-token";
+  process.env.GLOBAL_CONFIG_ID = "ecfg_test";
+  process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(null, { status: 500 });
 

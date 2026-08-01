@@ -32,19 +32,19 @@ Deployed on [Vercel](https://vercel.com).
 ### Current location
 
 The location pill reads one city-level `current_location` record from Vercel
-Edge Config and combines it with current conditions from Open-Meteo. Location
-reads expire within 60 seconds; weather is cached separately by rounded
-coordinates for several minutes. If the store is unavailable or contains an
-invalid value, Lisbon is used as the home base.
+Global Config (formerly Edge Config) and combines it with current conditions
+from Open-Meteo. Location reads expire within 60 seconds; weather is cached
+separately by rounded coordinates for several minutes. If the store is
+unavailable or contains an invalid value, Lisbon is used as the home base.
 
-Create an Edge Config store in Vercel, connect it to this project, and configure:
+Create a Global Config store in Vercel, connect it to this project, and configure:
 
 | Variable | Purpose |
 | --- | --- |
-| `EDGE_CONFIG` | Read connection string injected by the Edge Config connection |
-| `EDGE_CONFIG_ID` | Store ID used by the update route |
-| `EDGE_CONFIG_WRITE_TOKEN` | Vercel access token used only by the server-side write route |
-| `EDGE_CONFIG_TEAM_ID` | Optional team ID for a team-owned store |
+| `GLOBAL_CONFIG` | Read connection string injected by the Global Config connection |
+| `GLOBAL_CONFIG_ID` | Store ID used by the update route |
+| `GLOBAL_CONFIG_WRITE_TOKEN` | Sensitive, project-scoped Vercel access token used only by the server-side write route |
+| `GLOBAL_CONFIG_TEAM_ID` | Optional team ID for a team-owned store |
 | `LOCATION_UPDATE_SECRET` | A separate, random secret known by the iPhone Shortcut |
 
 The initial store item is optional. When present, its key is
@@ -63,8 +63,9 @@ The initial store item is optional. When present, its key is
 
 The protected endpoint accepts `POST /api/location/update` with a bearer token.
 It validates city and country names, rounds coordinates to two decimals, and
-upserts the record through Vercel's authenticated Edge Config API. Never expose
-`EDGE_CONFIG_WRITE_TOKEN` to the Shortcut.
+upserts the record through Vercel's authenticated Global Config API. Never expose
+`GLOBAL_CONFIG_WRITE_TOKEN` to the Shortcut. Give the token access only to this
+project, set an expiration, and record its rotation date in Vercel.
 
 #### iPhone Shortcut
 
@@ -73,7 +74,7 @@ Create a Shortcut named **Update website location**:
 1. Add **Get Current Location**.
 2. Read **City**, **Country**, **Latitude**, and **Longitude** from that location.
 3. Add **Get Contents of URL** using
-   `https://personal-website-hugodemenez.vercel.app/api/location/update`.
+   `https://www.hugodemenez.fr/api/location/update`.
 4. Choose `POST`, set the request body to JSON, and add the four fields as
    `city`, `country`, `latitude`, and `longitude`.
 5. Add an `Authorization` header whose value is

@@ -12,7 +12,7 @@ const paris: StoredLocation = {
   updatedAt: "2026-08-01T08:00:00.000Z",
 };
 
-test("uses Lisbon as the home base when Edge Config has no valid record", () => {
+test("uses Lisbon as the home base when Global Config has no valid record", () => {
   assert.deepEqual(composeLocationWeather(null, null), {
     location: "Lisbon",
     country: "Portugal",

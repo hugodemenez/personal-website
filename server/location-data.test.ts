@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  createEdgeConfigWriteRequest,
+  createGlobalConfigWriteRequest,
   hasValidBearerToken,
   parseLocationUpdate,
   parseStoredLocation,
@@ -74,10 +74,10 @@ test("checks bearer tokens and produces the authenticated batch upsert", () => {
     now
   );
   assert.ok(location);
-  const request = createEdgeConfigWriteRequest(location, {
-    EDGE_CONFIG_ID: "ecfg_test",
-    EDGE_CONFIG_WRITE_TOKEN: "write-token",
-    EDGE_CONFIG_TEAM_ID: "team_test",
+  const request = createGlobalConfigWriteRequest(location, {
+    GLOBAL_CONFIG_ID: "ecfg_test",
+    GLOBAL_CONFIG_WRITE_TOKEN: "write-token",
+    GLOBAL_CONFIG_TEAM_ID: "team_test",
   });
   assert.ok(request);
   assert.equal(

@@ -10,10 +10,10 @@ export interface StoredLocation {
   updatedAt: string;
 }
 
-interface EdgeConfigWriteEnvironment {
-  EDGE_CONFIG_ID?: string;
-  EDGE_CONFIG_WRITE_TOKEN?: string;
-  EDGE_CONFIG_TEAM_ID?: string;
+interface GlobalConfigWriteEnvironment {
+  GLOBAL_CONFIG_ID?: string;
+  GLOBAL_CONFIG_WRITE_TOKEN?: string;
+  GLOBAL_CONFIG_TEAM_ID?: string;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -87,19 +87,19 @@ export function hasValidBearerToken(
   return supplied.length === expected.length && timingSafeEqual(supplied, expected);
 }
 
-export function createEdgeConfigWriteRequest(
+export function createGlobalConfigWriteRequest(
   location: StoredLocation,
-  environment: EdgeConfigWriteEnvironment
+  environment: GlobalConfigWriteEnvironment
 ): { url: string; init: RequestInit } | null {
-  const id = environment.EDGE_CONFIG_ID;
-  const token = environment.EDGE_CONFIG_WRITE_TOKEN;
+  const id = environment.GLOBAL_CONFIG_ID;
+  const token = environment.GLOBAL_CONFIG_WRITE_TOKEN;
   if (!id || !token) return null;
 
   const url = new URL(
     `https://api.vercel.com/v1/edge-config/${encodeURIComponent(id)}/items`
   );
-  if (environment.EDGE_CONFIG_TEAM_ID) {
-    url.searchParams.set("teamId", environment.EDGE_CONFIG_TEAM_ID);
+  if (environment.GLOBAL_CONFIG_TEAM_ID) {
+    url.searchParams.set("teamId", environment.GLOBAL_CONFIG_TEAM_ID);
   }
 
   return {
