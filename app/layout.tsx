@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Header } from "../components/app-header";
 
@@ -12,6 +12,14 @@ export const metadata: Metadata = {
     template: "%s | Hugo Demenez",
   },
   description: "Developer, trader, and entrepreneur.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { color: "#FDFBF7", media: "(prefers-color-scheme: light)" },
+    { color: "#14120b", media: "(prefers-color-scheme: dark)" },
+  ],
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
