@@ -1,6 +1,7 @@
-import { getLisbonWeather } from "@/server/location";
+import { getCurrentLocationWeather } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
 import WeatherPill from "@/components/weather-pill";
+import { cacheLife } from "next/cache";
 
 function XIcon() {
   return (
@@ -44,8 +45,11 @@ const musicLinkClass =
   "font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent";
 
 export default async function GeneratedContent() {
+  "use cache";
+  cacheLife("seconds");
+
   const [weather, spotify] = await Promise.all([
-    getLisbonWeather(),
+    getCurrentLocationWeather(),
     getSpotifyData(),
   ]);
   const track = spotify.recentTrack;

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { LocationWeather } from "@/server/location";
+import { formatLocalTime, isLocationStale } from "@/lib/location-display";
 
 interface WeatherPillProps {
   weather: LocationWeather | null;
@@ -24,26 +25,36 @@ function InfoIcon() {
 
 export default function WeatherPill({ weather }: WeatherPillProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [localTime, setLocalTime] = useState(weather?.time ?? "local time");
+  const [localTime, setLocalTime] = useState<string | null>(null);
+  const [isStale, setIsStale] = useState(false);
   const rootRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const updateLocalTime = () => {
-      setLocalTime(
-        new Intl.DateTimeFormat("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          timeZone: "Europe/Lisbon",
-        }).format(new Date())
-      );
+      setLocalTime(formatLocalTime(weather?.timeZone ?? null));
     };
 
     updateLocalTime();
     const interval = window.setInterval(updateLocalTime, 30_000);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [weather?.timeZone]);
+
+  useEffect(() => {
+    setIsStale(isLocationStale(weather?.updatedAt ?? null, new Date()));
+  }, [weather?.updatedAt]);
+
+  const updatedDate = weather?.updatedAt
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+      }).format(Date.parse(weather.updatedAt))
+    : null;
+  const weatherDescription =
+    weather?.condition && weather.temperature !== null
+      ? `${weather.condition.toLowerCase()} at ${weather.temperature}°C`
+      : null;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -79,13 +90,13 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
         className="inline-flex h-6 items-center gap-1 rounded-full bg-surface pl-2.5 pr-0.5 text-[0.625rem] tracking-[-0.01em] text-muted"
       >
         <span className="whitespace-nowrap">{weather?.location ?? "Lisbon"}</span>
-        {weather ? (
+        {weather?.temperature !== null ? (
           <>
             <span aria-hidden="true" className="text-foreground/25">
               •
             </span>
             <span className="whitespace-nowrap tabular-nums">
-              {weather.temperature}°C
+              {weather?.temperature}°C
             </span>
           </>
         ) : null}
@@ -94,7 +105,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
           aria-controls="weather-details"
           aria-expanded={isOpen}
           aria-haspopup="dialog"
-          aria-label="About the Lisbon weather"
+          aria-label={`About the weather in ${weather?.location ?? "Lisbon"}`}
           className="relative grid size-5 shrink-0 place-items-center rounded-full text-muted/55 transition-[background-color,color,transform] duration-150 hover:bg-background/70 hover:text-foreground active:scale-[0.94] motion-reduce:transition-none after:absolute after:-inset-3 after:content-['']"
           onClick={() => setIsOpen((open) => !open)}
           type="button"
@@ -105,7 +116,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
 
       <span
         id="weather-details"
-        aria-label="Lisbon weather details"
+        aria-label={`${weather?.location ?? "Lisbon"} weather details`}
         aria-hidden={!isOpen}
         className={`absolute right-0 top-[calc(100%+0.5rem)] z-40 w-64 max-w-[calc(100vw-2rem)] origin-top-right rounded-xl border border-border bg-background px-3.5 py-3 text-left text-xs leading-relaxed text-muted shadow-lg transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
           isOpen
@@ -115,11 +126,17 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
         role="dialog"
       >
         <span className="block text-foreground">
-          I am currently based in Lisbon. Here, it’s {localTime}
-          {weather
-            ? `, and the weather is ${weather.condition.toLowerCase()} at ${weather.temperature}°C`
-            : ", though the current weather is unavailable"}
-          . The data comes from{" "}
+          {weather?.isHomeBase
+            ? "My home base is Lisbon."
+            : isStale
+              ? `My last known location is ${weather?.location ?? "Lisbon"}, updated ${updatedDate}.`
+              : `I’m currently in ${weather?.location ?? "Lisbon"}.`}{" "}
+          {localTime && weatherDescription
+            ? `Here, it’s ${localTime}, and the weather is ${weatherDescription}.`
+            : localTime
+              ? `Here, it’s ${localTime}, though the current weather is unavailable.`
+              : "The current local time and weather are unavailable."}{" "}
+          Weather data comes from{" "}
           <a
             className="underline decoration-border underline-offset-2 transition-colors hover:text-foreground"
             href="https://open-meteo.com/"

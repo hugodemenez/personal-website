@@ -1,21 +1,59 @@
+import { createClient } from "@vercel/edge-config";
 import { cacheLife } from "next/cache";
+import {
+  CURRENT_LOCATION_KEY,
+  parseStoredLocation,
+  type StoredLocation,
+} from "@/server/location-data";
 
-const LISBON_WEATHER_URL =
-  "https://api.open-meteo.com/v1/forecast?latitude=38.7223&longitude=-9.1393&current=temperature_2m,weather_code&timezone=auto";
+const LISBON_HOME: StoredLocation = {
+  version: 1,
+  city: "Lisbon",
+  country: "Portugal",
+  latitude: 38.72,
+  longitude: -9.14,
+  updatedAt: "",
+};
 
 interface OpenMeteoResponse {
+  timezone?: string;
   current?: {
-    time?: string;
     temperature_2m?: number;
     weather_code?: number;
   };
 }
 
-export interface LocationWeather {
-  location: string;
-  time: string;
+interface CurrentWeather {
+  timeZone: string;
   temperature: number;
   condition: string;
+}
+
+export interface LocationWeather {
+  location: string;
+  country: string | null;
+  timeZone: string | null;
+  temperature: number | null;
+  condition: string | null;
+  updatedAt: string | null;
+  isHomeBase: boolean;
+}
+
+export function composeLocationWeather(
+  savedLocation: StoredLocation | null,
+  weather: CurrentWeather | null
+): LocationWeather {
+  const location = savedLocation ?? LISBON_HOME;
+
+  return {
+    location: location.city,
+    country: location.country ?? null,
+    timeZone: weather?.timeZone ?? (!savedLocation ? "Europe/Lisbon" : null),
+    temperature: weather?.temperature ?? null,
+    condition: weather?.condition ?? null,
+    updatedAt: savedLocation?.updatedAt ?? null,
+    isHomeBase: !savedLocation,
+  };
 }
 
 function describeWeatherCode(code: number): string {
@@ -30,46 +68,74 @@ function describeWeatherCode(code: number): string {
   return "Thunderstorms";
 }
 
-function formatLocalTime(value: string): string {
-  const match = value.match(/T(\d{2}):(\d{2})/);
-  if (!match) return "Local time";
+async function readCurrentLocation(): Promise<StoredLocation | null> {
+  "use cache";
+  cacheLife("seconds");
 
-  const hour = Number(match[1]);
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const twelveHour = hour % 12 || 12;
-  return `${twelveHour}:${match[2]} ${suffix}`;
+  if (!process.env.EDGE_CONFIG) return null;
+
+  try {
+    const edgeConfig = createClient(process.env.EDGE_CONFIG, {
+      cache: "no-store",
+      disableDevelopmentCache: true,
+    });
+    return parseStoredLocation(await edgeConfig.get(CURRENT_LOCATION_KEY));
+  } catch {
+    console.error("Unable to read the current location from Edge Config");
+    return null;
+  }
 }
 
-export async function getLisbonWeather(): Promise<LocationWeather | null> {
+async function getWeatherForCoordinates(
+  latitude: number,
+  longitude: number
+): Promise<CurrentWeather | null> {
   "use cache";
   cacheLife("minutes");
 
-  try {
-    const response = await fetch(LISBON_WEATHER_URL, {
-      headers: { accept: "application/json" },
-    });
+  const params = new URLSearchParams({
+    latitude: latitude.toFixed(2),
+    longitude: longitude.toFixed(2),
+    current: "temperature_2m,weather_code",
+    timezone: "auto",
+  });
 
-    if (!response.ok) throw new Error(`Open-Meteo returned ${response.status}`);
+  try {
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?${params.toString()}`,
+      { headers: { accept: "application/json" } }
+    );
+    if (!response.ok) throw new Error("Weather service unavailable");
 
     const data = (await response.json()) as OpenMeteoResponse;
-    const current = data.current;
-
     if (
-      !current?.time ||
-      typeof current.temperature_2m !== "number" ||
-      typeof current.weather_code !== "number"
+      !data.timezone ||
+      typeof data.current?.temperature_2m !== "number" ||
+      typeof data.current.weather_code !== "number"
     ) {
-      throw new Error("Open-Meteo returned incomplete current conditions");
+      throw new Error("Weather service returned incomplete conditions");
     }
 
     return {
-      location: "Lisbon",
-      time: formatLocalTime(current.time),
-      temperature: Math.round(current.temperature_2m),
-      condition: describeWeatherCode(current.weather_code),
+      timeZone: data.timezone,
+      temperature: Math.round(data.current.temperature_2m),
+      condition: describeWeatherCode(data.current.weather_code),
     };
-  } catch (error) {
-    console.error("Unable to load Lisbon weather", error);
+  } catch {
+    console.error("Unable to load current weather");
     return null;
   }
+}
+
+export async function getCurrentLocationWeather(): Promise<LocationWeather> {
+  "use cache";
+  cacheLife("seconds");
+
+  const savedLocation = await readCurrentLocation();
+  const location = savedLocation ?? LISBON_HOME;
+  const weather = await getWeatherForCoordinates(
+    location.latitude,
+    location.longitude
+  );
+  return composeLocationWeather(savedLocation, weather);
 }
