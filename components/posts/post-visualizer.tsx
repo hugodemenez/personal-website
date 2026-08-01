@@ -335,13 +335,18 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         })}
       </ol>
 
-      {/* Held at opacity 0.99 rather than 1 while visible: Safari 26 clips a
-          fully opaque fixed layer at the top edge of its floating toolbar, so
-          the artwork stopped dead at the bar. Any value below 1 composites the
-          layer separately and lets it run to the bottom of the screen. */}
+      {/* Two Safari 26 quirks are being dodged here, both about its floating
+          toolbar. It scans fixed elements sitting within ~3px of the bottom
+          edge and tints the bar from their background-color; this deck is wide
+          and tall enough to qualify but paints its color on absolute children,
+          so Safari resolved no color and drew a solid bar over the artwork.
+          Holding it 8px clear of the edge takes it out of that scan and lets
+          the bar float over the page instead. Opacity below 1 handles the
+          second quirk: a fully opaque fixed layer gets clipped at the bar's top
+          edge, while a composited one paints behind it. */}
       <div
         data-writing-deck
-        className={`fixed inset-x-4 bottom-0 z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden motion-reduce:transition-none ${
+        className={`fixed inset-x-4 bottom-2 z-30 mx-auto h-[clamp(10rem,38vw,14rem)] max-w-xl overflow-hidden motion-reduce:transition-none ${
           isFirstArtwork
             ? "will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)]"
             : "transition-none"
