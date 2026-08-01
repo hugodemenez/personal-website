@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Header } from "../components/app-header";
+import { SafariThemeSampler } from "../components/safari-theme-sampler";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  colorScheme: "light dark",
+  width: "device-width",
+  initialScale: 1,
   viewportFit: "cover",
 };
 
@@ -25,8 +27,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" className={`${inter.className} bg-background`}>
       <body className="antialiased bg-background text-foreground">
+        <SafariThemeSampler />
         <Header />
         {children}
       </body>
