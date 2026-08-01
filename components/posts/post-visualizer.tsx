@@ -157,7 +157,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         </p>
       </div>
 
-      <ol className="relative px-1 pb-[calc(14rem+25vh)] before:absolute before:bottom-0 before:left-[0.72rem] before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.22rem]">
+      <ol className="relative px-1 pb-[calc(14rem+25vh)] before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
         {sortedPosts.map((post, index) => {
           const isSelected = index === selectedPostIndex;
 
