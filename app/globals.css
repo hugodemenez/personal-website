@@ -119,6 +119,89 @@ dialog::backdrop {
   }
 }
 
+/* Writing artwork deck: stack forward, peel the top card away in reverse. */
+@keyframes artworkStackIn {
+  from {
+    filter: blur(6px);
+    opacity: 0.55;
+    transform: translateY(18%) scale(0.94);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes artworkStackUnder {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(-1.5%) scale(0.975);
+  }
+}
+
+@keyframes artworkDestackOut {
+  from {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    filter: blur(6px);
+    opacity: 0;
+    transform: translateY(18%) scale(0.94);
+  }
+}
+
+@keyframes artworkDestackReveal {
+  from {
+    transform: translateY(-1.5%) scale(0.975);
+  }
+  to {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.artwork-stack-in,
+.artwork-stack-under,
+.artwork-destack-out,
+.artwork-destack-reveal {
+  transform-origin: center top;
+  will-change: filter, opacity, transform;
+}
+
+.artwork-stack-in,
+.artwork-stack-under {
+  animation-duration: 240ms;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.artwork-stack-in {
+  animation-name: artworkStackIn;
+}
+
+.artwork-stack-under {
+  animation-name: artworkStackUnder;
+}
+
+.artwork-destack-out,
+.artwork-destack-reveal {
+  animation-duration: 200ms;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.artwork-destack-out {
+  animation-name: artworkDestackOut;
+}
+
+.artwork-destack-reveal {
+  animation-name: artworkDestackReveal;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -144,5 +227,12 @@ dialog::backdrop {
     100% {
       opacity: 1;
     }
+  }
+
+  .artwork-stack-in,
+  .artwork-stack-under,
+  .artwork-destack-out,
+  .artwork-destack-reveal {
+    animation: none;
   }
 }

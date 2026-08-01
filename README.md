@@ -29,6 +29,63 @@ npm run dev
 
 Deployed on [Vercel](https://vercel.com).
 
+### Current location
+
+The location pill reads one city-level `current_location` record from Vercel
+Global Config (formerly Edge Config) and combines it with current conditions
+from Open-Meteo. Location reads expire within 60 seconds; weather is cached
+separately by rounded coordinates for several minutes. If the store is
+unavailable or contains an invalid value, Lisbon is used as the home base.
+
+Create a Global Config store in Vercel, connect it to this project, and configure:
+
+| Variable | Purpose |
+| --- | --- |
+| `GLOBAL_CONFIG` | Read connection string injected by the Global Config connection |
+| `GLOBAL_CONFIG_ID` | Store ID used by the update route |
+| `GLOBAL_CONFIG_WRITE_TOKEN` | Sensitive, project-scoped Vercel access token used only by the server-side write route |
+| `GLOBAL_CONFIG_TEAM_ID` | Optional team ID for a team-owned store |
+| `LOCATION_UPDATE_SECRET` | A separate, random secret known by the iPhone Shortcut |
+
+The initial store item is optional. When present, its key is
+`current_location` and its value has this shape:
+
+```json
+{
+  "version": 1,
+  "city": "Lisbon",
+  "country": "Portugal",
+  "latitude": 38.72,
+  "longitude": -9.14,
+  "updatedAt": "2026-08-01T08:00:00.000Z"
+}
+```
+
+The protected endpoint accepts `POST /api/location/update` with a bearer token.
+It validates city and country names, rounds coordinates to two decimals, and
+upserts the record through Vercel's authenticated Global Config API. Never expose
+`GLOBAL_CONFIG_WRITE_TOKEN` to the Shortcut. Give the token access only to this
+project, set an expiration, and record its rotation date in Vercel.
+
+#### iPhone Shortcut
+
+Create a Shortcut named **Update website location**:
+
+1. Add **Get Current Location**.
+2. Read **City**, **Country**, **Latitude**, and **Longitude** from that location.
+3. Add **Get Contents of URL** using
+   `https://www.hugodemenez.fr/api/location/update`.
+4. Choose `POST`, set the request body to JSON, and add the four fields as
+   `city`, `country`, `latitude`, and `longitude`.
+5. Add an `Authorization` header whose value is
+   `Bearer <LOCATION_UPDATE_SECRET>`.
+6. If the response's `ok` value is not true, show a failure notification.
+
+In the Shortcuts **Automation** tab, create a daily 8:00 AM automation, select
+this Shortcut, enable **Run Immediately**, and disable success notifications.
+Run it manually once before enabling the schedule and confirm the endpoint
+returns `200` with the city and `updatedAt` fields.
+
 ### Spotify authorization
 
 The footer reads user-specific Spotify data with the Authorization Code flow. Configure

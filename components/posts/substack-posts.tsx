@@ -1,7 +1,6 @@
 import { fetchSubstackPosts } from "@/server/substack-feed";
 import SubstackVisualizer from "./post-visualizer";
 import { Suspense } from "react";
-import "./post.css";
 
 export default function SubstackPosts() {
   return (
