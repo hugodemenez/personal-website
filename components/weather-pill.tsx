@@ -11,7 +11,7 @@ function InfoIcon() {
   return (
     <svg
       aria-hidden="true"
-      className="size-3"
+      className="size-2.5"
       fill="none"
       viewBox="0 0 16 16"
     >
@@ -76,7 +76,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
     >
       <span
         aria-label="Current location and weather"
-        className="inline-flex h-7 items-center gap-1.5 rounded-full bg-surface pl-2.5 pr-0.5 text-[0.6875rem] tracking-[-0.01em] text-muted"
+        className="inline-flex h-6 items-center gap-1 rounded-full bg-surface pl-2.5 pr-0.5 text-[0.625rem] tracking-[-0.01em] text-muted"
       >
         <span className="whitespace-nowrap">{weather?.location ?? "Lisbon"}</span>
         {weather ? (
@@ -95,7 +95,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           aria-label="About the Lisbon weather"
-          className="relative grid size-6 shrink-0 place-items-center rounded-full text-muted/55 transition-[background-color,color,transform] duration-150 hover:bg-background/70 hover:text-foreground active:scale-[0.94] motion-reduce:transition-none after:absolute after:-inset-2 after:content-['']"
+          className="relative grid size-5 shrink-0 place-items-center rounded-full text-muted/55 transition-[background-color,color,transform] duration-150 hover:bg-background/70 hover:text-foreground active:scale-[0.94] motion-reduce:transition-none after:absolute after:-inset-3 after:content-['']"
           onClick={() => setIsOpen((open) => !open)}
           type="button"
         >
