@@ -8,7 +8,8 @@ export function Header() {
       className={`
         flex items-center justify-between tracking-tight
         fixed top-0 left-0 right-0 z-1 
-        max-w-4xl mx-auto px-4 sm:px-8 pt-3
+        max-w-4xl mx-auto px-4 sm:px-8
+        pt-[calc(0.75rem+env(safe-area-inset-top))]
         pb-8 sm:pb-12
         bg-linear-to-b from-background via-background to-background/0
       `}

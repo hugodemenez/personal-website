@@ -19,6 +19,10 @@
 }
 
 :root {
+  /* Tell Safari the page handles both appearances, so it matches its chrome
+     and overscroll canvas to the theme instead of guessing. */
+  color-scheme: light dark;
+
   /* Light Mode (Creamy Theme) - Default */
   --background: #FDFBF7;
   --surface: #F2EFE9;
