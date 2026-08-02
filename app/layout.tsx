@@ -47,7 +47,7 @@ export default function RootLayout({
   [data-pinned="timeline"] {
     animation: pinShell linear both;
     animation-timeline: scroll(root block);
-    animation-range: var(--pin-start, 0px) 100%;
+    animation-range: var(--pin-start, 0px) var(--pin-end, 100%);
   }
 }`,
         }}

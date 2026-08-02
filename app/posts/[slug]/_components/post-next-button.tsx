@@ -28,7 +28,7 @@ export default function NextButton({ posts }: NextButtonProps) {
       className="text-muted hover:text-accent transition-colors flex min-h-11 items-center gap-2 text-sm cursor-pointer"
       aria-label={`Go to next post: ${nextPost.title}`}
     >
-      Next post →
+      Next<span className="hidden sm:inline"> post</span> →
     </Link>
   );
 }

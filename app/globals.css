@@ -69,6 +69,16 @@ body {
   }
 }
 
+/* Spring easing: overshoots a little, then settles firmly, rather than easing
+   asymptotically into place. Approximates a damped spring as a linear() curve. */
+:root {
+  --ease-spring: linear(
+    0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%,
+    0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%,
+    1.001 84.8%, 1
+  );
+}
+
 ::selection {
   background-color: var(--accent);
   color: white;

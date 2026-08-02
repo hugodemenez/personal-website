@@ -104,7 +104,7 @@ export default async function Home() {
             ) : null}
           </p>
           <p className="leading-relaxed">
-            I keep a small social footprint. On X, I’m{" "}
+            I keep a small social footprint. I’m{" "}
             <a
               className={socialLinkClass}
               href="https://x.com/hugodemenez"
@@ -118,7 +118,7 @@ export default async function Home() {
             thought of my own.
           </p>
           <p className="leading-relaxed">
-            The work itself is less private: I build in public on GitHub as{" "}
+            The work itself is less private: I build Deltalytix in public on GitHub as{" "}
             <span className="whitespace-nowrap">
               <a
                 className={socialLinkClass}

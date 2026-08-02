@@ -8,6 +8,7 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
 import { PinnedShell } from "./pinned-shell";
@@ -17,6 +18,12 @@ interface PostsVisualizerProps {
 }
 
 const IMAGE_SIZES = "(max-width: 768px) 92vw, 700px";
+
+/** How many titles back still count as "just passed" for the exit animation. */
+const TITLE_HISTORY = 4;
+
+/** Where a title comes to rest — just under the Writing bar, not behind it. */
+const TITLE_OFFSET = 104;
 
 interface TimelineMilestone {
   date: string;
@@ -118,6 +125,9 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   );
   const sectionRef = useRef<HTMLElement>(null);
   const postRefs = useRef<Array<HTMLLIElement | null>>([]);
+  // Average row height, used to release each pinned title after about one row
+  // so it hands the slot to the next one instead of staying put.
+  const [rowSpan, setRowSpan] = useState(0);
 
   const sortedPosts = useMemo(
     () =>
@@ -149,6 +159,23 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   useEffect(() => {
     dispatchSelection({ type: "reset" });
   }, [posts]);
+
+  useEffect(() => {
+    const measureRowSpan = () => {
+      const heights = postRefs.current
+        .filter((row): row is HTMLLIElement => Boolean(row))
+        .map((row) => row.getBoundingClientRect().height);
+
+      if (!heights.length) return;
+
+      const total = heights.reduce((sum, height) => sum + height, 0);
+      setRowSpan(Math.round(total / heights.length));
+    };
+
+    measureRowSpan();
+    window.addEventListener("resize", measureRowSpan);
+    return () => window.removeEventListener("resize", measureRowSpan);
+  }, [sortedPosts]);
 
   useEffect(() => {
     let animationFrame = 0;
@@ -213,7 +240,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
       {/* Pinned the same way as the header, not with position:sticky — sticky
           here reproduces the iOS Safari bottom-bar strip every time. */}
       <PinnedShell
-        className="relative z-20 -mx-4 flex items-baseline justify-between gap-4 px-4 pb-4 pt-4"
+        className="relative z-20 -mx-4 px-4 pb-4 pt-4"
         offset={52}
       >
         <div
@@ -224,23 +251,27 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-full h-8 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
         />
-        <h2
-          id="posts-heading"
-          className="relative font-serif text-3xl tracking-[-0.035em] text-foreground"
-        >
-          <button
-            aria-label="Return to the beginning of Writing"
-            className="-mx-2 min-h-11 cursor-pointer px-2 text-left transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
-            onClick={returnToWritingStart}
-            type="button"
+
+        <div className="relative flex items-baseline justify-between gap-4">
+          <h2
+            id="posts-heading"
+            className="font-serif text-3xl tracking-[-0.035em] text-foreground"
           >
-            Writing
-          </button>
-        </h2>
-        <p className="relative text-sm tabular-nums text-muted/70">
-          {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
-          {String(sortedPosts.length).padStart(2, "0")}
-        </p>
+            <button
+              aria-label="Return to the beginning of Writing"
+              className="-mx-2 min-h-11 cursor-pointer px-2 text-left transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
+              onClick={returnToWritingStart}
+              type="button"
+            >
+              Writing
+            </button>
+          </h2>
+          <p className="text-sm tabular-nums text-muted/70">
+            {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
+            {String(sortedPosts.length).padStart(2, "0")}
+          </p>
+        </div>
+
       </PinnedShell>
 
       <ol className="relative px-1 pb-24 before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
@@ -280,6 +311,11 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
           const { post, postIndex } = entry;
           const isSelected = postIndex === selectedPostIndex;
+          // 0 for the title currently in the slot, rising for each one passed.
+          const titleDepth = Math.min(
+            Math.max(selectedPostIndex - postIndex, 0),
+            TITLE_HISTORY - 1
+          );
 
           return (
             <li
@@ -298,10 +334,36 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     : "border-border bg-background"
                 }`}
               />
-              <div className="min-h-20">
+              {/* min-w-0: grid items default to min-width:auto, which blocks the
+                  title's truncate from ever shrinking below its content width. */}
+              <div className="min-h-20 min-w-0">
+                {/* Pins just below the Writing bar so the title comes to rest in
+                    that slot instead of sliding behind it. The shrink/slide sits
+                    on an inner node — PinnedShell owns transform on the shell. */}
+                <PinnedShell
+                  className="relative z-30"
+                  offset={TITLE_OFFSET}
+                  releaseAfter={rowSpan || undefined}
+                >
+                <div
+                  className="origin-left transition-[transform,opacity] duration-500 [transition-timing-function:var(--ease-spring)] motion-reduce:transition-none"
+                  style={{
+                    opacity: titleDepth > 0 ? 0 : 1,
+                    transform:
+                      titleDepth > 0
+                        ? "translateX(-1.25rem) scale(0.78)"
+                        : isSelected
+                          ? "scale(0.78)"
+                          : "scale(1)",
+                    // The outgoing title leaves only once the incoming one has
+                    // collapsed into the slot — the delay tracks the arriving
+                    // title's spring settle. Arriving itself is never delayed.
+                    transitionDelay: titleDepth > 0 ? "400ms" : "0ms",
+                  }}
+                >
                 <Link
                   aria-current={isSelected ? "true" : undefined}
-                  className={`flex min-h-11 items-center pb-1.5 pt-4 text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`flex min-h-11 min-w-0 items-center pb-1.5 pt-4 text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
                       ? "font-bold text-foreground"
                       : "font-normal text-muted/65 hover:text-foreground"
@@ -317,10 +379,10 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   rel={post.slug ? undefined : "noopener noreferrer"}
                   target={post.slug ? undefined : "_blank"}
                 >
-                  <span>
-                    {post.title}
+                  <span className="flex min-w-0 items-baseline">
+                    <span className="truncate">{post.title}</span>
                     <span
-                      className={`ml-2 whitespace-nowrap text-sm font-normal tracking-normal ${
+                      className={`ml-2 shrink-0 whitespace-nowrap text-sm font-normal tracking-normal ${
                         isSelected ? "text-muted/70" : "text-muted/45"
                       }`}
                     >
@@ -328,15 +390,25 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     </span>
                   </span>
                 </Link>
+                </div>
+                </PinnedShell>
 
                 {post.description ? (
-                  <p
-                    className={`mb-4 max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
+                  // Clickable like the title, but hidden from assistive tech and
+                  // the tab order — the title link above already points here, and
+                  // a second one would announce the same destination twice.
+                  <Link
+                    aria-hidden="true"
+                    className={`mb-6 block max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
                       isSelected ? "text-muted/75" : "text-muted/45"
                     }`}
+                    href={getPostHref(post)}
+                    rel={post.slug ? undefined : "noopener noreferrer"}
+                    tabIndex={-1}
+                    target={post.slug ? undefined : "_blank"}
                   >
                     {formatPostDescription(post.description)}
-                  </p>
+                  </Link>
                 ) : null}
 
                 {post.image ? (
