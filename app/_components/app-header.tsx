@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Suspense } from "react";
+import { HomeLink } from "./home-link";
 import { Search } from "./search";
 import { getPosts, type PostMetadata } from "@/lib/posts";
 import { fetchSubstackPosts } from "@/server/substack-feed";
@@ -27,13 +27,8 @@ async function SearchWithPosts() {
 
 export function Header() {
   return (
-    <header className="mb-10 flex items-center justify-between tracking-tight sm:mb-14">
-      <Link
-        href="/"
-        className="font-medium text-foreground hover:text-accent transition-colors"
-      >
-        Home
-      </Link>
+    <header className="flex items-center justify-between py-3 tracking-tight">
+      <HomeLink />
       <nav>
         <ul className="flex items-center gap-6 text-muted">
           <li>

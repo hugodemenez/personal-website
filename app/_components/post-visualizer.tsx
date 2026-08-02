@@ -10,6 +10,7 @@ import {
   useRef,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
+import { PinnedShell } from "./pinned-shell";
 
 interface PostsVisualizerProps {
   posts: SubstackPost[];
@@ -207,15 +208,25 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     <section
       ref={sectionRef}
       aria-labelledby="posts-heading"
-      className="relative mt-8"
+      className="mt-8"
     >
-      {/* Deliberately not sticky. Making this heading sticky stopped iOS Safari
-          letting the timeline flow under its floating bottom bar — content was
-          cut off at the bar instead of passing behind it. Verified on device. */}
-      <div className="flex items-baseline justify-between gap-4 py-4">
+      {/* Pinned the same way as the header, not with position:sticky — sticky
+          here reproduces the iOS Safari bottom-bar strip every time. */}
+      <PinnedShell
+        className="relative z-20 -mx-4 flex items-baseline justify-between gap-4 px-4 pb-4 pt-4"
+        offset={52}
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-background"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-full h-8 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
+        />
         <h2
           id="posts-heading"
-          className="font-serif text-3xl tracking-[-0.035em] text-foreground"
+          className="relative font-serif text-3xl tracking-[-0.035em] text-foreground"
         >
           <button
             aria-label="Return to the beginning of Writing"
@@ -226,11 +237,11 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
             Writing
           </button>
         </h2>
-        <p className="text-sm tabular-nums text-muted/70">
+        <p className="relative text-sm tabular-nums text-muted/70">
           {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
           {String(sortedPosts.length).padStart(2, "0")}
         </p>
-      </div>
+      </PinnedShell>
 
       <ol className="relative px-1 pb-24 before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
         {timelineEntries.map((entry) => {

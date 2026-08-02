@@ -11,10 +11,7 @@ export default async function SlugLayout({ children }: LayoutProps) {
 
   return (
     <>
-      {/* No position:sticky anywhere on the site. On the landing page a sticky
-          element reliably made iOS Safari reserve an opaque strip at its bottom
-          bar instead of letting content flow under it, so we avoid it here too. */}
-      <div className="mb-4 flex items-center justify-between py-3 tracking-tight">
+      <div className="sticky top-14 z-2 mb-4 flex items-center justify-between bg-linear-to-b from-background from-70% to-transparent py-3 tracking-tight">
         <PreviousButton posts={posts} />
         <NextButton posts={posts} />
       </div>
