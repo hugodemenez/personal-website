@@ -178,17 +178,6 @@ dialog::backdrop {
   will-change: filter, opacity, transform;
 }
 
-/* svh, not dvh: pins the deck against the smallest viewport so it never lands
-   under Safari's bottom bar and never jumps as the bar collapses. */
-.writing-deck {
-  --writing-deck-height: clamp(10rem, 38vw, 14rem);
-  top: calc(75svh - var(--writing-deck-height) / 2);
-  right: 0.5rem;
-  width: min(calc(100vw - 2rem), 36rem);
-  height: var(--writing-deck-height);
-  transform-origin: right center;
-}
-
 .artwork-stack-in,
 .artwork-stack-under {
   animation-duration: 240ms;

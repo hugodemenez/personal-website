@@ -8,7 +8,6 @@ import {
   useMemo,
   useReducer,
   useRef,
-  useState,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
 
@@ -90,6 +89,18 @@ function getPostHref(post: SubstackPost): string {
   return post.slug ? `/posts/${post.slug}` : post.link;
 }
 
+// Feed descriptions arrive pre-truncated at ~153 chars, often mid-word
+// ("...the most influe..."). Back off to the last whole word.
+function formatPostDescription(description: string): string {
+  const trimmed = description.trim();
+  if (!/(\.{3}|…)$/.test(trimmed)) return trimmed;
+
+  const body = trimmed.replace(/(\.{3}|…)$/, "").trimEnd();
+  const lastSpace = body.lastIndexOf(" ");
+
+  return `${lastSpace > 0 ? body.slice(0, lastSpace) : body}…`;
+}
+
 function formatPostDate(pubDate: string): string {
   return new Intl.DateTimeFormat("en", {
     day: "numeric",
@@ -104,7 +115,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     selectionReducer,
     initialSelection
   );
-  const [isWritingVisible, setIsWritingVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const postRefs = useRef<Array<HTMLLIElement | null>>([]);
 
@@ -144,19 +154,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
     const selectNearestPost = () => {
       animationFrame = 0;
-      const section = sectionRef.current;
-      const sectionBounds = section?.getBoundingClientRect();
-      const readingLine = window.innerHeight * 0.45;
-      const sectionIsVisible = Boolean(
-        sectionBounds &&
-          sectionBounds.top <= readingLine &&
-          sectionBounds.bottom > readingLine
-      );
-
-      setIsWritingVisible((current) =>
-        current === sectionIsVisible ? current : sectionIsVisible
-      );
-
       const anchor = window.innerHeight * 0.36;
       let nearestIndex = 0;
       let nearestDistance = Number.POSITIVE_INFINITY;
@@ -194,19 +191,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   if (!sortedPosts.length) return null;
 
   const selectedPostIndex = selection.currentIndex;
-  const selectedPost = sortedPosts[selectedPostIndex] ?? sortedPosts[0];
-  const previousPost =
-    selection.previousIndex === null
-      ? null
-      : sortedPosts[selection.previousIndex];
-  const preloadBatchStart =
-    selectedPostIndex === 0
-      ? 1
-      : Math.floor(selectedPostIndex / 3) * 3 + 1;
-  const preloadBatch = sortedPosts.slice(
-    preloadBatchStart,
-    preloadBatchStart + 3
-  );
+
   const returnToWritingStart = (event: MouseEvent<HTMLButtonElement>) => {
     const shouldReduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -247,7 +232,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         </p>
       </div>
 
-      <ol className="relative px-1 pb-[calc(14rem+25vh)] before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
+      <ol className="relative px-1 pb-24 before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
         {timelineEntries.map((entry) => {
           if (entry.kind === "milestone") {
             const { milestone } = entry;
@@ -291,141 +276,83 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
               ref={(node) => {
                 postRefs.current[postIndex] = node;
               }}
-              className="relative grid min-h-20 grid-cols-[1.5rem_1fr] items-center gap-3 sm:grid-cols-[1.75rem_1fr] sm:gap-4"
+              className="relative grid grid-cols-[1.5rem_1fr] items-start gap-3 sm:grid-cols-[1.75rem_1fr] sm:gap-4"
               data-post-index={postIndex}
             >
               <span
                 aria-hidden="true"
-                className={`relative z-10 mx-auto size-2 rounded-full border transition-[background-color,border-color,transform] duration-150 ease-out motion-reduce:transition-none ${
+                className={`relative z-10 mx-auto mt-7 size-2 rounded-full border transition-[background-color,border-color,transform] duration-150 ease-out motion-reduce:transition-none ${
                   isSelected
                     ? "scale-125 border-accent bg-accent"
                     : "border-border bg-background"
                 }`}
               />
-              <Link
-                aria-current={isSelected ? "true" : undefined}
-                className={`flex min-h-11 items-center py-4 text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
-                  isSelected
-                    ? "font-bold text-foreground"
-                    : "font-normal text-muted/65 hover:text-foreground"
-                }`}
-                href={getPostHref(post)}
-                onFocus={() =>
-                  dispatchSelection({
-                    type: "select",
-                    index: postIndex,
-                    animate: false,
-                  })
-                }
-                rel={post.slug ? undefined : "noopener noreferrer"}
-                target={post.slug ? undefined : "_blank"}
-              >
-                <span>
-                  {post.title}
-                  <span
-                    className={`ml-2 whitespace-nowrap text-sm font-normal tracking-normal ${
-                      isSelected ? "text-muted/70" : "text-muted/45"
+              <div className="min-h-20">
+                <Link
+                  aria-current={isSelected ? "true" : undefined}
+                  className={`flex min-h-11 items-center pb-1.5 pt-4 text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
+                    isSelected
+                      ? "font-bold text-foreground"
+                      : "font-normal text-muted/65 hover:text-foreground"
+                  }`}
+                  href={getPostHref(post)}
+                  onFocus={() =>
+                    dispatchSelection({
+                      type: "select",
+                      index: postIndex,
+                      animate: false,
+                    })
+                  }
+                  rel={post.slug ? undefined : "noopener noreferrer"}
+                  target={post.slug ? undefined : "_blank"}
+                >
+                  <span>
+                    {post.title}
+                    <span
+                      className={`ml-2 whitespace-nowrap text-sm font-normal tracking-normal ${
+                        isSelected ? "text-muted/70" : "text-muted/45"
+                      }`}
+                    >
+                      • {formatPostDate(post.pubDate)}
+                    </span>
+                  </span>
+                </Link>
+
+                {post.description ? (
+                  <p
+                    className={`mb-4 max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
+                      isSelected ? "text-muted/75" : "text-muted/45"
                     }`}
                   >
-                    • {formatPostDate(post.pubDate)}
-                  </span>
-                </span>
-              </Link>
+                    {formatPostDescription(post.description)}
+                  </p>
+                ) : null}
+
+                {post.image ? (
+                  <Link
+                    aria-hidden="true"
+                    className="mb-8 block overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
+                    href={getPostHref(post)}
+                    rel={post.slug ? undefined : "noopener noreferrer"}
+                    tabIndex={-1}
+                    target={post.slug ? undefined : "_blank"}
+                  >
+                    <Image
+                      alt=""
+                      className="h-[clamp(9rem,34vw,13rem)] w-full object-cover"
+                      height={400}
+                      sizes={IMAGE_SIZES}
+                      src={post.image}
+                      unoptimized
+                      width={700}
+                    />
+                  </Link>
+                ) : null}
+              </div>
             </li>
           );
         })}
       </ol>
-
-      <div
-        data-writing-deck
-        className={`writing-deck fixed z-30 overflow-visible will-change-transform transition-[transform,opacity] duration-[240ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none ${
-          isWritingVisible
-            ? "[transform:translateX(0)_scale(0.5)] opacity-100"
-            : "pointer-events-none [transform:translateX(calc(100%+1rem))_scale(0.5)] opacity-0"
-        }`}
-      >
-        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0">
-          {preloadBatch.map((post) =>
-            post.image ? (
-              <Image
-                key={`preload-${post.slug}`}
-                alt=""
-                className="object-cover"
-                data-preloaded-post={post.slug}
-                fill
-                loading="eager"
-                sizes={IMAGE_SIZES}
-                src={post.image}
-                unoptimized
-              />
-            ) : null
-          )}
-        </div>
-
-        <div className="relative h-full w-full">
-          {previousPost ? (
-            <Link
-              key={`previous-${previousPost.slug}-${selection.transitionId}`}
-              aria-hidden="true"
-              className={`pointer-events-none absolute inset-0 overflow-hidden rounded-xs border border-border bg-surface shadow-lg ${
-                selection.direction === "forward"
-                  ? "artwork-stack-under z-10"
-                  : "artwork-destack-out z-20"
-              }`}
-              href={getPostHref(previousPost)}
-              rel={previousPost.slug ? undefined : "noopener noreferrer"}
-              tabIndex={-1}
-              target={previousPost.slug ? undefined : "_blank"}
-            >
-              {previousPost.image ? (
-                <Image
-                  alt=""
-                  className="object-cover"
-                  fill
-                  sizes={IMAGE_SIZES}
-                  src={previousPost.image}
-                  unoptimized
-                />
-              ) : (
-                <span className="flex h-full items-center justify-center px-8 text-center font-serif text-2xl text-muted">
-                  {previousPost.title}
-                </span>
-              )}
-            </Link>
-          ) : null}
-
-          <Link
-            key={`deck-${selectedPost.slug}-${selection.transitionId}`}
-            className={`absolute inset-0 overflow-hidden rounded-xs border border-border bg-surface shadow-lg ${
-              selection.direction === "forward"
-                ? "artwork-stack-in z-20"
-                : selection.direction === "backward"
-                  ? "artwork-destack-reveal z-10"
-                  : "z-10"
-            }`}
-            href={getPostHref(selectedPost)}
-            rel={selectedPost.slug ? undefined : "noopener noreferrer"}
-            target={selectedPost.slug ? undefined : "_blank"}
-          >
-            {selectedPost.image ? (
-              <Image
-                alt={selectedPost.title}
-                className="object-cover"
-                fill
-                loading="eager"
-                sizes={IMAGE_SIZES}
-                src={selectedPost.image}
-                unoptimized
-              />
-            ) : (
-              <span className="flex h-full items-center justify-center px-8 text-center font-serif text-2xl text-muted">
-                {selectedPost.title}
-              </span>
-            )}
-          </Link>
-        </div>
-
-      </div>
     </section>
   );
 }
