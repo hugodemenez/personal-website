@@ -59,6 +59,81 @@ function SpotifyIcon() {
   );
 }
 
+function TradingBarsIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="mx-1 inline size-3.5 -translate-y-px"
+      viewBox="0 0 12 12"
+      fill="none"
+    >
+      <rect x="1" y="7" width="2.5" height="4" rx="0.75" className="fill-current">
+        <animate
+          attributeName="height"
+          values="4;7;3;6;4"
+          dur="1.6s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="y"
+          values="7;4;8;5;7"
+          dur="1.6s"
+          repeatCount="indefinite"
+        />
+      </rect>
+      <rect x="4.75" y="4" width="2.5" height="7" rx="0.75" className="fill-current">
+        <animate
+          attributeName="height"
+          values="7;3;8;4;7"
+          dur="1.4s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="y"
+          values="4;8;3;7;4"
+          dur="1.4s"
+          repeatCount="indefinite"
+        />
+      </rect>
+      <rect x="8.5" y="6" width="2.5" height="5" rx="0.75" className="fill-current">
+        <animate
+          attributeName="height"
+          values="5;8;4;7;5"
+          dur="1.8s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="y"
+          values="6;3;7;4;6"
+          dur="1.8s"
+          repeatCount="indefinite"
+        />
+      </rect>
+    </svg>
+  );
+}
+
+function DeltalytixIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-3 shrink-0 fill-current"
+      viewBox="0 0 255 255"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M159 63L127.5 0V255H255L236.5 218H159V63Z"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M0 255L127.5 0V255H0ZM64 217L121 104V217H64Z"
+      />
+    </svg>
+  );
+}
+
 const socialLinkClass =
   "inline-flex items-center gap-1 align-baseline font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent";
 const musicLinkClass =
@@ -86,7 +161,9 @@ export default async function Home() {
           </div>
           <p className="leading-relaxed">
             I write about the work as I go: building products, staying focused,
-            discretionary trading, and turning rough ideas into useful systems.
+            discretionary trading
+            <TradingBarsIcon />
+            and turning rough ideas into useful systems.
             {track ? (
               <>
                 {" "}Most days have a soundtrack; lately it has been{" "}
@@ -118,7 +195,17 @@ export default async function Home() {
             thought of my own.
           </p>
           <p className="leading-relaxed">
-            The work itself is less private: I build Deltalytix in public on GitHub as{" "}
+            The work itself is less private: I build{" "}
+            <a
+              className={socialLinkClass}
+              href="https://deltlaytix.app"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <DeltalytixIcon />
+              Deltalytix
+            </a>{" "}
+            in public on GitHub as{" "}
             <span className="whitespace-nowrap">
               <a
                 className={socialLinkClass}
