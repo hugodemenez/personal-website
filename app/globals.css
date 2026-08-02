@@ -57,14 +57,15 @@ body {
   font-family: var(--font-family-sans);
   max-width: 36rem;
   margin: 0 auto;
-  /* Top clears the fixed header; bottom pays back the inset that
-     viewport-fit=cover opts into, so nothing is stranded under Safari's bar. */
-  padding: 5rem 1rem calc(4rem + env(safe-area-inset-bottom));
+  /* The header is in normal flow (pinned by transform), so no extra top space
+     is needed for it. env() on the bottom is a no-op without viewport-fit=cover
+     but is kept so the padding stays correct if cover is ever re-enabled. */
+  padding: 2rem 1rem calc(4rem + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 640px) {
   body {
-    padding: 6rem 1rem calc(6rem + env(safe-area-inset-bottom));
+    padding: 3rem 1rem calc(6rem + env(safe-area-inset-bottom));
   }
 }
 

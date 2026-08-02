@@ -25,9 +25,12 @@ async function SearchWithPosts() {
   return <Search posts={allPosts} />;
 }
 
+// Stays in normal flow — PinnedShell in layout.tsx does the pinning by
+// transform. Making this position:fixed takes it out of flow, so the shell
+// wraps a zero-height box and pins nothing.
 export function Header() {
   return (
-    <header className="fixed inset-x-0 top-0 z-40 mx-auto flex max-w-xl items-center justify-between bg-linear-to-b from-background from-72% to-transparent px-4 pb-10 pt-[max(0.75rem,env(safe-area-inset-top))] tracking-tight">
+    <header className="flex items-center justify-between py-3 tracking-tight">
       <HomeLink />
       <nav>
         <ul className="flex items-center gap-6 text-muted">

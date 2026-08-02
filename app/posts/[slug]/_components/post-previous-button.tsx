@@ -23,7 +23,7 @@ export default function PreviousButton({ posts }: PreviousButtonProps) {
   return (
     <Link
       href={`/posts/${previousPost.slug}`}
-      className="text-muted hover:text-accent transition-colors flex items-center gap-2 text-sm cursor-pointer z-50"
+      className="text-muted hover:text-accent transition-colors flex min-h-11 items-center gap-2 text-sm cursor-pointer"
       aria-label={`Go to previous post: ${previousPost.title}`}
     >
       ← Previous post
