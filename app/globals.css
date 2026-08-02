@@ -57,12 +57,14 @@ body {
   font-family: var(--font-family-sans);
   max-width: 36rem;
   margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+  /* Top clears the fixed header; bottom pays back the inset that
+     viewport-fit=cover opts into, so nothing is stranded under Safari's bar. */
+  padding: 5rem 1rem calc(4rem + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 640px) {
   body {
-    padding: 3rem 1rem 6rem;
+    padding: 6rem 1rem calc(6rem + env(safe-area-inset-bottom));
   }
 }
 

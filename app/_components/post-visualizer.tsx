@@ -10,7 +10,6 @@ import {
   useRef,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
-import { PinnedShell } from "./pinned-shell";
 
 interface PostsVisualizerProps {
   posts: SubstackPost[];
@@ -210,20 +209,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
       aria-labelledby="posts-heading"
       className="mt-8"
     >
-      {/* Pinned the same way as the header, not with position:sticky — sticky
-          here reproduces the iOS Safari bottom-bar strip every time. */}
-      <PinnedShell
-        className="relative z-20 -mx-4 flex items-baseline justify-between gap-4 px-4 pb-4 pt-4"
-        offset={52}
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-background"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-full h-8 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
-        />
+      <div className="sticky top-[max(3.5rem,calc(env(safe-area-inset-top)+2.75rem))] z-20 -mx-4 flex items-baseline justify-between gap-4 bg-linear-to-b from-background via-background to-background/0 px-4 pb-8 pt-4">
         <h2
           id="posts-heading"
           className="relative font-serif text-3xl tracking-[-0.035em] text-foreground"
@@ -241,7 +227,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
           {String(sortedPosts.length).padStart(2, "0")}
         </p>
-      </PinnedShell>
+      </div>
 
       <ol className="relative px-1 pb-24 before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
         {timelineEntries.map((entry) => {

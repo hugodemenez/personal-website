@@ -85,11 +85,6 @@ export default async function Home() {
             </p>
           </div>
           <p className="leading-relaxed">
-            I build practical software for trading and analytics—journals, network
-            dashboards, strategy research, and small tools that make difficult
-            decisions easier to review.
-          </p>
-          <p className="leading-relaxed">
             I write about the work as I go: building products, staying focused,
             discretionary trading, and turning rough ideas into useful systems.
             {track ? (
