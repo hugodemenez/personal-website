@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import fs from "node:fs";
 import path from "node:path";
 import { compileMDX } from "next-mdx-remote/rsc";
-import { mdxComponents } from "@/components/mdx-components-list";
+import { mdxComponents } from "@/app/_components/mdx-components-list";
 import { cacheLife } from "next/cache";
-import { ImageGallery } from "@/components/image-gallery";
+import { ImageGallery } from "./_components/image-gallery";
 import Link from "next/link";
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "substack");

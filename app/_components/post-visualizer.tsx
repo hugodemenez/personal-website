@@ -222,9 +222,12 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     <section
       ref={sectionRef}
       aria-labelledby="posts-heading"
-      className="relative mx-auto mt-8 w-full max-w-xl px-4 sm:px-0"
+      className="relative mt-8"
     >
-      <div className="sticky top-0 z-20 -mx-2 flex items-baseline justify-between gap-4 bg-background/90 px-2 py-4 backdrop-blur-sm">
+      {/* Deliberately not sticky. Making this heading sticky stopped iOS Safari
+          letting the timeline flow under its floating bottom bar — content was
+          cut off at the bar instead of passing behind it. Verified on device. */}
+      <div className="flex items-baseline justify-between gap-4 py-4">
         <h2
           id="posts-heading"
           className="font-serif text-3xl tracking-[-0.035em] text-foreground"

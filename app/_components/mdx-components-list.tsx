@@ -1,7 +1,7 @@
 import { ComponentPropsWithoutRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Tweet } from "./tweet/Tweet";
+import { Tweet } from "./tweet";
 
 export const mdxComponents = {
   Tweet: ({ id }: { id: string }) => <Tweet id={id} />,

@@ -1,18 +1,33 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Search } from "./search";
+import { getPosts, type PostMetadata } from "@/lib/posts";
+import { fetchSubstackPosts } from "@/server/substack-feed";
+
+async function SearchWithPosts() {
+  const posts = await getPosts();
+  const externalPosts = await fetchSubstackPosts();
+
+  const parsedExternalPosts: PostMetadata[] = externalPosts.map((post) => ({
+    slug: post.slug,
+    title: post.title,
+    date: post.pubDate,
+    description: post.description,
+    tags: ["substack"],
+    author: "Hugo Demenez",
+    available: post.available,
+  })) as PostMetadata[];
+
+  const allPosts = [...posts, ...parsedExternalPosts].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  return <Search posts={allPosts} />;
+}
 
 export function Header() {
   return (
-    <header
-      className={`
-        flex items-center justify-between tracking-tight
-        fixed top-0 left-0 right-0 z-1 
-        max-w-4xl mx-auto px-4 sm:px-8 pt-3
-        pb-8 sm:pb-12
-        bg-linear-to-b from-background via-background to-background/0
-      `}
-    >
+    <header className="mb-10 flex items-center justify-between tracking-tight sm:mb-14">
       <Link
         href="/"
         className="font-medium text-foreground hover:text-accent transition-colors"
@@ -46,7 +61,7 @@ export function Header() {
                 </button>
               }
             >
-              <Search />
+              <SearchWithPosts />
             </Suspense>
           </li>
         </ul>

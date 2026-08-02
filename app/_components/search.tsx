@@ -4,11 +4,11 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import type { PostMetadata } from "@/lib/posts";
 
-interface SearchClientProps {
+interface SearchProps {
   posts: PostMetadata[];
 }
 
-export function SearchClient({ posts }: SearchClientProps) {
+export function Search({ posts }: SearchProps) {
   const [query, setQuery] = useState("");
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
