@@ -42,17 +42,41 @@
   }
 }
 
+/* No background here: body's background propagates to the canvas, so the page is
+   one uniform colour edge to edge and Safari can tint its chrome from it. */
 html {
-  background-color: var(--background);
   min-width: 360px;
   scrollbar-gutter: stable;
 }
 
+/* body is the layout container — max width, centring and gutters all live here. */
 body {
   text-rendering: optimizeLegibility;
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-family-sans);
+  max-width: 36rem;
+  margin: 0 auto;
+  /* The header is in normal flow (pinned by transform), so no extra top space
+     is needed for it. env() on the bottom is a no-op without viewport-fit=cover
+     but is kept so the padding stays correct if cover is ever re-enabled. */
+  padding: 2rem 1rem calc(4rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 640px) {
+  body {
+    padding: 3rem 1rem calc(6rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Spring easing: overshoots a little, then settles firmly, rather than easing
+   asymptotically into place. Approximates a damped spring as a linear() curve. */
+:root {
+  --ease-spring: linear(
+    0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%,
+    0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%,
+    1.001 84.8%, 1
+  );
 }
 
 ::selection {
@@ -119,21 +143,21 @@ dialog::backdrop {
   from {
     filter: blur(6px);
     opacity: 0.55;
-    transform: translateY(18%) scale(0.94);
+    transform: translateX(18%) scale(0.96);
   }
   to {
     filter: blur(0);
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
 }
 
 @keyframes artworkStackUnder {
   from {
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
   to {
-    transform: translateY(-1.5%) scale(0.975);
+    transform: translateX(-1.5%) scale(0.975);
   }
 }
 
@@ -141,21 +165,21 @@ dialog::backdrop {
   from {
     filter: blur(0);
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
   to {
     filter: blur(6px);
     opacity: 0;
-    transform: translateY(18%) scale(0.94);
+    transform: translateX(18%) scale(0.96);
   }
 }
 
 @keyframes artworkDestackReveal {
   from {
-    transform: translateY(-1.5%) scale(0.975);
+    transform: translateX(-1.5%) scale(0.975);
   }
   to {
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
 }
 
@@ -163,7 +187,7 @@ dialog::backdrop {
 .artwork-stack-under,
 .artwork-destack-out,
 .artwork-destack-reveal {
-  transform-origin: center top;
+  transform-origin: center;
   will-change: filter, opacity, transform;
 }
 

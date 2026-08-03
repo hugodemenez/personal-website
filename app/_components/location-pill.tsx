@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { LocationWeather } from "@/server/location";
 import { formatLocalTime, isLocationStale } from "@/lib/location-display";
 
-interface WeatherPillProps {
+interface LocationPillProps {
   weather: LocationWeather | null;
 }
 
@@ -23,7 +23,7 @@ function InfoIcon() {
   );
 }
 
-export default function WeatherPill({ weather }: WeatherPillProps) {
+export default function LocationPill({ weather }: LocationPillProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [localTime, setLocalTime] = useState<string | null>(null);
   const [isStale, setIsStale] = useState(false);
@@ -102,7 +102,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
         ) : null}
         <button
           ref={buttonRef}
-          aria-controls="weather-details"
+          aria-controls="location-details"
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           aria-label={`About the weather in ${weather?.location ?? "Lisbon"}`}
@@ -115,7 +115,7 @@ export default function WeatherPill({ weather }: WeatherPillProps) {
       </span>
 
       <span
-        id="weather-details"
+        id="location-details"
         aria-label={`${weather?.location ?? "Lisbon"} weather details`}
         aria-hidden={!isOpen}
         className={`absolute left-0 right-auto top-[calc(100%+0.5rem)] z-40 w-64 max-w-[calc(100vw-2rem)] origin-top-left rounded-xl border border-border bg-background px-3.5 py-3 text-left text-xs leading-relaxed text-muted shadow-lg transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none sm:left-auto sm:right-0 sm:origin-top-right ${

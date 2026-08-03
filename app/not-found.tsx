@@ -1,10 +1,10 @@
-import { BackButton } from '@/components/back-button';
+import { BackButton } from './_components/back-button';
 import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="mx-auto py-8">
-    <div className="mb-8">
+    <main>
+      <div className="mb-8">
         <BackButton />
       </div>
       <article className="prose prose-stone dark:prose-invert mx-auto wrap-break-word flex flex-col items-center">
@@ -19,6 +19,6 @@ export default function NotFound() {
           Return to Home
         </Link>
       </article>
-    </div>
+    </main>
   );
 }

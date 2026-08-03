@@ -17,16 +17,16 @@ export default function PreviousButton({ posts }: PreviousButtonProps) {
     currentIndex !== -1 && currentIndex > 0 ? posts[currentIndex - 1] : null;
 
   if (!previousPost) {
-    return <div className="w-0 h-0"></div>;
+    return null;
   }
 
   return (
     <Link
       href={`/posts/${previousPost.slug}`}
-      className="text-muted hover:text-accent transition-colors flex items-center gap-2 text-sm cursor-pointer z-50"
+      className="text-muted hover:text-accent transition-colors flex min-h-11 items-center gap-2 text-sm cursor-pointer"
       aria-label={`Go to previous post: ${previousPost.title}`}
     >
-      ← Previous post
+      ← Previous<span className="hidden sm:inline"> post</span>
     </Link>
   );
 }
