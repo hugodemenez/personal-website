@@ -198,7 +198,7 @@ export default async function Home() {
             The work itself is less private: I build{" "}
             <a
               className={socialLinkClass}
-              href="https://deltlaytix.app"
+              href="https://deltalytix.app"
               rel="noopener noreferrer"
               target="_blank"
             >
