@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
+import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
 
 interface PostsVisualizerProps {
@@ -282,29 +283,30 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
             return (
               <li
                 key={milestone.id}
-                className="relative grid min-h-28 grid-cols-[1.5rem_1fr] items-center gap-3 sm:grid-cols-[1.75rem_1fr] sm:gap-4"
+                className="relative grid min-h-24 grid-cols-[1.5rem_1fr] items-center gap-3 sm:grid-cols-[1.75rem_1fr] sm:gap-4"
                 data-timeline-highlight={milestone.id}
               >
                 <span
                   aria-hidden="true"
-                  className="relative z-10 mx-auto size-3 rounded-full border-2 border-background bg-accent shadow-[0_0_0_1px_var(--accent)]"
+                  className="relative z-10 mx-auto size-2.5 rounded-full border-2 border-background bg-accent"
                 />
-                <div className="my-4 rounded-xl border border-accent/20 bg-accent/[0.07] px-4 py-3.5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-accent">
-                      Highlight
-                    </span>
-                    <time
-                      className="text-xs font-medium tabular-nums text-muted/60"
-                      dateTime={milestone.date}
-                    >
-                      {milestone.label}
-                    </time>
-                  </div>
-                  <p className="mt-1.5 font-serif text-lg leading-snug tracking-[-0.015em] text-foreground">
+                {/* Same type as a post title — the marker, not a card, is what
+                    sets a highlight apart. */}
+                <p className="my-5 max-w-prose text-[1.05rem] font-bold leading-snug tracking-[-0.015em] text-foreground">
+                  <HighlighterText
+                    seed={milestone.id}
+                    trailing={
+                      <time
+                        className="ml-2 whitespace-nowrap text-sm font-normal tracking-normal text-muted/70"
+                        dateTime={milestone.date}
+                      >
+                        • {milestone.label}
+                      </time>
+                    }
+                  >
                     {milestone.text}
-                  </p>
-                </div>
+                  </HighlighterText>
+                </p>
               </li>
             );
           }

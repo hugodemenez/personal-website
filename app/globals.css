@@ -79,6 +79,23 @@ body {
   );
 }
 
+/* Highlighter ink sits behind the text and blends with the paper rather than
+   painting over it: multiply darkens the cream, screen lifts the dark page.
+   The ink colour itself runs the opposite way from the text it sits under —
+   see the accent-light/accent pair on the marker's own classes. */
+.highlighter-ink {
+  mix-blend-mode: multiply;
+}
+
+/* Screen over the dark page runs hot at full strength — pull it back so the
+   ink stays a highlight rather than a glow. */
+@media (prefers-color-scheme: dark) {
+  .highlighter-ink {
+    mix-blend-mode: screen;
+    opacity: 0.52;
+  }
+}
+
 ::selection {
   background-color: var(--accent);
   color: white;
