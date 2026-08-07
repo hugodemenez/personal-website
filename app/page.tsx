@@ -71,13 +71,13 @@ function TradingBarsIcon() {
         <animate
           attributeName="height"
           values="4;7;3;6;4"
-          dur="1.6s"
+          dur="3.2s"
           repeatCount="indefinite"
         />
         <animate
           attributeName="y"
           values="7;4;8;5;7"
-          dur="1.6s"
+          dur="3.2s"
           repeatCount="indefinite"
         />
       </rect>
@@ -85,13 +85,13 @@ function TradingBarsIcon() {
         <animate
           attributeName="height"
           values="7;3;8;4;7"
-          dur="1.4s"
+          dur="3s"
           repeatCount="indefinite"
         />
         <animate
           attributeName="y"
           values="4;8;3;7;4"
-          dur="1.4s"
+          dur="3s"
           repeatCount="indefinite"
         />
       </rect>
@@ -99,13 +99,13 @@ function TradingBarsIcon() {
         <animate
           attributeName="height"
           values="5;8;4;7;5"
-          dur="1.8s"
+          dur="3.4s"
           repeatCount="indefinite"
         />
         <animate
           attributeName="y"
           values="6;3;7;4;6"
-          dur="1.8s"
+          dur="3.4s"
           repeatCount="indefinite"
         />
       </rect>
