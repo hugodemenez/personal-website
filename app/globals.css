@@ -155,6 +155,81 @@ dialog::backdrop {
   }
 }
 
+/* Live candle strip. A candle opens every 1.5s, so the track steps one slot (4
+   user units) left six times over a 9s cycle — a quick 0.4s slide, then a 1.1s
+   hold while the new candle prints. Six steps cover the whole cycle, which lands
+   on a frame identical to the first, so the loop has no seam. Candles leaving on
+   the left are retired by the viewBox clip and the mask's fade. */
+@keyframes tradingCandleScroll {
+  0% {
+    transform: translateX(0);
+  }
+  4.444% {
+    transform: translateX(-4px);
+  }
+  16.667% {
+    transform: translateX(-4px);
+  }
+  21.111% {
+    transform: translateX(-8px);
+  }
+  33.333% {
+    transform: translateX(-8px);
+  }
+  37.778% {
+    transform: translateX(-12px);
+  }
+  50% {
+    transform: translateX(-12px);
+  }
+  54.444% {
+    transform: translateX(-16px);
+  }
+  66.667% {
+    transform: translateX(-16px);
+  }
+  71.111% {
+    transform: translateX(-20px);
+  }
+  83.333% {
+    transform: translateX(-20px);
+  }
+  87.778% {
+    transform: translateX(-24px);
+  }
+  100% {
+    transform: translateX(-24px);
+  }
+}
+
+/* Each candle prints during its own 1.5s slot — 16.667% of the 9s cycle — then
+   holds closed for the rest of it while the track carries it off to the left.
+   Staggered animation-delay is what assigns each candle its slot. */
+@keyframes tradingCandlePrint {
+  0% {
+    transform: scaleY(0);
+  }
+  6% {
+    transform: scaleY(0.62);
+  }
+  11% {
+    transform: scaleY(1.08);
+  }
+  16.5%,
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+.trading-candle-track {
+  animation: tradingCandleScroll 9s ease-out infinite;
+}
+
+.trading-candle {
+  animation: tradingCandlePrint 9s ease-out infinite backwards;
+  transform-box: view-box;
+}
+
 /* Writing artwork deck: stack forward, peel the top card away in reverse. */
 @keyframes artworkStackIn {
   from {
@@ -265,6 +340,8 @@ dialog::backdrop {
     }
   }
 
+  .trading-candle-track,
+  .trading-candle,
   .artwork-stack-in,
   .artwork-stack-under,
   .artwork-destack-out,

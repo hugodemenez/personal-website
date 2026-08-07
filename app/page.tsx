@@ -59,7 +59,31 @@ function SpotifyIcon() {
   );
 }
 
-function TradingBarsIcon() {
+/* One cycle of the price walk. y grows downward, so a close above an open means a
+   smaller number. The last close returns to the first open, which is what lets the
+   strip repeat without a visible seam. */
+const CANDLE_CYCLE = [
+  { open: 10.0, close: 7.6, high: 6.64, low: 11.12 },
+  { open: 7.6, close: 4.72, high: 3.76, low: 8.4 },
+  { open: 4.72, close: 6.16, high: 3.6, low: 7.44 },
+  { open: 6.16, close: 3.12, high: 1.84, low: 6.96 },
+  { open: 3.12, close: 6.64, high: 2.32, low: 7.76 },
+  { open: 6.64, close: 10.0, high: 5.84, low: 10.96 },
+];
+
+const CANDLE_PITCH = 4;
+const VISIBLE_CANDLES = 3;
+const CANDLE_STEP_SECONDS = 1.5;
+
+function TradingCandlestickIcon() {
+  /* Three slots are on screen at once, so the strip carries the cycle plus two
+     lead-in candles: after scrolling a full cycle the window frames candles 6-8,
+     which are identical to 0-2, and the animation can loop from the top. */
+  const candles = Array.from(
+    { length: CANDLE_CYCLE.length + VISIBLE_CANDLES },
+    (_, index) => ({ ...CANDLE_CYCLE[index % CANDLE_CYCLE.length], index }),
+  );
+
   return (
     <svg
       aria-hidden="true"
@@ -67,48 +91,66 @@ function TradingBarsIcon() {
       viewBox="0 0 12 12"
       fill="none"
     >
-      <rect x="1" y="7" width="2.5" height="4" rx="0.75" className="fill-current">
-        <animate
-          attributeName="height"
-          values="4;7;3;6;4"
-          dur="1.6s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="y"
-          values="7;4;8;5;7"
-          dur="1.6s"
-          repeatCount="indefinite"
-        />
-      </rect>
-      <rect x="4.75" y="4" width="2.5" height="7" rx="0.75" className="fill-current">
-        <animate
-          attributeName="height"
-          values="7;3;8;4;7"
-          dur="1.4s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="y"
-          values="4;8;3;7;4"
-          dur="1.4s"
-          repeatCount="indefinite"
-        />
-      </rect>
-      <rect x="8.5" y="6" width="2.5" height="5" rx="0.75" className="fill-current">
-        <animate
-          attributeName="height"
-          values="5;8;4;7;5"
-          dur="1.8s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="y"
-          values="6;3;7;4;6"
-          dur="1.8s"
-          repeatCount="indefinite"
-        />
-      </rect>
+      <defs>
+        {/* Held in screen space, so it doubles as depth (older candles sit dimmer)
+            and as the dissolve that retires a candle at the left edge. */}
+        <linearGradient
+          id="tradingCandleFade"
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          x2="12"
+        >
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset="0.1" stopColor="#fff" stopOpacity="0.32" />
+          <stop offset="0.42" stopColor="#fff" stopOpacity="0.62" />
+          <stop offset="0.71" stopColor="#fff" stopOpacity="1" />
+        </linearGradient>
+        <mask
+          id="tradingCandleMask"
+          maskUnits="userSpaceOnUse"
+          x="0"
+          y="0"
+          width="12"
+          height="12"
+        >
+          <rect width="12" height="12" fill="url(#tradingCandleFade)" />
+        </mask>
+      </defs>
+      <g mask="url(#tradingCandleMask)">
+        <g className="trading-candle-track">
+          {candles.map(({ open, close, high, low, index }) => {
+            const x = 2 + index * CANDLE_PITCH;
+            return (
+              <g
+                key={index}
+                className="trading-candle"
+                style={{
+                  /* Print outward from the open price, the way a live candle does. */
+                  transformOrigin: `0 ${open}px`,
+                  animationDelay: `${(index - VISIBLE_CANDLES) * CANDLE_STEP_SECONDS}s`,
+                }}
+              >
+                <line
+                  x1={x}
+                  x2={x}
+                  y1={high}
+                  y2={low}
+                  stroke="currentColor"
+                  strokeWidth="0.55"
+                />
+                <rect
+                  x={x - 1.2}
+                  y={Math.min(open, close)}
+                  width="2.4"
+                  height={Math.abs(close - open)}
+                  rx="0.2"
+                  className="fill-current"
+                />
+              </g>
+            );
+          })}
+        </g>
+      </g>
     </svg>
   );
 }
@@ -162,7 +204,7 @@ export default async function Home() {
           <p className="leading-relaxed">
             I write about the work as I go: building products, staying focused,
             discretionary trading
-            <TradingBarsIcon />
+            <TradingCandlestickIcon />
             and turning rough ideas into useful systems.
             {track ? (
               <>
