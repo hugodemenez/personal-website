@@ -30,11 +30,11 @@ test("keeps Iberia and the Bay of Biscay distinct on the Europe sketch", () => {
   const europe = continentRing("Europe");
   assert.ok(europe);
   assert.ok(
-    europe.some(([longitude, latitude]) => longitude <= -9 && latitude > 37 && latitude < 41),
+    europe.some(([longitude, latitude]) => longitude <= -12 && latitude > 37 && latitude < 41),
     "Portugal's west coast should stick out"
   );
   assert.ok(
-    europe.some(([longitude, latitude]) => longitude > -2.5 && longitude < 0 && latitude > 44 && latitude < 47),
+    europe.some(([longitude, latitude]) => longitude > -1 && longitude < 2 && latitude > 44 && latitude < 47),
     "the Bay of Biscay should indent between Iberia and France"
   );
 
