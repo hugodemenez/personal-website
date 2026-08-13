@@ -55,17 +55,48 @@ test("returns 503 when Global Config is unavailable", async () => {
   assert.equal((await POST(request(validPayload))).status, 503);
 });
 
-test("writes the rounded location and returns its public summary", async () => {
+function mockConfigFetch(options: {
+  existing?: unknown;
+  readStatus?: number;
+  writeStatus?: number;
+}) {
+  const originalFetch = globalThis.fetch;
+  let sentBody: unknown;
+  const calls: string[] = [];
+
+  globalThis.fetch = async (input, init) => {
+    const method = (init?.method ?? "GET").toUpperCase();
+    calls.push(method);
+    if (method === "GET") {
+      if ((options.readStatus ?? 200) === 404) {
+        return new Response(null, { status: 404 });
+      }
+      return new Response(JSON.stringify(options.existing ?? null), {
+        status: options.readStatus ?? 200,
+      });
+    }
+
+    sentBody = JSON.parse(String(init?.body));
+    return new Response(null, { status: options.writeStatus ?? 200 });
+  };
+
+  return {
+    get sentBody() {
+      return sentBody;
+    },
+    calls,
+    restore() {
+      globalThis.fetch = originalFetch;
+    },
+  };
+}
+
+test("writes the rounded location and starts a one-day history", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
   process.env.GLOBAL_CONFIG_ID = "ecfg_test";
   process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
 
-  const originalFetch = globalThis.fetch;
-  let sentBody: unknown;
-  globalThis.fetch = async (_input, init) => {
-    sentBody = JSON.parse(String(init?.body));
-    return new Response(null, { status: 200 });
-  };
+  const fetchMock = mockConfigFetch({ readStatus: 404 });
 
   try {
     const response = await POST(request(validPayload));
@@ -78,19 +109,28 @@ test("writes the rounded location and returns its public summary", async () => {
     assert.equal(body.location.city, "Paris");
     assert.ok(!Number.isNaN(Date.parse(body.location.updatedAt)));
     assert.deepEqual(
-      (sentBody as { items: Array<{ value: { latitude: number; longitude: number } }> })
-        .items[0].value,
+      (fetchMock.sentBody as { items: Array<{ value: unknown }> }).items[0].value,
       {
-        version: 1,
+        version: 2,
         city: "Paris",
         country: "France",
         latitude: 48.86,
         longitude: 2.35,
         updatedAt: body.location.updatedAt,
+        places: [
+          {
+            city: "Paris",
+            country: "France",
+            latitude: 48.86,
+            longitude: 2.35,
+            days: 1,
+            lastSeenAt: body.location.updatedAt,
+          },
+        ],
       }
     );
   } finally {
-    globalThis.fetch = originalFetch;
+    fetchMock.restore();
   }
 });
 
@@ -99,12 +139,7 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
   process.env.GLOBAL_CONFIG_ID = "ecfg_test";
   process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
 
-  const originalFetch = globalThis.fetch;
-  let sentBody: unknown;
-  globalThis.fetch = async (_input, init) => {
-    sentBody = JSON.parse(String(init?.body));
-    return new Response(null, { status: 200 });
-  };
+  const fetchMock = mockConfigFetch({ readStatus: 404 });
 
   try {
     const response = await POST(
@@ -116,20 +151,103 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
       })
     );
     assert.equal(response.status, 200);
+    const body = (await response.json()) as { location: { updatedAt: string } };
     assert.deepEqual(
-      (sentBody as { items: Array<{ value: { city: string; latitude: number; longitude: number } }> })
-        .items[0].value,
+      (fetchMock.sentBody as { items: Array<{ value: unknown }> }).items[0].value,
       {
-        version: 1,
+        version: 2,
         city: "Azeitão",
         country: "Portugal",
         latitude: 38.52,
         longitude: -9.02,
-        updatedAt: (await response.json()).location.updatedAt,
+        updatedAt: body.location.updatedAt,
+        places: [
+          {
+            city: "Azeitão",
+            country: "Portugal",
+            latitude: 38.52,
+            longitude: -9.02,
+            days: 1,
+            lastSeenAt: body.location.updatedAt,
+          },
+        ],
       }
     );
   } finally {
-    globalThis.fetch = originalFetch;
+    fetchMock.restore();
+  }
+});
+
+test("increments days for a returning place and keeps earlier stays", async () => {
+  process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
+  process.env.GLOBAL_CONFIG_ID = "ecfg_test";
+  process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
+
+  const fetchMock = mockConfigFetch({
+    existing: {
+      version: 2,
+      city: "Lisbon",
+      country: "Portugal",
+      latitude: 38.72,
+      longitude: -9.14,
+      updatedAt: "2026-07-20T08:00:00.000Z",
+      places: [
+        {
+          city: "Lisbon",
+          country: "Portugal",
+          latitude: 38.72,
+          longitude: -9.14,
+          days: 9,
+          lastSeenAt: "2026-07-20T08:00:00.000Z",
+        },
+        {
+          city: "Paris",
+          country: "France",
+          latitude: 48.86,
+          longitude: 2.35,
+          days: 3,
+          lastSeenAt: "2026-06-01T08:00:00.000Z",
+        },
+      ],
+    },
+  });
+
+  try {
+    const response = await POST(request(validPayload));
+    assert.equal(response.status, 200);
+    const stored = (
+      fetchMock.sentBody as {
+        items: Array<{
+          value: {
+            city: string;
+            places: Array<{ city: string; days: number }>;
+          };
+        }>;
+      }
+    ).items[0].value;
+    assert.equal(stored.city, "Paris");
+    assert.equal(stored.places.length, 2);
+    assert.equal(stored.places[0].city, "Paris");
+    assert.equal(stored.places[0].days, 4);
+    assert.equal(stored.places[1].city, "Lisbon");
+    assert.equal(stored.places[1].days, 9);
+  } finally {
+    fetchMock.restore();
+  }
+});
+
+test("returns 503 when the stored location cannot be read", async () => {
+  process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
+  process.env.GLOBAL_CONFIG_ID = "ecfg_test";
+  process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
+
+  const fetchMock = mockConfigFetch({ readStatus: 500 });
+
+  try {
+    assert.equal((await POST(request(validPayload))).status, 503);
+    assert.deepEqual(fetchMock.calls, ["GET"]);
+  } finally {
+    fetchMock.restore();
   }
 });
 
@@ -166,12 +284,11 @@ test("returns 503 when the Global Config write fails", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
   process.env.GLOBAL_CONFIG_ID = "ecfg_test";
   process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => new Response(null, { status: 500 });
+  const fetchMock = mockConfigFetch({ readStatus: 404, writeStatus: 500 });
 
   try {
     assert.equal((await POST(request(validPayload))).status, 503);
   } finally {
-    globalThis.fetch = originalFetch;
+    fetchMock.restore();
   }
 });
