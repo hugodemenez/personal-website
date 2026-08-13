@@ -59,7 +59,7 @@ export default function PlacesMap({ places }: PlacesMapProps) {
         <defs>
           <filter height="108%" id={filterId} width="108%" x="-4%" y="-4%">
             <feTurbulence
-              baseFrequency="0.018"
+              baseFrequency="0.012"
               numOctaves="2"
               result="noise"
               seed="7"
@@ -68,7 +68,7 @@ export default function PlacesMap({ places }: PlacesMapProps) {
             <feDisplacementMap
               in="SourceGraphic"
               in2="noise"
-              scale="2.4"
+              scale="1.35"
               xChannelSelector="R"
               yChannelSelector="G"
             />

@@ -81,21 +81,36 @@ const CONTINENTS: readonly Continent[] = [
   {
     name: "Europe",
     ring: [
-      [-10, 51],
-      [-7, 58],
-      [1, 59],
-      [6, 62],
-      [10, 70],
-      [20, 70],
-      [29, 69],
-      [30, 60],
-      [28, 46],
-      [24, 38],
-      [16, 38],
-      [10, 36],
-      [-5, 36],
-      [-9, 38],
-      [-9, 43],
+      [-9.3, 42.8],
+      [-9.5, 40.6],
+      [-9.4, 38.7],
+      [-8.9, 37.1],
+      [-6.2, 36.2],
+      [-2.2, 36.8],
+      [0.4, 38.8],
+      [2.6, 42.3],
+      [5.2, 43.2],
+      [7.4, 43.6],
+      [10.4, 41.6],
+      [14.8, 38.1],
+      [17.8, 40.4],
+      [13.6, 45.5],
+      [18.6, 42.2],
+      [22.8, 37.4],
+      [26.0, 38.4],
+      [24.2, 41.2],
+      [28.4, 45.4],
+      [30.0, 54.0],
+      [29.4, 69.2],
+      [20.0, 70.4],
+      [10.2, 63.0],
+      [8.2, 58.2],
+      [5.4, 53.2],
+      [1.4, 51.0],
+      [-4.6, 48.4],
+      [-1.4, 45.6],
+      [-1.6, 43.4],
+      [-5.8, 43.4],
     ],
   },
   {
@@ -120,24 +135,24 @@ const CONTINENTS: readonly Continent[] = [
   {
     name: "Africa",
     ring: [
-      [-6, 35],
-      [-11, 31],
-      [-17, 15],
-      [-13, 6],
-      [0, 6],
-      [8, 4],
-      [13, -6],
-      [12, -17],
-      [18, -34],
-      [26, -34],
-      [33, -27],
-      [40, -12],
-      [40, 0],
-      [51, 11],
-      [43, 12],
-      [33, 29],
-      [24, 32],
-      [10, 33],
+      [-5.6, 34.2],
+      [-9.6, 32.4],
+      [-16.8, 16.0],
+      [-13.0, 6.0],
+      [0.0, 6.0],
+      [8.0, 4.0],
+      [13.0, -6.0],
+      [12.0, -17.0],
+      [18.0, -34.0],
+      [26.0, -34.0],
+      [33.0, -27.0],
+      [40.0, -12.0],
+      [40.0, 0.0],
+      [51.0, 11.0],
+      [43.0, 12.0],
+      [32.4, 29.6],
+      [23.6, 32.0],
+      [10.4, 32.4],
     ],
   },
   {
@@ -249,7 +264,7 @@ export function projectLocation(
 function wobble(longitude: number, latitude: number, index: number): LonLat {
   const drift = Math.sin(index * 1.71 + longitude * 0.13 + latitude * 0.07);
   const drift2 = Math.cos(index * 2.27 + longitude * 0.05 - latitude * 0.11);
-  return [longitude + drift * 1.15, latitude + drift2 * 0.85];
+  return [longitude + drift * 0.55, latitude + drift2 * 0.4];
 }
 
 function closedSketchPath(points: ProjectedPoint[]): string {
@@ -273,6 +288,10 @@ function closedSketchPath(points: ProjectedPoint[]): string {
 export interface ContinentPath {
   name: string;
   d: string;
+}
+
+export function continentRing(name: string): readonly LonLat[] | undefined {
+  return CONTINENTS.find((continent) => continent.name === name)?.ring;
 }
 
 export function continentPaths(): ContinentPath[] {
