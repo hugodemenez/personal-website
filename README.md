@@ -115,9 +115,12 @@ key is missing at build, the cards are omitted.
 
 ### Spotify authorization
 
-The footer reads user-specific Spotify data with the Authorization Code flow. Configure
-`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, and
-`SPOTIFY_REFRESH_TOKEN` in the deployment environment.
+The homepage reads user-specific Spotify data with the Authorization Code flow
+and shows the most-played track from the last seven days. Spotify only returns
+the 50 most recent plays, so a heavy listening week is ranked from that window
+rather than a complete seven-day history. Configure `SPOTIFY_CLIENT_ID`,
+`SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, and `SPOTIFY_REFRESH_TOKEN` in
+the deployment environment.
 
 Spotify refresh tokens expire after six months from July 20, 2026. When Spotify returns
 `invalid_grant`, the site stops retrying that token and serves the fallback track. To

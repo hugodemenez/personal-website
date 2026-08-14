@@ -183,7 +183,7 @@ const musicLinkClass =
   "font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent";
 
 export default async function Home() {
-  const { recentTrack: track } = await getSpotifyData();
+  const { weeklyTopTrack: track } = await getSpotifyData();
 
   return (
     <>
@@ -209,7 +209,7 @@ export default async function Home() {
             and turning rough ideas into useful systems.
             {track ? (
               <>
-                {" "}Most days have a soundtrack; lately it has been{" "}
+                {" "}Most days have a soundtrack; this week it has been{" "}
                 <a
                   className={musicLinkClass}
                   href={track.url}
