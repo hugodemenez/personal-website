@@ -116,11 +116,11 @@ export default function PlacesMap({ places }: PlacesMapProps) {
           </filter>
           <filter
             filterUnits="userSpaceOnUse"
-            height={MAP_HEIGHT + 48}
+            height={view.height + 48}
             id={brushFilterId}
-            width={MAP_WIDTH + 48}
-            x={-24}
-            y={-24}
+            width={view.width + 48}
+            x={view.x - 24}
+            y={view.y - 24}
           >
             <feTurbulence
               baseFrequency="0.022 0.38"
