@@ -96,6 +96,25 @@ body {
   }
 }
 
+/* Writing thumbnails: dissolve into the page on both sides so title text can
+   sit over the left edge without fighting the photo for contrast. */
+.post-thumb {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 1.85rem,
+    #000 calc(100% - 1.35rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 1.85rem,
+    #000 calc(100% - 1.35rem),
+    transparent 100%
+  );
+}
+
 ::selection {
   background-color: var(--accent);
   color: white;

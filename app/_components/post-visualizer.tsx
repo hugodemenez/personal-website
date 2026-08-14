@@ -18,7 +18,7 @@ interface PostsVisualizerProps {
   posts: SubstackPost[];
 }
 
-const IMAGE_SIZES = "(max-width: 640px) 96px, 108px";
+const IMAGE_SIZES = "(max-width: 640px) 140px, 180px";
 
 /** How many titles back still count as "just passed" for the exit animation. */
 const TITLE_HISTORY = 4;
@@ -338,15 +338,40 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     : "border-border bg-background"
                 }`}
               />
-              {/* min-w-0: grid items default to min-width:auto, which blocks the
-                  title's truncate from ever shrinking below its content width.
-                  Three text rows on the left, thumbnail spanning them on the right. */}
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-3 gap-y-0.5 pb-6 pt-4">
+              {/* Three text rows on the left; the thumbnail sits behind the
+                  right edge so a long title can run a little over the photo.
+                  min-w-0 lets truncate shrink instead of blowing out the grid. */}
+              <div className="relative min-w-0 pb-6 pt-4">
+                {post.image ? (
+                  <Link
+                    aria-hidden="true"
+                    className="absolute top-4 bottom-6 right-0 z-0 aspect-[3/2]"
+                    href={getPostHref(post)}
+                    rel={post.slug ? undefined : "noopener noreferrer"}
+                    tabIndex={-1}
+                    target={post.slug ? undefined : "_blank"}
+                  >
+                    <Image
+                      alt=""
+                      className="post-thumb object-contain"
+                      fill
+                      sizes={IMAGE_SIZES}
+                      src={post.image}
+                      unoptimized
+                    />
+                  </Link>
+                ) : null}
+
+                <div
+                  className={`pointer-events-none relative z-10 flex min-w-0 flex-col gap-y-0.5 ${
+                    post.image ? "pr-16 sm:pr-[4.75rem]" : ""
+                  }`}
+                >
                 {/* Pins just below the Writing bar so the title comes to rest in
                     that slot instead of sliding behind it. The shrink/slide sits
                     on an inner node — PinnedShell owns transform on the shell. */}
                 <PinnedShell
-                  className="relative z-30 col-start-1 row-start-1 min-w-0"
+                  className="pointer-events-auto relative z-30 min-w-0"
                   offset={TITLE_OFFSET}
                   releaseAfter={rowSpan || undefined}
                 >
@@ -395,7 +420,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   // a second one would announce the same destination twice.
                   <Link
                     aria-hidden="true"
-                    className={`col-start-1 row-start-2 truncate text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
+                    className={`pointer-events-auto truncate text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
                       isSelected ? "text-muted/75" : "text-muted/45"
                     }`}
                     href={getPostHref(post)}
@@ -409,7 +434,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
                 <Link
                   aria-hidden="true"
-                  className={`col-start-1 row-start-3 text-sm tracking-normal transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`pointer-events-auto text-sm tracking-normal transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected ? "text-muted/70" : "text-muted/45"
                   }`}
                   href={getPostHref(post)}
@@ -421,26 +446,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     {formatPostDate(post.pubDate)}
                   </time>
                 </Link>
-
-                {post.image ? (
-                  <Link
-                    aria-hidden="true"
-                    className="relative col-start-2 row-span-3 row-start-1 w-24 self-stretch overflow-hidden border border-border bg-surface sm:w-[6.75rem]"
-                    href={getPostHref(post)}
-                    rel={post.slug ? undefined : "noopener noreferrer"}
-                    tabIndex={-1}
-                    target={post.slug ? undefined : "_blank"}
-                  >
-                    <Image
-                      alt=""
-                      className="object-cover"
-                      fill
-                      sizes={IMAGE_SIZES}
-                      src={post.image}
-                      unoptimized
-                    />
-                  </Link>
-                ) : null}
+                </div>
               </div>
             </li>
           );
