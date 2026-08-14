@@ -95,7 +95,7 @@ returns `200` with the city and `updatedAt` fields.
 
 ### Recent runs
 
-The homepage Running list reads completed `run` activities from
+The homepage Running carousel reads completed `run` activities from
 [Shape Calendar](https://shapecalendar.com/api). Configure:
 
 | Variable | Purpose |
@@ -103,10 +103,11 @@ The homepage Running list reads completed `run` activities from
 | `SHAPE_API_KEY` | Bearer token from Shape Settings → API access (`shape_…`) |
 
 The server fetches the last 180 days, drops walks and HealthKit/Strava
-duplicates, and shows the six most recent runs. Mapped routes in the same
-city are merged into one heatmap: overlapping streets get a stronger accent
-color. Strava-sourced rows link to the public activity. If the key is missing
-or Shape is unavailable, the section is omitted.
+duplicates, then groups mapped routes that cover the same streets. The
+homepage shows a short carousel: one card per distinct path, with a
+frequency heatmap and the latest run on that loop. Strava-sourced cards
+link to the public activity. If the key is missing or Shape is unavailable,
+the section is omitted.
 
 ### Spotify authorization
 

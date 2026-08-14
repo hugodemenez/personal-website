@@ -42,12 +42,21 @@ export interface RouteHeatmap {
   routeCount: number;
 }
 
+export interface DistinctPath {
+  run: RecentRun;
+  count: number;
+  heatmap: RouteHeatmap | null;
+}
+
 export const RECENT_RUN_LIMIT = 6;
+export const DISTINCT_PATH_LIMIT = 8;
+export const PATH_OVERLAP = 0.4;
 export const WALKING_PACE_SEC_PER_KM = 9 * 60;
 export const MAP_WIDTH = 120;
 export const MAP_HEIGHT = 40;
 export const HEATMAP_WIDTH = 560;
 export const HEATMAP_MAX_HEIGHT = 300;
+export const HEATMAP_CARD_MAX_HEIGHT = 188;
 const MAP_PADDING = 2;
 const MAX_MAP_POINTS = 180;
 const CLUSTER_RADIUS_KM = 8;
@@ -327,19 +336,59 @@ function walkGridLine(
   }
 }
 
-export function buildRouteHeatmapFromRoutes(
-  routes: Array<Array<[number, number]>>,
-  width = HEATMAP_WIDTH
-): RouteHeatmap | null {
-  const cluster = selectPrimaryRouteCluster(routes);
-  if (!cluster.length) return null;
+export function pathContainment(
+  a: Array<[number, number]>,
+  b: Array<[number, number]>,
+  cols = 64
+): number {
+  if (a.length < 2 || b.length < 2) return 0;
 
-  const { minLat, maxLat, minLng, maxLng } = boundsOf(cluster);
+  const { minLat, maxLat, minLng, maxLng } = boundsOf([a, b]);
+  const latSpan = maxLat - minLat || 0.001;
+  const lngSpan = maxLng - minLng || 0.001;
+  const rows = Math.max(8, Math.round(cols * (latSpan / lngSpan)));
+
+  const toSet = (points: Array<[number, number]>) => {
+    const cells = new Set<string>();
+    for (const [lat, lng] of downsample(points, 240)) {
+      const x = Math.max(
+        0,
+        Math.min(cols - 1, Math.round(((lng - minLng) / lngSpan) * (cols - 1)))
+      );
+      const y = Math.max(
+        0,
+        Math.min(rows - 1, Math.round(((maxLat - lat) / latSpan) * (rows - 1)))
+      );
+      cells.add(`${x},${y}`);
+    }
+    return cells;
+  };
+
+  const aCells = toSet(a);
+  const bCells = toSet(b);
+  if (!aCells.size || !bCells.size) return 0;
+
+  let intersection = 0;
+  for (const cell of aCells) {
+    if (bCells.has(cell)) intersection += 1;
+  }
+
+  return intersection / Math.min(aCells.size, bCells.size);
+}
+
+export function paintRouteHeatmap(
+  routes: Array<Array<[number, number]>>,
+  width = HEATMAP_WIDTH,
+  maxHeight = HEATMAP_MAX_HEIGHT
+): RouteHeatmap | null {
+  if (!routes.length) return null;
+
+  const { minLat, maxLat, minLng, maxLng } = boundsOf(routes);
   const latSpan = maxLat - minLat || 0.001;
   const lngSpan = maxLng - minLng || 0.001;
   const aspect = lngSpan / latSpan;
   const innerWidth = width - HEATMAP_PADDING * 2;
-  const innerHeight = Math.min(HEATMAP_MAX_HEIGHT - HEATMAP_PADDING * 2, innerWidth / aspect);
+  const innerHeight = Math.min(maxHeight - HEATMAP_PADDING * 2, innerWidth / aspect);
   const height = Math.round(innerHeight + HEATMAP_PADDING * 2);
   const cols = HEATMAP_GRID;
   const rows = Math.max(2, Math.round(HEATMAP_GRID * (innerHeight / innerWidth)));
@@ -361,7 +410,7 @@ export function buildRouteHeatmapFromRoutes(
     HEATMAP_PADDING + (row / (rows - 1)) * innerHeight,
   ];
 
-  for (const route of cluster) {
+  for (const route of routes) {
     const cells = downsample(route, 400).map(([lat, lng]) => toCell(lat, lng));
     let previous: [number, number] | null = null;
 
@@ -402,7 +451,7 @@ export function buildRouteHeatmapFromRoutes(
   return {
     width,
     height,
-    routeCount: cluster.length,
+    routeCount: routes.length,
     edges: values
       .filter((edge) => edge.count >= minCount)
       .map((edge) => ({
@@ -416,6 +465,13 @@ export function buildRouteHeatmapFromRoutes(
   };
 }
 
+export function buildRouteHeatmapFromRoutes(
+  routes: Array<Array<[number, number]>>,
+  width = HEATMAP_WIDTH
+): RouteHeatmap | null {
+  return paintRouteHeatmap(selectPrimaryRouteCluster(routes), width);
+}
+
 export function buildRouteHeatmap(
   activities: ShapeActivity[]
 ): RouteHeatmap | null {
@@ -425,6 +481,52 @@ export function buildRouteHeatmap(
     .filter((points) => points.length >= 2);
 
   return buildRouteHeatmapFromRoutes(routes);
+}
+
+export function selectDistinctPaths(
+  activities: ShapeActivity[],
+  limit = DISTINCT_PATH_LIMIT
+): DistinctPath[] {
+  const mapped = selectRecentRuns(activities, Number.POSITIVE_INFINITY).filter(
+    (activity) => activity.map
+  );
+  const clusters: Array<{
+    activities: ShapeActivity[];
+    routes: Array<Array<[number, number]>>;
+  }> = [];
+
+  for (const activity of mapped) {
+    const points = decodePolyline(activity.map as string);
+    if (points.length < 2) continue;
+
+    let nearest: (typeof clusters)[number] | null = null;
+    let nearestScore = 0;
+
+    for (const cluster of clusters) {
+      const score = pathContainment(points, cluster.routes.flat());
+      if (score > nearestScore) {
+        nearest = cluster;
+        nearestScore = score;
+      }
+    }
+
+    if (nearest && nearestScore >= PATH_OVERLAP) {
+      nearest.activities.push(activity);
+      nearest.routes.push(points);
+    } else {
+      clusters.push({ activities: [activity], routes: [points] });
+    }
+  }
+
+  return clusters.slice(0, limit).map((cluster) => ({
+    run: toRecentRun(cluster.activities[0]),
+    count: cluster.activities.length,
+    heatmap: paintRouteHeatmap(
+      cluster.routes,
+      HEATMAP_WIDTH,
+      HEATMAP_CARD_MAX_HEIGHT
+    ),
+  }));
 }
 
 function activityScore(activity: ShapeActivity): number {

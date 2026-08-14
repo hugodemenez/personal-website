@@ -2,12 +2,8 @@
 
 import { cacheLife } from "next/cache";
 import {
-  RECENT_RUN_LIMIT,
-  buildRouteHeatmap,
-  selectRecentRuns,
-  toRecentRun,
-  type RecentRun,
-  type RouteHeatmap,
+  selectDistinctPaths,
+  type DistinctPath,
   type ShapeActivity,
 } from "@/lib/shape-runs";
 
@@ -20,22 +16,19 @@ interface ShapeActivitiesResponse {
 }
 
 export interface RunningSectionData {
-  runs: RecentRun[];
-  heatmap: RouteHeatmap | null;
+  paths: DistinctPath[];
 }
 
 function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export async function getRunningSection(
-  limit = RECENT_RUN_LIMIT
-): Promise<RunningSectionData> {
+export async function getRunningSection(): Promise<RunningSectionData> {
   "use cache";
   cacheLife("minutes");
 
   const token = process.env.SHAPE_API_KEY;
-  if (!token) return { runs: [], heatmap: null };
+  if (!token) return { paths: [] };
 
   const to = new Date();
   const from = new Date(to);
@@ -62,14 +55,9 @@ export async function getRunningSection(
       throw new Error(data.error ?? `Shape API failed (${response.status})`);
     }
 
-    const activities = data.activities ?? [];
-
-    return {
-      runs: selectRecentRuns(activities, limit).map(toRecentRun),
-      heatmap: buildRouteHeatmap(activities),
-    };
+    return { paths: selectDistinctPaths(data.activities ?? []) };
   } catch (error) {
     console.error("Unable to load recent runs from Shape", error);
-    return { runs: [], heatmap: null };
+    return { paths: [] };
   }
 }

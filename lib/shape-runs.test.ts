@@ -13,8 +13,52 @@ import {
   selectRecentRuns,
   toRecentRun,
   buildRouteHeatmapFromRoutes,
+  pathContainment,
+  selectDistinctPaths,
   type ShapeActivity,
 } from "./shape-runs";
+
+function encodePolyline(points: Array<[number, number]>): string {
+  let lastLat = 0;
+  let lastLng = 0;
+  let result = "";
+
+  const encode = (value: number) => {
+    let encoded = value < 0 ? ~(value << 1) : value << 1;
+    let chunk = "";
+    while (encoded >= 0x20) {
+      chunk += String.fromCharCode((0x20 | (encoded & 0x1f)) + 63);
+      encoded >>= 5;
+    }
+    chunk += String.fromCharCode(encoded + 63);
+    return chunk;
+  };
+
+  for (const [lat, lng] of points) {
+    const nextLat = Math.round(lat * 1e5);
+    const nextLng = Math.round(lng * 1e5);
+    result += encode(nextLat - lastLat);
+    result += encode(nextLng - lastLng);
+    lastLat = nextLat;
+    lastLng = nextLng;
+  }
+
+  return result;
+}
+
+const LISBON_LOOP: Array<[number, number]> = [
+  [38.553, -9.018],
+  [38.554, -9.016],
+  [38.552, -9.015],
+  [38.551, -9.017],
+  [38.553, -9.018],
+];
+const LILLE_LOOP: Array<[number, number]> = [
+  [50.665, 3.166],
+  [50.667, 3.168],
+  [50.666, 3.17],
+  [50.664, 3.167],
+];
 
 function activity(overrides: Partial<ShapeActivity> = {}): ShapeActivity {
   return {
@@ -127,6 +171,44 @@ test("keeps nearby routes together and drops a distant one", () => {
 
   const cluster = selectPrimaryRouteCluster([lisbonLoop, sameLoop, lille]);
   assert.equal(cluster.length, 2);
+});
+
+test("pathContainment is high when a short loop sits on a longer one", () => {
+  const short = LISBON_LOOP.slice(0, 3);
+  assert.ok(pathContainment(short, LISBON_LOOP) > 0.7);
+  assert.ok(pathContainment(LISBON_LOOP, LILLE_LOOP) < 0.2);
+});
+
+test("selectDistinctPaths keeps one card per similar route", () => {
+  const lisbonA = activity({
+    id: "lisbon-a",
+    date: "2026-08-14T07:00:00Z",
+    title: "Tempo 2km",
+    map: encodePolyline(LISBON_LOOP),
+  });
+  const lisbonB = activity({
+    id: "lisbon-b",
+    date: "2026-08-10T07:00:00Z",
+    title: "Tempo 5km",
+    distance: 5200,
+    map: encodePolyline(LISBON_LOOP),
+  });
+  const lille = activity({
+    id: "lille-1",
+    date: "2026-06-30T17:00:00Z",
+    title: "Afternoon Run",
+    distance: 8000,
+    map: encodePolyline(LILLE_LOOP),
+  });
+
+  const paths = selectDistinctPaths([lisbonA, lisbonB, lille]);
+
+  assert.equal(paths.length, 2);
+  assert.equal(paths[0].run.title, "Tempo 2km");
+  assert.equal(paths[0].count, 2);
+  assert.equal(paths[1].run.title, "Afternoon Run");
+  assert.equal(paths[1].count, 1);
+  assert.ok(paths[0].heatmap);
 });
 
 test("merges overlapping streets into a frequency heatmap", () => {
