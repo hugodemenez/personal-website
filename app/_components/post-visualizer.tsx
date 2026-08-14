@@ -18,13 +18,15 @@ interface PostsVisualizerProps {
   posts: SubstackPost[];
 }
 
-const IMAGE_SIZES = "(max-width: 768px) 92vw, 700px";
+const IMAGE_SIZES = "(max-width: 640px) 96px, 108px";
 
 /** How many titles back still count as "just passed" for the exit animation. */
 const TITLE_HISTORY = 4;
 
-/** Where a title comes to rest — just under the Writing bar, not behind it. */
-const TITLE_OFFSET = 104;
+/** Where a title comes to rest — just under the Writing bar, not behind it.
+ *  Titles no longer carry their own pt-4, so this sits a little lower than the
+ *  old 104px offset to keep the same clearance under the bar. */
+const TITLE_OFFSET = 120;
 
 interface TimelineMilestone {
   date: string;
@@ -330,20 +332,21 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
             >
               <span
                 aria-hidden="true"
-                className={`relative z-10 mx-auto mt-7 size-2 rounded-full border transition-[background-color,border-color,transform] duration-150 ease-out motion-reduce:transition-none ${
+                className={`relative z-10 mx-auto mt-6 size-2 rounded-full border transition-[background-color,border-color,transform] duration-150 ease-out motion-reduce:transition-none ${
                   isSelected
                     ? "scale-125 border-accent bg-accent"
                     : "border-border bg-background"
                 }`}
               />
               {/* min-w-0: grid items default to min-width:auto, which blocks the
-                  title's truncate from ever shrinking below its content width. */}
-              <div className="min-h-20 min-w-0">
+                  title's truncate from ever shrinking below its content width.
+                  Three text rows on the left, thumbnail spanning them on the right. */}
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto_auto] gap-x-3 gap-y-0.5 pb-6 pt-4">
                 {/* Pins just below the Writing bar so the title comes to rest in
                     that slot instead of sliding behind it. The shrink/slide sits
                     on an inner node — PinnedShell owns transform on the shell. */}
                 <PinnedShell
-                  className="relative z-30"
+                  className="relative z-30 col-start-1 row-start-1 min-w-0"
                   offset={TITLE_OFFSET}
                   releaseAfter={rowSpan || undefined}
                 >
@@ -365,7 +368,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 >
                 <Link
                   aria-current={isSelected ? "true" : undefined}
-                  className={`flex min-h-11 min-w-0 items-center pb-1.5 pt-4 text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`block min-w-0 truncate text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
                       ? "font-bold text-foreground"
                       : "font-normal text-muted/65 hover:text-foreground"
@@ -381,16 +384,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   rel={post.slug ? undefined : "noopener noreferrer"}
                   target={post.slug ? undefined : "_blank"}
                 >
-                  <span className="flex min-w-0 items-baseline">
-                    <span className="truncate">{post.title}</span>
-                    <span
-                      className={`ml-2 shrink-0 whitespace-nowrap text-sm font-normal tracking-normal ${
-                        isSelected ? "text-muted/70" : "text-muted/45"
-                      }`}
-                    >
-                      • {formatPostDate(post.pubDate)}
-                    </span>
-                  </span>
+                  {post.title}
                 </Link>
                 </div>
                 </PinnedShell>
@@ -401,7 +395,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   // a second one would announce the same destination twice.
                   <Link
                     aria-hidden="true"
-                    className={`mb-6 block max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
+                    className={`col-start-1 row-start-2 truncate text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
                       isSelected ? "text-muted/75" : "text-muted/45"
                     }`}
                     href={getPostHref(post)}
@@ -413,10 +407,25 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   </Link>
                 ) : null}
 
+                <Link
+                  aria-hidden="true"
+                  className={`col-start-1 row-start-3 text-sm tracking-normal transition-colors duration-150 motion-reduce:transition-none ${
+                    isSelected ? "text-muted/70" : "text-muted/45"
+                  }`}
+                  href={getPostHref(post)}
+                  rel={post.slug ? undefined : "noopener noreferrer"}
+                  tabIndex={-1}
+                  target={post.slug ? undefined : "_blank"}
+                >
+                  <time dateTime={post.pubDate}>
+                    {formatPostDate(post.pubDate)}
+                  </time>
+                </Link>
+
                 {post.image ? (
                   <Link
                     aria-hidden="true"
-                    className="mb-8 block overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
+                    className="relative col-start-2 row-span-3 row-start-1 w-24 self-stretch overflow-hidden border border-border bg-surface sm:w-[6.75rem]"
                     href={getPostHref(post)}
                     rel={post.slug ? undefined : "noopener noreferrer"}
                     tabIndex={-1}
@@ -424,12 +433,11 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   >
                     <Image
                       alt=""
-                      className="h-[clamp(9rem,34vw,13rem)] w-full object-cover"
-                      height={400}
+                      className="object-cover"
+                      fill
                       sizes={IMAGE_SIZES}
                       src={post.image}
                       unoptimized
-                      width={700}
                     />
                   </Link>
                 ) : null}
