@@ -63,8 +63,8 @@ function PathCard({ path }: { path: DistinctPath }) {
       ) : null}
       <p className="mt-1 text-sm text-muted/70">
         {path.count === 1
-          ? "One run on this path"
-          : `${path.count} similar runs`}
+          ? "One run on these streets"
+          : `${path.count} runs on these streets`}
       </p>
     </>
   );
@@ -163,7 +163,7 @@ export function RunPathCarousel({ paths }: { paths: DistinctPath[] }) {
         {paths.map((path) => (
           <li
             key={path.run.id}
-            aria-label={`${path.run.title}, ${path.count === 1 ? "one run" : `${path.count} similar runs`}`}
+            aria-label={`${path.run.title}, ${path.count === 1 ? "one run" : `${path.count} runs`} on these streets`}
             aria-roledescription="slide"
             className="w-full min-w-full shrink-0 snap-start"
           >

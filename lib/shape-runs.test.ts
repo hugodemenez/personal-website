@@ -191,7 +191,12 @@ test("selectDistinctPaths keeps one card per similar route", () => {
     date: "2026-08-10T07:00:00Z",
     title: "Tempo 5km",
     distance: 5200,
-    map: encodePolyline(LISBON_LOOP),
+    map: encodePolyline([
+      [38.5532, -9.0181],
+      [38.556, -9.012],
+      [38.55, -9.014],
+      [38.553, -9.018],
+    ]),
   });
   const lille = activity({
     id: "lille-1",

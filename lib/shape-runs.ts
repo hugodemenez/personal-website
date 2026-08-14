@@ -493,28 +493,39 @@ export function selectDistinctPaths(
   const clusters: Array<{
     activities: ShapeActivity[];
     routes: Array<Array<[number, number]>>;
+    center: [number, number];
   }> = [];
 
   for (const activity of mapped) {
     const points = decodePolyline(activity.map as string);
     if (points.length < 2) continue;
 
+    const routeCenter = centroid(points);
     let nearest: (typeof clusters)[number] | null = null;
-    let nearestScore = 0;
+    let nearestDistance = Infinity;
 
     for (const cluster of clusters) {
-      const score = pathContainment(points, cluster.routes.flat());
-      if (score > nearestScore) {
+      const distance = distanceKm(routeCenter, cluster.center);
+      if (distance < nearestDistance) {
         nearest = cluster;
-        nearestScore = score;
+        nearestDistance = distance;
       }
     }
 
-    if (nearest && nearestScore >= PATH_OVERLAP) {
+    if (nearest && nearestDistance <= CLUSTER_RADIUS_KM) {
       nearest.activities.push(activity);
       nearest.routes.push(points);
+      const n = nearest.routes.length;
+      nearest.center = [
+        (nearest.center[0] * (n - 1) + routeCenter[0]) / n,
+        (nearest.center[1] * (n - 1) + routeCenter[1]) / n,
+      ];
     } else {
-      clusters.push({ activities: [activity], routes: [points] });
+      clusters.push({
+        activities: [activity],
+        routes: [points],
+        center: routeCenter,
+      });
     }
   }
 

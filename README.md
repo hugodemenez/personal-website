@@ -103,11 +103,11 @@ The homepage Running carousel reads completed `run` activities from
 | `SHAPE_API_KEY` | Bearer token from Shape Settings → API access (`shape_…`) |
 
 The server fetches the last 180 days, drops walks and HealthKit/Strava
-duplicates, then groups mapped routes that cover the same streets. The
-homepage shows a short carousel: one card per distinct path, with a
-frequency heatmap and the latest run on that loop. Strava-sourced cards
-link to the public activity. If the key is missing or Shape is unavailable,
-the section is omitted.
+duplicates, then groups mapped routes that start in the same area. The
+homepage shows a short carousel: one card per place, with a frequency
+heatmap of the streets I repeat there and the latest run on that loop.
+Strava-sourced cards link to the public activity. If the key is missing
+or Shape is unavailable, the section is omitted.
 
 ### Spotify authorization
 
