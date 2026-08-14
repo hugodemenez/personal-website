@@ -360,41 +360,32 @@ function toSmoothPath(points: ProjectedPoint[]): string {
   return `${path} L ${last.x.toFixed(2)} ${last.y.toFixed(2)}`;
 }
 
-function buildZoneStroke(
+function buildCirclePath(
   origin: ProjectedPoint,
-  random: () => number,
-  length: number,
-  lift: number,
-  tilt: number,
-  wander: number
+  radiusX: number,
+  radiusY: number,
+  random: () => number
 ): string {
-  const start = -length / 2;
-  const segments = 5;
+  const turns = 1.06 + random() * 0.1;
+  const start = random() * Math.PI * 2;
+  const steps = 18;
   const points: ProjectedPoint[] = [];
 
-  for (let index = 0; index <= segments; index += 1) {
-    const progress = index / segments;
-    const ease = Math.sin(progress * Math.PI);
+  for (let index = 0; index <= steps; index += 1) {
+    const progress = index / steps;
+    const angle = start + progress * turns * Math.PI * 2;
+    const wobble = 1 + (random() - 0.5) * 0.2;
     points.push({
-      x:
-        origin.x +
-        start +
-        length * progress +
-        (random() - 0.5) * wander * ease,
-      y:
-        origin.y +
-        tilt * (progress - 0.5) * length +
-        (random() - 0.5) * lift * 0.45 * ease,
+      x: origin.x + Math.cos(angle) * radiusX * wobble,
+      y: origin.y + Math.sin(angle) * radiusY * wobble,
     });
   }
 
   return toSmoothPath(points);
 }
 
-export interface ZoneBrush {
+export interface ZoneCircle {
   city: string;
-  corePath: string;
-  coreWidth: number;
   kind: StayKind;
   path: string;
   width: number;
@@ -411,104 +402,19 @@ export function zoneCenter(place: VisitedPlace): ProjectedPoint {
   );
 }
 
-export interface MapViewBox {
-  height: number;
-  width: number;
-  x: number;
-  y: number;
-}
-
-const MIN_LON_SPAN = 48;
-const MIN_LAT_SPAN = 32;
-const VIEW_PADDING = 0.2;
-const WORLD_ASPECT = MAP_WIDTH / MAP_HEIGHT;
-
-export function mapViewBox(places: readonly VisitedPlace[]): MapViewBox {
-  const coords = places.length
-    ? places.map((place) => ({
-        latitude: place.latitude,
-        longitude: place.longitude,
-      }))
-    : [{ latitude: 38.72, longitude: -9.14 }];
-
-  const west = Math.min(...coords.map((coord) => coord.longitude));
-  const east = Math.max(...coords.map((coord) => coord.longitude));
-  const south = Math.min(...coords.map((coord) => coord.latitude));
-  const north = Math.max(...coords.map((coord) => coord.latitude));
-  const lonMid = (west + east) / 2;
-  const latMid = (south + north) / 2;
-
-  let lonSpan = Math.max(east - west, MIN_LON_SPAN);
-  let latSpan = Math.max(north - south, MIN_LAT_SPAN);
-
-  if (lonSpan / latSpan < WORLD_ASPECT) lonSpan = latSpan * WORLD_ASPECT;
-  if (lonSpan / latSpan > WORLD_ASPECT) latSpan = lonSpan / WORLD_ASPECT;
-
-  lonSpan *= 1 + VIEW_PADDING * 2;
-  latSpan *= 1 + VIEW_PADDING * 2;
-
-  let viewWest = lonMid - lonSpan / 2;
-  let viewEast = lonMid + lonSpan / 2;
-  let viewSouth = latMid - latSpan / 2;
-  let viewNorth = latMid + latSpan / 2;
-
-  if (viewWest < -180) {
-    viewEast = Math.min(180, viewEast - viewWest - 180);
-    viewWest = -180;
-  }
-  if (viewEast > 180) {
-    viewWest = Math.max(-180, viewWest - (viewEast - 180));
-    viewEast = 180;
-  }
-  if (viewSouth < -90) {
-    viewNorth = Math.min(90, viewNorth - viewSouth - 90);
-    viewSouth = -90;
-  }
-  if (viewNorth > 90) {
-    viewSouth = Math.max(-90, viewSouth - (viewNorth - 90));
-    viewNorth = 90;
-  }
-
-  const topLeft = projectLocation(viewWest, viewNorth);
-  const bottomRight = projectLocation(viewEast, viewSouth);
-
-  return {
-    x: topLeft.x,
-    y: topLeft.y,
-    width: Math.max(1, bottomRight.x - topLeft.x),
-    height: Math.max(1, bottomRight.y - topLeft.y),
-  };
-}
-
-export function zoneBrushes(
-  places: readonly VisitedPlace[],
-  viewWidth = MAP_WIDTH
-): ZoneBrush[] {
+export function zoneCircles(places: readonly VisitedPlace[]): ZoneCircle[] {
   return places.map((place) => {
     const kind = stayKind(place, places);
     const origin = zoneCenter(place);
     const random = createRandom(`${place.city}|${place.country ?? ""}`);
-    const length = viewWidth * (kind === "habitual" ? 0.17 : 0.125);
-    const lift = viewWidth * (kind === "habitual" ? 0.052 : 0.038);
-    const wander = viewWidth * 0.018;
-    const tilt = (random() - 0.5) * 0.28;
-    const path = buildZoneStroke(origin, random, length, lift, tilt, wander);
-    const corePath = buildZoneStroke(
-      origin,
-      random,
-      length * 0.78,
-      lift * 0.7,
-      tilt * 0.55,
-      wander * 0.7
-    );
+    const radius = kind === "habitual" ? 28 : 21;
+    const stretch = 0.82 + random() * 0.12;
 
     return {
       city: place.city,
-      corePath,
-      coreWidth: lift * 0.48,
       kind,
-      path,
-      width: lift,
+      path: buildCirclePath(origin, radius, radius * stretch, random),
+      width: kind === "habitual" ? 2.6 : 1.9,
       x: origin.x,
       y: origin.y,
     };

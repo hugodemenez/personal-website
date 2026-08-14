@@ -3,11 +3,12 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { VisitedPlace } from "@/server/location-data";
 import {
+  MAP_HEIGHT,
+  MAP_PADDING,
   MAP_WIDTH,
   continentPaths,
-  mapViewBox,
   stayKind,
-  zoneBrushes,
+  zoneCircles,
   type StayKind,
 } from "@/lib/world-map";
 
@@ -15,24 +16,21 @@ interface PlacesMapProps {
   places: VisitedPlace[];
 }
 
-function BrushSwatch({ kind }: { kind: StayKind }) {
+function CircleSwatch({ kind }: { kind: StayKind }) {
   return (
     <svg
       aria-hidden="true"
-      className={`highlighter-ink inline-block h-2.5 w-7 -translate-y-px overflow-visible ${
-        kind === "habitual"
-          ? "text-accent-light dark:text-accent"
-          : "text-muted/55 dark:text-muted/70"
+      className={`inline-block size-3.5 -translate-y-px overflow-visible ${
+        kind === "habitual" ? "text-accent" : "text-muted/70"
       }`}
-      viewBox="0 0 28 10"
+      viewBox="0 0 16 16"
     >
       <path
-        d="M 1 6 Q 8 3.5 15 5.5 T 27 4.5"
+        d="M 3.2 8.4 Q 3.6 3.8 8.1 3.4 T 13.1 8.2 Q 12.4 12.8 7.8 12.6 T 3.4 8.1"
         fill="none"
         stroke="currentColor"
-        strokeLinecap="butt"
-        strokeOpacity={kind === "habitual" ? 0.82 : 0.7}
-        strokeWidth={kind === "habitual" ? 6.2 : 5}
+        strokeLinecap="round"
+        strokeWidth={kind === "habitual" ? 1.6 : 1.25}
       />
     </svg>
   );
@@ -40,18 +38,15 @@ function BrushSwatch({ kind }: { kind: StayKind }) {
 
 export default function PlacesMap({ places }: PlacesMapProps) {
   const filterId = `map-ink-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
-  const brushFilterId = `map-brush-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
+  const circleFilterId = `map-circle-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
   const sectionRef = useRef<HTMLElement>(null);
   const [activeCity, setActiveCity] = useState<string | null>(null);
   const [drawn, setDrawn] = useState(false);
   const continents = useMemo(() => continentPaths(), []);
-  const view = useMemo(() => mapViewBox(places), [places]);
-  const brushes = useMemo(() => zoneBrushes(places, view.width), [places, view.width]);
-  const coastWidth = Math.max(0.85, 1.35 * (view.width / MAP_WIDTH) * 2);
-  const labelSize = 8 + view.width * 0.014;
+  const circles = useMemo(() => zoneCircles(places), [places]);
   const habitual = places.filter((place) => stayKind(place, places) === "habitual");
   const casual = places.filter((place) => stayKind(place, places) === "casual");
-  const active = brushes.find((brush) => brush.city === activeCity) ?? null;
+  const active = circles.find((circle) => circle.city === activeCity) ?? null;
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -95,7 +90,9 @@ export default function PlacesMap({ places }: PlacesMapProps) {
       <svg
         aria-hidden="true"
         className="mt-5 block w-full text-muted"
-        viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
+        viewBox={`${-MAP_PADDING} ${-MAP_PADDING} ${MAP_WIDTH + MAP_PADDING * 2} ${
+          MAP_HEIGHT + MAP_PADDING * 2
+        }`}
       >
         <defs>
           <filter height="108%" id={filterId} width="108%" x="-4%" y="-4%">
@@ -116,14 +113,14 @@ export default function PlacesMap({ places }: PlacesMapProps) {
           </filter>
           <filter
             filterUnits="userSpaceOnUse"
-            height={view.height + 48}
-            id={brushFilterId}
-            width={view.width + 48}
-            x={view.x - 24}
-            y={view.y - 24}
+            height={MAP_HEIGHT + 48}
+            id={circleFilterId}
+            width={MAP_WIDTH + 48}
+            x={-24}
+            y={-24}
           >
             <feTurbulence
-              baseFrequency="0.022 0.38"
+              baseFrequency="0.04"
               numOctaves={2}
               result="grain"
               seed={11}
@@ -132,7 +129,7 @@ export default function PlacesMap({ places }: PlacesMapProps) {
             <feDisplacementMap
               in="SourceGraphic"
               in2="grain"
-              scale={3.4}
+              scale={1.8}
               xChannelSelector="R"
               yChannelSelector="G"
             />
@@ -146,69 +143,49 @@ export default function PlacesMap({ places }: PlacesMapProps) {
               d={continent.d}
               key={continent.name}
               strokeLinejoin="round"
-              strokeWidth={coastWidth}
+              strokeWidth="1.35"
             />
           ))}
         </g>
 
-        <g className="highlighter-ink" filter={`url(#${brushFilterId})`}>
-          {brushes.map((brush, index) => {
-            const isActive = active?.city === brush.city;
-            const habitualMark = brush.kind === "habitual";
+        <g filter={`url(#${circleFilterId})`}>
+          {circles.map((circle, index) => {
+            const isActive = active?.city === circle.city;
+            const habitualMark = circle.kind === "habitual";
             return (
               <g
                 className={
                   habitualMark
-                    ? "cursor-pointer text-accent-light dark:text-accent"
-                    : "cursor-pointer text-muted/60 dark:text-muted/75"
+                    ? "cursor-pointer text-accent"
+                    : "cursor-pointer text-muted/70"
                 }
-                key={`${brush.city}-${brush.kind}`}
+                key={`${circle.city}-${circle.kind}`}
                 onClick={() =>
                   setActiveCity((current) =>
-                    current === brush.city ? null : brush.city
+                    current === circle.city ? null : circle.city
                   )
                 }
-                onMouseEnter={() => setActiveCity(brush.city)}
+                onMouseEnter={() => setActiveCity(circle.city)}
                 onMouseLeave={() =>
                   setActiveCity((current) =>
-                    current === brush.city ? null : current
+                    current === circle.city ? null : current
                   )
                 }
               >
                 <path
-                  d={brush.path}
+                  d={circle.path}
                   fill="none"
                   pathLength={1}
                   stroke="currentColor"
                   strokeDasharray="1 1"
                   strokeDashoffset={drawn ? 0 : 1}
-                  strokeLinecap="butt"
-                  strokeOpacity={
-                    isActive ? 0.92 : habitualMark ? 0.8 : 0.62
-                  }
-                  strokeWidth={brush.width}
+                  strokeLinecap="round"
+                  strokeOpacity={isActive ? 0.95 : habitualMark ? 0.88 : 0.62}
+                  strokeWidth={circle.width}
                   style={{
                     transition: drawn
-                      ? `stroke-dashoffset 420ms cubic-bezier(0.3,0.7,0.4,1) ${
-                          index * 70
-                        }ms`
-                      : "none",
-                  }}
-                />
-                <path
-                  d={brush.corePath}
-                  fill="none"
-                  pathLength={1}
-                  stroke="currentColor"
-                  strokeDasharray="1 1"
-                  strokeDashoffset={drawn ? 0 : 1}
-                  strokeLinecap="butt"
-                  strokeOpacity={0.48}
-                  strokeWidth={brush.coreWidth}
-                  style={{
-                    transition: drawn
-                      ? `stroke-dashoffset 420ms cubic-bezier(0.3,0.7,0.4,1) ${
-                          index * 70 + 70
+                      ? `stroke-dashoffset 640ms cubic-bezier(0.3,0.7,0.4,1) ${
+                          index * 90
                         }ms`
                       : "none",
                   }}
@@ -221,13 +198,10 @@ export default function PlacesMap({ places }: PlacesMapProps) {
         {active ? (
           <text
             className="fill-foreground"
-            fontSize={labelSize}
-            textAnchor={active.x > view.x + view.width * 0.62 ? "end" : "start"}
-            x={
-              active.x +
-              (active.x > view.x + view.width * 0.62 ? -view.width * 0.04 : view.width * 0.04)
-            }
-            y={active.y - view.height * 0.06}
+            fontSize="14"
+            textAnchor={active.x > MAP_WIDTH * 0.62 ? "end" : "start"}
+            x={active.x + (active.x > MAP_WIDTH * 0.62 ? -22 : 22)}
+            y={active.y - 26}
           >
             {active.city}
           </text>
@@ -236,11 +210,11 @@ export default function PlacesMap({ places }: PlacesMapProps) {
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-muted">
         <p className="inline-flex items-center gap-1.5">
-          <BrushSwatch kind="habitual" />
+          <CircleSwatch kind="habitual" />
           <span>Most of the time</span>
         </p>
         <p className="inline-flex items-center gap-1.5">
-          <BrushSwatch kind="casual" />
+          <CircleSwatch kind="casual" />
           <span>Casual</span>
         </p>
       </div>

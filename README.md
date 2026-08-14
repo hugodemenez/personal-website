@@ -34,10 +34,9 @@ Deployed on [Vercel](https://vercel.com).
 The location pill reads a `current_location` record from Vercel Global Config
 (formerly Edge Config) and combines it with current conditions from Open-Meteo.
 The homepage also draws a rough world map from the same record. Day counts
-stay in storage; the map paints highlighter zones — most of the time versus
-casual — rather than pins or numbers. The frame fits the stays: Europe
-fills the page until a place outside it opens the view back toward the
-world. Location reads expire
+stay in storage; the map keeps the whole world in view and circles regions
+by hand — most of the time versus casual — rather than pins or numbers.
+Location reads expire
 within 60 seconds; weather is cached separately by rounded coordinates for
 several minutes. If the store is unavailable or contains an invalid value,
 Lisbon is used as the home base.

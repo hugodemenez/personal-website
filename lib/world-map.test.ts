@@ -6,11 +6,10 @@ import {
   MAP_WIDTH,
   continentPaths,
   continentRing,
-  mapViewBox,
   projectLocation,
   stayKind,
-  zoneBrushes,
   zoneCenter,
+  zoneCircles,
 } from "./world-map";
 
 const lisbon: VisitedPlace = {
@@ -29,26 +28,6 @@ const paris: VisitedPlace = {
   latitude: 49,
   longitude: 2,
   days: 12,
-  isCurrent: false,
-  isHomeBase: false,
-};
-
-const newYork: VisitedPlace = {
-  city: "New York",
-  country: "United States",
-  latitude: 41,
-  longitude: -74,
-  days: 8,
-  isCurrent: false,
-  isHomeBase: false,
-};
-
-const tokyo: VisitedPlace = {
-  city: "Tokyo",
-  country: "Japan",
-  latitude: 36,
-  longitude: 140,
-  days: 5,
   isCurrent: false,
   isHomeBase: false,
 };
@@ -99,25 +78,14 @@ test("classifies long stays as most of the time and the rest as casual", () => {
   );
 });
 
-test("paints a broad highlighter zone instead of a pin", () => {
-  const [brush] = zoneBrushes([lisbon]);
-  assert.ok(brush);
-  assert.equal(brush.kind, "habitual");
-  assert.match(brush.path, /^M /);
-  assert.ok(brush.width > 16);
+test("circles a region instead of pinning a city", () => {
+  const [circle] = zoneCircles([lisbon]);
+  assert.ok(circle);
+  assert.equal(circle.kind, "habitual");
+  assert.match(circle.path, /^M /);
+  assert.ok(circle.width < 4);
 
   const snapped = zoneCenter(lisbon);
   const exact = projectLocation(lisbon.longitude, lisbon.latitude);
   assert.ok(Math.hypot(snapped.x - exact.x, snapped.y - exact.y) < 30);
-});
-
-test("frames Europe tightly and opens the world when stays leave it", () => {
-  const europe = mapViewBox([lisbon, paris]);
-  const atlantic = mapViewBox([lisbon, paris, newYork]);
-  const world = mapViewBox([lisbon, paris, newYork, tokyo]);
-
-  assert.ok(europe.width < MAP_WIDTH * 0.55, "Europe-only stays should zoom in");
-  assert.ok(atlantic.width > europe.width, "a stay in America should widen the frame");
-  assert.ok(world.width > atlantic.width, "a stay in Asia should open toward the world");
-  assert.ok(world.width <= MAP_WIDTH + 1);
 });
