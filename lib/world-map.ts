@@ -463,17 +463,17 @@ export function wantedCircles(
   return places.map((place) => {
     const origin = zoneCenter(place);
     const random = createRandom(`wanted|${place.name}`);
-    const radius = place.span === "region" ? 44 : 22;
+    const radius = place.span === "region" ? 46 : 24;
     const stretch = 0.74 + random() * 0.18;
     // Unfinished on purpose — a place not yet gone around.
-    const turns = 0.78 + random() * 0.14;
+    const turns = 0.86 + random() * 0.12;
 
     return {
       dashed: true,
       kind: "wanted",
       label: place.name,
       path: buildCirclePath(origin, radius, radius * stretch, random, turns),
-      width: place.span === "region" ? 1.7 : 1.55,
+      width: place.span === "region" ? 2.15 : 1.95,
       x: origin.x,
       y: origin.y,
     };

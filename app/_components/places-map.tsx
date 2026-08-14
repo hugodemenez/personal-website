@@ -26,7 +26,7 @@ function CircleSwatch({ kind }: { kind: PlaceMarkKind }) {
         kind === "habitual"
           ? "text-accent"
           : kind === "wanted"
-            ? "text-muted/55"
+            ? "text-muted/80"
             : "text-muted/70"
       }`}
       viewBox="0 0 16 16"
@@ -174,7 +174,7 @@ export default function PlacesMap({ places }: PlacesMapProps) {
                   habitualMark
                     ? "cursor-pointer text-accent"
                     : wantedMark
-                      ? "cursor-pointer text-muted/55"
+                      ? "cursor-pointer text-muted"
                       : "cursor-pointer text-muted/70"
                 }
                 key={`${circle.label}-${circle.kind}`}
@@ -195,11 +195,11 @@ export default function PlacesMap({ places }: PlacesMapProps) {
                   fill="none"
                   pathLength={1}
                   stroke="currentColor"
-                  strokeDasharray={circle.dashed ? "0.13 0.09" : "1 1"}
+                  strokeDasharray={circle.dashed ? "0.16 0.1" : "1 1"}
                   strokeDashoffset={drawn ? 0 : 1}
                   strokeLinecap="round"
                   strokeOpacity={
-                    isActive ? 0.95 : habitualMark ? 0.88 : wantedMark ? 0.55 : 0.62
+                    isActive ? 0.95 : habitualMark ? 0.88 : wantedMark ? 0.78 : 0.62
                   }
                   strokeWidth={circle.width}
                   style={{
