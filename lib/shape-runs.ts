@@ -57,6 +57,7 @@ export interface DistinctPath {
   averageDistanceLabel: string | null;
   averageDurationLabel: string | null;
   averagePaceLabel: string | null;
+  totalDistanceLabel: string | null;
 }
 
 export const RECENT_RUN_LIMIT = 6;
@@ -548,6 +549,7 @@ export function averageClusterStats(activities: ShapeActivity[]): {
   averageDistanceLabel: string | null;
   averageDurationLabel: string | null;
   averagePaceLabel: string | null;
+  totalDistanceLabel: string | null;
 } {
   const distances = activities.flatMap((activity) =>
     typeof activity.distance === "number" ? [activity.distance] : []
@@ -555,10 +557,12 @@ export function averageClusterStats(activities: ShapeActivity[]): {
   const durations = activities.flatMap((activity) =>
     typeof activity.duration === "number" ? [activity.duration] : []
   );
-  const distance =
+  const totalDistance =
     distances.length > 0
-      ? distances.reduce((sum, value) => sum + value, 0) / distances.length
+      ? distances.reduce((sum, value) => sum + value, 0)
       : null;
+  const distance =
+    totalDistance !== null ? totalDistance / distances.length : null;
   const duration =
     durations.length > 0
       ? durations.reduce((sum, value) => sum + value, 0) / durations.length
@@ -571,6 +575,8 @@ export function averageClusterStats(activities: ShapeActivity[]): {
       distance !== null && duration !== null
         ? formatPace(distance, duration)
         : null,
+    totalDistanceLabel:
+      totalDistance !== null ? formatDistance(totalDistance) : null,
   };
 }
 
