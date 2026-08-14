@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   type MouseEvent,
+  useCallback,
   useEffect,
   useMemo,
   useReducer,
@@ -11,16 +12,20 @@ import {
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
 import { layoutStampAlbum } from "@/lib/stamp-album";
+import {
+  isStampCollected,
+  isTitleStampActive,
+} from "@/lib/stamp-visibility";
 import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
-import { PostStamp } from "./post-stamp";
+import type { StampOffset } from "./playable-stamp";
 import { StampAlbum } from "./stamp-album";
+import { TitleStamp } from "./title-stamp";
+import { useFadingPresence } from "./use-fading-presence";
 
 interface PostsVisualizerProps {
   posts: SubstackPost[];
 }
-
-const IMAGE_SIZES = "(max-width: 768px) 92vw, 700px";
 
 /** How many titles back still count as "just passed" for the exit animation. */
 const TITLE_HISTORY = 4;
@@ -128,17 +133,16 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   );
   const sectionRef = useRef<HTMLElement>(null);
   const postRefs = useRef<Array<HTMLLIElement | null>>([]);
-  const stampRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const collectLineRef = useRef<HTMLDivElement>(null);
+  const stampRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const writingBarRef = useRef<HTMLDivElement>(null);
-  const collectedRef = useRef<boolean[]>([]);
   const originsRef = useRef<Map<string, DOMRect>>(new Map());
+  const albumRectsRef = useRef<Map<string, DOMRect>>(new Map());
   // Average row height, used to release each pinned title after about one row
   // so it hands the slot to the next one instead of staying put.
   const [rowSpan, setRowSpan] = useState(0);
-  const [collected, setCollected] = useState<boolean[]>([]);
   const [titleOffset, setTitleOffset] = useState(TITLE_OFFSET);
   const [trayWidth, setTrayWidth] = useState(0);
+  const [offsets, setOffsets] = useState<Record<string, StampOffset>>({});
 
   const sortedPosts = useMemo(
     () =>
@@ -169,9 +173,9 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
   useEffect(() => {
     dispatchSelection({ type: "reset" });
-    collectedRef.current = [];
     originsRef.current.clear();
-    setCollected([]);
+    albumRectsRef.current.clear();
+    setOffsets({});
   }, [posts]);
 
   useEffect(() => {
@@ -192,7 +196,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
       observer.disconnect();
       window.removeEventListener("resize", measureBar);
     };
-  }, [collected]);
+  }, [selection.currentIndex]);
 
   useEffect(() => {
     const measureRowSpan = () => {
@@ -233,34 +237,15 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
       dispatchSelection({ type: "select", index: nearestIndex });
 
-      // A stamp collects the first time it meets the Writing bar. The list
-      // slot stays put — collapsing it would yank the next stamp up into the
-      // line and collect the whole deck in one frame.
-      const line =
-        collectLineRef.current?.getBoundingClientRect().bottom ?? TITLE_OFFSET;
-      const previous = collectedRef.current;
-      const next = sortedPosts.map((post, index) => {
-        if (!post.image) return false;
-        const stamp = stampRefs.current[index];
-        if (!stamp) return previous[index] ?? false;
-
-        const top = stamp.getBoundingClientRect().top;
-        if (!(previous[index] ?? false)) {
-          originsRef.current.set(post.slug || post.link, stamp.getBoundingClientRect());
-        }
-
-        if (top < line - 4) return true;
-        if (top > line + 32) return false;
-        return previous[index] ?? false;
+      stampRefs.current.forEach((stamp, index) => {
+        if (!stamp) return;
+        const post = sortedPosts[index];
+        if (!post?.image) return;
+        originsRef.current.set(
+          post.slug || post.link,
+          stamp.getBoundingClientRect()
+        );
       });
-
-      if (
-        next.length !== previous.length ||
-        next.some((value, index) => value !== previous[index])
-      ) {
-        collectedRef.current = next;
-        setCollected(next);
-      }
     };
 
     const scheduleSelection = () => {
@@ -279,11 +264,30 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     };
   }, [sortedPosts]);
 
+  const selectedPostIndex = selection.currentIndex;
+  const titleSeeds = useMemo(
+    () =>
+      sortedPosts.flatMap((post, postIndex) =>
+        post.image && isTitleStampActive(postIndex, selectedPostIndex)
+          ? [post.slug || post.link]
+          : []
+      ),
+    [selectedPostIndex, sortedPosts]
+  );
+  const { fading: titleFading, keys: titleKeys } = useFadingPresence(titleSeeds);
+  const handleOffset = useCallback((seed: string, offset: StampOffset) => {
+    setOffsets((current) => ({ ...current, [seed]: offset }));
+  }, []);
+  const handleAlbumPositions = useCallback((rects: Map<string, DOMRect>) => {
+    albumRectsRef.current = rects;
+  }, []);
+
   if (!sortedPosts.length) return null;
 
-  const selectedPostIndex = selection.currentIndex;
   const albumItems = sortedPosts.flatMap((post, postIndex) => {
-    if (!collected[postIndex] || !post.image) return [];
+    if (!isStampCollected(postIndex, selectedPostIndex) || !post.image) {
+      return [];
+    }
     const seed = post.slug || post.link;
     return [
       {
@@ -332,10 +336,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
         />
 
         <div className="relative" ref={writingBarRef}>
-          <div
-            className="flex items-baseline justify-between gap-4"
-            ref={collectLineRef}
-          >
+          <div className="flex items-baseline justify-between gap-4">
             <h2
               id="posts-heading"
               className="font-serif text-3xl tracking-[-0.035em] text-foreground"
@@ -354,7 +355,13 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
               {String(sortedPosts.length).padStart(2, "0")}
             </p>
           </div>
-          <StampAlbum items={albumItems} slots={albumSlots} />
+          <StampAlbum
+            items={albumItems}
+            offsets={offsets}
+            onOffset={handleOffset}
+            onPositions={handleAlbumPositions}
+            slots={albumSlots}
+          />
         </div>
       </PinnedShell>
 
@@ -396,6 +403,12 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
           const { post, postIndex } = entry;
           const isSelected = postIndex === selectedPostIndex;
+          const seed = post.slug || post.link;
+          const collected = isStampCollected(postIndex, selectedPostIndex);
+          const showTitleStamp =
+            Boolean(post.image) &&
+            titleKeys.includes(seed) &&
+            !collected;
           // 0 for the title currently in the slot, rising for each one passed.
           const titleDepth = Math.min(
             Math.max(selectedPostIndex - postIndex, 0),
@@ -430,8 +443,9 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   offset={titleOffset}
                   releaseAfter={rowSpan || undefined}
                 >
+                <div className="flex items-center gap-3 pb-1.5 pt-4">
                 <div
-                  className="origin-left transition-[transform,opacity] duration-500 [transition-timing-function:var(--ease-spring)] motion-reduce:transition-none"
+                  className="min-w-0 flex-1 origin-left transition-[transform,opacity] duration-500 [transition-timing-function:var(--ease-spring)] motion-reduce:transition-none"
                   style={{
                     opacity: titleDepth > 0 ? 0 : 1,
                     transform:
@@ -448,7 +462,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 >
                 <Link
                   aria-current={isSelected ? "true" : undefined}
-                  className={`flex min-h-11 min-w-0 items-center pb-1.5 pt-4 text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`flex min-h-11 min-w-0 items-center text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
                       ? "font-bold text-foreground"
                       : "font-normal text-muted/65 hover:text-foreground"
@@ -476,6 +490,26 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   </span>
                 </Link>
                 </div>
+                {showTitleStamp && post.image ? (
+                  <span
+                    ref={(node) => {
+                      stampRefs.current[postIndex] = node;
+                    }}
+                    className="relative shrink-0"
+                  >
+                    <TitleStamp
+                      external={!post.slug}
+                      fading={titleFading(seed)}
+                      href={getPostHref(post)}
+                      offset={offsets[seed] ?? { x: 0, y: 0 }}
+                      onOffset={(next) => handleOffset(seed, next)}
+                      origin={albumRectsRef.current.get(seed)}
+                      seed={seed}
+                      src={post.image}
+                    />
+                  </span>
+                ) : null}
+                </div>
                 </PinnedShell>
 
                 {post.description ? (
@@ -484,7 +518,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   // a second one would announce the same destination twice.
                   <Link
                     aria-hidden="true"
-                    className={`mb-6 block max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
+                    className={`mb-8 block max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
                       isSelected ? "text-muted/75" : "text-muted/45"
                     }`}
                     href={getPostHref(post)}
@@ -496,25 +530,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   </Link>
                 ) : null}
 
-                {post.image ? (
-                  <div
-                    ref={(node) => {
-                      stampRefs.current[postIndex] = node;
-                    }}
-                    className={`mb-8 overflow-visible py-3 ${
-                      collected[postIndex] ? "invisible pointer-events-none" : ""
-                    }`}
-                  >
-                    <PostStamp
-                      decorative
-                      external={!post.slug}
-                      href={getPostHref(post)}
-                      seed={post.slug || post.link}
-                      sizes={IMAGE_SIZES}
-                      src={post.image}
-                    />
-                  </div>
-                ) : null}
               </div>
             </li>
           );

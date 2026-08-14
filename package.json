@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "sync-substack": "tsx scripts/sync-substack-posts.ts",
-    "test": "tsx --test server/location-data.test.ts server/location.test.ts server/shape.test.ts server/spotify.test.ts lib/location-display.test.ts lib/run-areas.test.ts lib/shape-runs.test.ts lib/stamp-album.test.ts lib/stamp-pose.test.ts lib/world-map.test.ts app/api/location/update/route.test.ts"
+    "test": "tsx --test server/location-data.test.ts server/location.test.ts server/shape.test.ts server/spotify.test.ts lib/location-display.test.ts lib/run-areas.test.ts lib/shape-runs.test.ts lib/stamp-album.test.ts lib/stamp-pose.test.ts lib/stamp-visibility.test.ts lib/world-map.test.ts app/api/location/update/route.test.ts"
   },
   "dependencies": {
     "@next/mdx": "^16.0.0",

@@ -374,6 +374,39 @@ a.stamp-shadow:focus-visible {
   transform: translateY(-3px);
 }
 
+.stamp-play {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.stamp-play[data-allow-scroll="true"] {
+  touch-action: pan-y;
+}
+
+.stamp-play[data-dragging="true"] {
+  cursor: grabbing;
+}
+
+.stamp-fade-out {
+  opacity: 0;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+
+.stamp-fade-in {
+  animation: stampFadeIn 180ms ease;
+}
+
+@keyframes stampFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -406,7 +439,8 @@ a.stamp-shadow:focus-visible {
   .artwork-stack-in,
   .artwork-stack-under,
   .artwork-destack-out,
-  .artwork-destack-reveal {
+  .artwork-destack-reveal,
+  .stamp-fade-in {
     animation: none;
   }
 }
