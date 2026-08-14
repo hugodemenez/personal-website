@@ -8,6 +8,7 @@ import {
   formatDuration,
   formatPace,
   formatRunDate,
+  spanDays,
   isWalkingActivity,
   selectPrimaryRouteCluster,
   selectRecentRuns,
@@ -80,6 +81,11 @@ function activity(overrides: Partial<ShapeActivity> = {}): ShapeActivity {
 test("reads the calendar day from Shape timestamps", () => {
   assert.equal(calendarDate("2026-08-14T05:16:21.000Z"), "2026-08-14");
   assert.equal(calendarDate("2026-08-14"), "2026-08-14");
+});
+
+test("counts inclusive calendar days between two runs", () => {
+  assert.equal(spanDays("2026-08-10T07:00:00Z", "2026-08-14T07:00:00Z"), 5);
+  assert.equal(spanDays("2026-08-14", "2026-08-14"), 1);
 });
 
 test("formats run stats for the homepage list", () => {
@@ -212,8 +218,10 @@ test("selectDistinctPaths keeps one card per similar route", () => {
   assert.equal(paths.length, 2);
   assert.equal(paths[0].run.title, "Tempo 2km");
   assert.equal(paths[0].count, 2);
+  assert.equal(paths[0].spanDays, 5);
   assert.equal(paths[1].run.title, "Afternoon Run");
   assert.equal(paths[1].count, 1);
+  assert.equal(paths[1].spanDays, 1);
   assert.ok(paths[0].sketch?.path);
   assert.match(paths[0].sketch?.path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
   assert.equal(paths[0].sketch?.traces.length, 1);

@@ -41,13 +41,19 @@ function PathCard({ path }: { path: DistinctPath }) {
     path.run.durationLabel,
     path.run.paceLabel,
   ].filter(Boolean);
+  const runLabel = path.count === 1 ? "1 run" : `${path.count} runs`;
+  const spanLabel =
+    path.spanDays === 1 ? "1 day" : `${path.spanDays} days`;
   const content = (
     <>
       {path.sketch ? <PathMap sketch={path.sketch} /> : null}
-      <div className="mt-4 flex items-baseline justify-between gap-3">
-        <h3 className="min-w-0 truncate text-[1.05rem] leading-snug tracking-[-0.015em] text-foreground transition-colors group-hover:text-accent">
-          {path.run.title}
-        </h3>
+      <h3 className="mt-4 min-w-0 truncate text-[1.05rem] leading-snug tracking-[-0.015em] text-foreground transition-colors group-hover:text-accent">
+        {runLabel} over {spanLabel}
+      </h3>
+      <div className="mt-1 flex items-baseline justify-between gap-3">
+        <p className="min-w-0 truncate text-sm text-muted/70">
+          Last run was {path.run.title}
+        </p>
         <time
           className="shrink-0 text-sm tabular-nums text-muted/70"
           dateTime={path.run.date}
@@ -60,11 +66,6 @@ function PathCard({ path }: { path: DistinctPath }) {
           {stats.join(" · ")}
         </p>
       ) : null}
-      <p className="mt-1 text-sm text-muted/70">
-        {path.count === 1
-          ? "One run on these streets"
-          : `${path.count} runs on these streets`}
-      </p>
     </>
   );
 
@@ -162,7 +163,7 @@ export function RunPathCarousel({ paths }: { paths: DistinctPath[] }) {
         {paths.map((path) => (
           <li
             key={path.run.id}
-            aria-label={`${path.run.title}, ${path.count === 1 ? "one run" : `${path.count} runs`} on these streets`}
+            aria-label={`${path.count === 1 ? "1 run" : `${path.count} runs`} over ${path.spanDays === 1 ? "1 day" : `${path.spanDays} days`}, last run was ${path.run.title}`}
             aria-roledescription="slide"
             className="w-full min-w-full shrink-0 snap-start"
           >

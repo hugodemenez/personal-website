@@ -52,6 +52,7 @@ export interface PathSketch {
 export interface DistinctPath {
   run: RecentRun;
   count: number;
+  spanDays: number;
   sketch: PathSketch | null;
 }
 
@@ -76,6 +77,14 @@ const HEATMAP_PADDING = 10;
 export function calendarDate(value: string): string {
   const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
   return match?.[1] ?? value;
+}
+
+export function spanDays(from: string, to: string): number {
+  const start = Date.parse(`${calendarDate(from)}T00:00:00.000Z`);
+  const end = Date.parse(`${calendarDate(to)}T00:00:00.000Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return 1;
+
+  return Math.round(Math.abs(end - start) / 86_400_000) + 1;
 }
 
 export function formatRunDate(value: string): string {
@@ -577,11 +586,17 @@ export function selectDistinctPaths(
     }
   }
 
-  return clusters.slice(0, limit).map((cluster) => ({
-    run: toRecentRun(cluster.activities[0]),
-    count: cluster.activities.length,
-    sketch: sketchRoutes(cluster.routes),
-  }));
+  return clusters.slice(0, limit).map((cluster) => {
+    const newest = cluster.activities[0];
+    const oldest = cluster.activities[cluster.activities.length - 1];
+
+    return {
+      run: toRecentRun(newest),
+      count: cluster.activities.length,
+      spanDays: spanDays(oldest.date, newest.date),
+      sketch: sketchRoutes(cluster.routes),
+    };
+  });
 }
 
 function activityScore(activity: ShapeActivity): number {
