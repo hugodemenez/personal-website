@@ -365,7 +365,8 @@ function buildZoneStroke(
   random: () => number,
   length: number,
   lift: number,
-  tilt: number
+  tilt: number,
+  wander: number
 ): string {
   const start = -length / 2;
   const segments = 5;
@@ -379,7 +380,7 @@ function buildZoneStroke(
         origin.x +
         start +
         length * progress +
-        (random() - 0.5) * 10 * ease,
+        (random() - 0.5) * wander * ease,
       y:
         origin.y +
         tilt * (progress - 0.5) * length +
@@ -410,21 +411,95 @@ export function zoneCenter(place: VisitedPlace): ProjectedPoint {
   );
 }
 
-export function zoneBrushes(places: readonly VisitedPlace[]): ZoneBrush[] {
+export interface MapViewBox {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+}
+
+const MIN_LON_SPAN = 48;
+const MIN_LAT_SPAN = 32;
+const VIEW_PADDING = 0.2;
+const WORLD_ASPECT = MAP_WIDTH / MAP_HEIGHT;
+
+export function mapViewBox(places: readonly VisitedPlace[]): MapViewBox {
+  const coords = places.length
+    ? places.map((place) => ({
+        latitude: place.latitude,
+        longitude: place.longitude,
+      }))
+    : [{ latitude: 38.72, longitude: -9.14 }];
+
+  const west = Math.min(...coords.map((coord) => coord.longitude));
+  const east = Math.max(...coords.map((coord) => coord.longitude));
+  const south = Math.min(...coords.map((coord) => coord.latitude));
+  const north = Math.max(...coords.map((coord) => coord.latitude));
+  const lonMid = (west + east) / 2;
+  const latMid = (south + north) / 2;
+
+  let lonSpan = Math.max(east - west, MIN_LON_SPAN);
+  let latSpan = Math.max(north - south, MIN_LAT_SPAN);
+
+  if (lonSpan / latSpan < WORLD_ASPECT) lonSpan = latSpan * WORLD_ASPECT;
+  if (lonSpan / latSpan > WORLD_ASPECT) latSpan = lonSpan / WORLD_ASPECT;
+
+  lonSpan *= 1 + VIEW_PADDING * 2;
+  latSpan *= 1 + VIEW_PADDING * 2;
+
+  let viewWest = lonMid - lonSpan / 2;
+  let viewEast = lonMid + lonSpan / 2;
+  let viewSouth = latMid - latSpan / 2;
+  let viewNorth = latMid + latSpan / 2;
+
+  if (viewWest < -180) {
+    viewEast = Math.min(180, viewEast - viewWest - 180);
+    viewWest = -180;
+  }
+  if (viewEast > 180) {
+    viewWest = Math.max(-180, viewWest - (viewEast - 180));
+    viewEast = 180;
+  }
+  if (viewSouth < -90) {
+    viewNorth = Math.min(90, viewNorth - viewSouth - 90);
+    viewSouth = -90;
+  }
+  if (viewNorth > 90) {
+    viewSouth = Math.max(-90, viewSouth - (viewNorth - 90));
+    viewNorth = 90;
+  }
+
+  const topLeft = projectLocation(viewWest, viewNorth);
+  const bottomRight = projectLocation(viewEast, viewSouth);
+
+  return {
+    x: topLeft.x,
+    y: topLeft.y,
+    width: Math.max(1, bottomRight.x - topLeft.x),
+    height: Math.max(1, bottomRight.y - topLeft.y),
+  };
+}
+
+export function zoneBrushes(
+  places: readonly VisitedPlace[],
+  viewWidth = MAP_WIDTH
+): ZoneBrush[] {
   return places.map((place) => {
     const kind = stayKind(place, places);
     const origin = zoneCenter(place);
     const random = createRandom(`${place.city}|${place.country ?? ""}`);
-    const length = kind === "habitual" ? 86 : 64;
-    const lift = kind === "habitual" ? 26 : 18;
+    const length = viewWidth * (kind === "habitual" ? 0.17 : 0.125);
+    const lift = viewWidth * (kind === "habitual" ? 0.052 : 0.038);
+    const wander = viewWidth * 0.018;
     const tilt = (random() - 0.5) * 0.28;
-    const path = buildZoneStroke(origin, random, length, lift, tilt);
+    const path = buildZoneStroke(origin, random, length, lift, tilt, wander);
     const corePath = buildZoneStroke(
       origin,
       random,
       length * 0.78,
       lift * 0.7,
-      tilt * 0.55
+      tilt * 0.55,
+      wander * 0.7
     );
 
     return {

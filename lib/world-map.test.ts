@@ -6,6 +6,7 @@ import {
   MAP_WIDTH,
   continentPaths,
   continentRing,
+  mapViewBox,
   projectLocation,
   stayKind,
   zoneBrushes,
@@ -28,6 +29,26 @@ const paris: VisitedPlace = {
   latitude: 49,
   longitude: 2,
   days: 12,
+  isCurrent: false,
+  isHomeBase: false,
+};
+
+const newYork: VisitedPlace = {
+  city: "New York",
+  country: "United States",
+  latitude: 41,
+  longitude: -74,
+  days: 8,
+  isCurrent: false,
+  isHomeBase: false,
+};
+
+const tokyo: VisitedPlace = {
+  city: "Tokyo",
+  country: "Japan",
+  latitude: 36,
+  longitude: 140,
+  days: 5,
   isCurrent: false,
   isHomeBase: false,
 };
@@ -88,4 +109,15 @@ test("paints a broad highlighter zone instead of a pin", () => {
   const snapped = zoneCenter(lisbon);
   const exact = projectLocation(lisbon.longitude, lisbon.latitude);
   assert.ok(Math.hypot(snapped.x - exact.x, snapped.y - exact.y) < 30);
+});
+
+test("frames Europe tightly and opens the world when stays leave it", () => {
+  const europe = mapViewBox([lisbon, paris]);
+  const atlantic = mapViewBox([lisbon, paris, newYork]);
+  const world = mapViewBox([lisbon, paris, newYork, tokyo]);
+
+  assert.ok(europe.width < MAP_WIDTH * 0.55, "Europe-only stays should zoom in");
+  assert.ok(atlantic.width > europe.width, "a stay in America should widen the frame");
+  assert.ok(world.width > atlantic.width, "a stay in Asia should open toward the world");
+  assert.ok(world.width <= MAP_WIDTH + 1);
 });

@@ -3,10 +3,9 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { VisitedPlace } from "@/server/location-data";
 import {
-  MAP_HEIGHT,
-  MAP_PADDING,
   MAP_WIDTH,
   continentPaths,
+  mapViewBox,
   stayKind,
   zoneBrushes,
   type StayKind,
@@ -46,7 +45,10 @@ export default function PlacesMap({ places }: PlacesMapProps) {
   const [activeCity, setActiveCity] = useState<string | null>(null);
   const [drawn, setDrawn] = useState(false);
   const continents = useMemo(() => continentPaths(), []);
-  const brushes = useMemo(() => zoneBrushes(places), [places]);
+  const view = useMemo(() => mapViewBox(places), [places]);
+  const brushes = useMemo(() => zoneBrushes(places, view.width), [places, view.width]);
+  const coastWidth = Math.max(0.85, 1.35 * (view.width / MAP_WIDTH) * 2);
+  const labelSize = 8 + view.width * 0.014;
   const habitual = places.filter((place) => stayKind(place, places) === "habitual");
   const casual = places.filter((place) => stayKind(place, places) === "casual");
   const active = brushes.find((brush) => brush.city === activeCity) ?? null;
@@ -93,9 +95,7 @@ export default function PlacesMap({ places }: PlacesMapProps) {
       <svg
         aria-hidden="true"
         className="mt-5 block w-full text-muted"
-        viewBox={`${-MAP_PADDING} ${-MAP_PADDING} ${MAP_WIDTH + MAP_PADDING * 2} ${
-          MAP_HEIGHT + MAP_PADDING * 2
-        }`}
+        viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
       >
         <defs>
           <filter height="108%" id={filterId} width="108%" x="-4%" y="-4%">
@@ -146,7 +146,7 @@ export default function PlacesMap({ places }: PlacesMapProps) {
               d={continent.d}
               key={continent.name}
               strokeLinejoin="round"
-              strokeWidth="1.35"
+              strokeWidth={coastWidth}
             />
           ))}
         </g>
@@ -221,10 +221,13 @@ export default function PlacesMap({ places }: PlacesMapProps) {
         {active ? (
           <text
             className="fill-foreground"
-            fontSize="14"
-            textAnchor={active.x > MAP_WIDTH * 0.62 ? "end" : "start"}
-            x={active.x + (active.x > MAP_WIDTH * 0.62 ? -18 : 18)}
-            y={active.y - 22}
+            fontSize={labelSize}
+            textAnchor={active.x > view.x + view.width * 0.62 ? "end" : "start"}
+            x={
+              active.x +
+              (active.x > view.x + view.width * 0.62 ? -view.width * 0.04 : view.width * 0.04)
+            }
+            y={active.y - view.height * 0.06}
           >
             {active.city}
           </text>
