@@ -312,13 +312,130 @@ export function continentPaths(): ContinentPath[] {
   });
 }
 
-export function markerRadius(days: number | null): number {
-  if (days === null) return 4.2;
-  return Math.min(11, 3.1 + Math.sqrt(days) * 1.15);
+export type StayKind = "habitual" | "casual";
+
+export function stayKind(
+  place: VisitedPlace,
+  places: readonly VisitedPlace[]
+): StayKind {
+  if (place.isHomeBase && place.days === null) return "habitual";
+
+  const maximum = Math.max(0, ...places.map((entry) => entry.days ?? 0));
+  if (maximum === 0) return place.isCurrent ? "habitual" : "casual";
+  return (place.days ?? 0) >= maximum * 0.55 ? "habitual" : "casual";
 }
 
-export function formatStay(place: VisitedPlace): string {
-  if (place.isHomeBase && place.days === null) return "Home base";
-  if (place.days === 1) return "1 day";
-  return `${place.days ?? 0} days`;
+function createRandom(seed: string): () => number {
+  let hash = 2166136261;
+
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return () => {
+    hash = (hash + 0x6d2b79f5) | 0;
+    let value = hash;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function toSmoothPath(points: ProjectedPoint[]): string {
+  if (points.length < 2) return "";
+
+  let path = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const point = points[index];
+    const next = points[index + 1];
+    path += ` Q ${point.x.toFixed(2)} ${point.y.toFixed(2)} ${(
+      (point.x + next.x) /
+      2
+    ).toFixed(2)} ${((point.y + next.y) / 2).toFixed(2)}`;
+  }
+
+  const last = points[points.length - 1];
+  return `${path} L ${last.x.toFixed(2)} ${last.y.toFixed(2)}`;
+}
+
+function buildZoneStroke(
+  origin: ProjectedPoint,
+  random: () => number,
+  length: number,
+  lift: number,
+  tilt: number
+): string {
+  const start = -length / 2;
+  const segments = 5;
+  const points: ProjectedPoint[] = [];
+
+  for (let index = 0; index <= segments; index += 1) {
+    const progress = index / segments;
+    const ease = Math.sin(progress * Math.PI);
+    points.push({
+      x:
+        origin.x +
+        start +
+        length * progress +
+        (random() - 0.5) * 10 * ease,
+      y:
+        origin.y +
+        tilt * (progress - 0.5) * length +
+        (random() - 0.5) * lift * 0.45 * ease,
+    });
+  }
+
+  return toSmoothPath(points);
+}
+
+export interface ZoneBrush {
+  city: string;
+  corePath: string;
+  coreWidth: number;
+  kind: StayKind;
+  path: string;
+  width: number;
+  x: number;
+  y: number;
+}
+
+const ZONE_STEP_DEGREES = 8;
+
+export function zoneCenter(place: VisitedPlace): ProjectedPoint {
+  return projectLocation(
+    Math.round(place.longitude / ZONE_STEP_DEGREES) * ZONE_STEP_DEGREES,
+    Math.round(place.latitude / ZONE_STEP_DEGREES) * ZONE_STEP_DEGREES
+  );
+}
+
+export function zoneBrushes(places: readonly VisitedPlace[]): ZoneBrush[] {
+  return places.map((place) => {
+    const kind = stayKind(place, places);
+    const origin = zoneCenter(place);
+    const random = createRandom(`${place.city}|${place.country ?? ""}`);
+    const length = kind === "habitual" ? 86 : 64;
+    const lift = kind === "habitual" ? 26 : 18;
+    const tilt = (random() - 0.5) * 0.28;
+    const path = buildZoneStroke(origin, random, length, lift, tilt);
+    const corePath = buildZoneStroke(
+      origin,
+      random,
+      length * 0.78,
+      lift * 0.7,
+      tilt * 0.55
+    );
+
+    return {
+      city: place.city,
+      corePath,
+      coreWidth: lift * 0.48,
+      kind,
+      path,
+      width: lift,
+      x: origin.x,
+      y: origin.y,
+    };
+  });
 }

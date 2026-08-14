@@ -6,19 +6,31 @@ import {
   MAP_WIDTH,
   continentPaths,
   continentRing,
-  formatStay,
-  markerRadius,
   projectLocation,
+  stayKind,
+  zoneBrushes,
+  zoneCenter,
 } from "./world-map";
 
-const samplePlace = {
+const lisbon: VisitedPlace = {
   city: "Lisbon",
   country: "Portugal",
   latitude: 39,
   longitude: -9,
+  days: 40,
   isCurrent: true,
   isHomeBase: false,
-} satisfies Omit<VisitedPlace, "days">;
+};
+
+const paris: VisitedPlace = {
+  city: "Paris",
+  country: "France",
+  latitude: 49,
+  longitude: 2,
+  days: 12,
+  isCurrent: false,
+  isHomeBase: false,
+};
 
 test("projects lon/lat onto the sketch plane", () => {
   assert.deepEqual(projectLocation(-180, 90), { x: 0, y: 0 });
@@ -38,26 +50,42 @@ test("keeps Iberia and the Bay of Biscay distinct on the Europe sketch", () => {
     "the Bay of Biscay should indent between Iberia and France"
   );
 
-  const lisbon = projectLocation(-9.14, 38.72);
-  const paris = projectLocation(2.35, 48.86);
-  assert.ok(paris.x - lisbon.x > 20);
-  assert.ok(lisbon.y - paris.y > 16);
+  const lisbonPoint = projectLocation(-9.14, 38.72);
+  const parisPoint = projectLocation(2.35, 48.86);
+  assert.ok(parisPoint.x - lisbonPoint.x > 20);
+  assert.ok(lisbonPoint.y - parisPoint.y > 16);
 });
 
-test("builds closed continent sketches and sizes markers by days", () => {
+test("builds closed continent sketches", () => {
   const paths = continentPaths();
   assert.ok(paths.length >= 8);
   for (const path of paths) {
     assert.match(path.d, /^M /);
     assert.match(path.d, /Z$/);
   }
+});
 
-  assert.ok(markerRadius(1) < markerRadius(16));
-  assert.ok(markerRadius(400) <= 11);
-  assert.equal(formatStay({ ...samplePlace, days: 1 }), "1 day");
-  assert.equal(formatStay({ ...samplePlace, days: 12 }), "12 days");
+test("classifies long stays as most of the time and the rest as casual", () => {
+  const places = [lisbon, paris];
+  assert.equal(stayKind(lisbon, places), "habitual");
+  assert.equal(stayKind(paris, places), "casual");
   assert.equal(
-    formatStay({ ...samplePlace, days: null, isHomeBase: true }),
-    "Home base"
+    stayKind(
+      { ...lisbon, days: null, isHomeBase: true },
+      [{ ...lisbon, days: null, isHomeBase: true }]
+    ),
+    "habitual"
   );
+});
+
+test("paints a broad highlighter zone instead of a pin", () => {
+  const [brush] = zoneBrushes([lisbon]);
+  assert.ok(brush);
+  assert.equal(brush.kind, "habitual");
+  assert.match(brush.path, /^M /);
+  assert.ok(brush.width > 16);
+
+  const snapped = zoneCenter(lisbon);
+  const exact = projectLocation(lisbon.longitude, lisbon.latitude);
+  assert.ok(Math.hypot(snapped.x - exact.x, snapped.y - exact.y) < 30);
 });
