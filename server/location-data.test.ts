@@ -215,6 +215,44 @@ test("adds a new place without dropping earlier stays", () => {
   assert.equal(lisbon.places[1].days, 1);
 });
 
+test("keeps at most three distinct places in Global Config", () => {
+  const first = applyLocationVisit(
+    null,
+    parseLocationUpdate(
+      { city: "Paris", country: "France", latitude: 48.86, longitude: 2.35 },
+      now
+    )!
+  );
+  const second = applyLocationVisit(
+    first,
+    parseLocationUpdate(
+      { city: "Lisbon", country: "Portugal", latitude: 38.72, longitude: -9.14 },
+      new Date("2026-08-03T08:00:00.000Z")
+    )!
+  );
+  const third = applyLocationVisit(
+    second,
+    parseLocationUpdate(
+      { city: "Lille", country: "France", latitude: 50.63, longitude: 3.06 },
+      new Date("2026-08-04T08:00:00.000Z")
+    )!
+  );
+  const fourth = applyLocationVisit(
+    third,
+    parseLocationUpdate(
+      { city: "Lyon", country: "France", latitude: 45.76, longitude: 4.84 },
+      new Date("2026-08-05T08:00:00.000Z")
+    )!
+  );
+
+  assert.equal(fourth.city, "Lyon");
+  assert.equal(fourth.places.length, 3);
+  assert.deepEqual(
+    fourth.places.map((place) => place.city),
+    ["Lyon", "Lille", "Lisbon"]
+  );
+});
+
 test("matches places by normalized city and country", () => {
   assert.equal(
     samePlace(

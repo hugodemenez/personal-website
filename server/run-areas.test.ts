@@ -29,7 +29,7 @@ function path(overrides: Partial<DistinctPath> = {}): DistinctPath {
   };
 }
 
-test("uses a stay or stored area before asking the model", async () => {
+test("uses a recent stay before asking the model", async () => {
   const lookups: Array<[number, number]> = [];
   const named = await nameRunningPaths(
     [
@@ -45,7 +45,6 @@ test("uses a stay or stored area before asking the model", async () => {
         lookups.push(center);
         return "Lille";
       },
-      persistAreas: async () => {},
     }
   );
 
@@ -54,39 +53,7 @@ test("uses a stay or stored area before asking the model", async () => {
   assert.deepEqual(lookups, [[50.665, 3.166]]);
 });
 
-test("does not ask the model again for a zone already in the store", async () => {
-  let lookups = 0;
-  let stored: Array<{ name: string; center: [number, number] }> = [];
-
-  const first = await nameRunningPaths([path({ center: [50.665, 3.166] })], {
-    knownAreas: stored,
-    lookupName: async () => {
-      lookups += 1;
-      return "Lille";
-    },
-    persistAreas: async (areas) => {
-      stored = areas;
-    },
-  });
-  const second = await nameRunningPaths([path({ center: [50.67, 3.17] })], {
-    knownAreas: stored,
-    lookupName: async () => {
-      lookups += 1;
-      return "Lille";
-    },
-    persistAreas: async (areas) => {
-      stored = areas;
-    },
-  });
-
-  assert.equal(first[0].placeName, "Lille");
-  assert.equal(second[0].placeName, "Lille");
-  assert.equal(lookups, 1);
-  assert.equal(stored[0]?.name, "Lille");
-});
-
-test("stores a newly resolved zone and skips unnamed clusters", async () => {
-  const persisted: string[] = [];
+test("leaves a cluster unnamed when the model is not sure", async () => {
   const named = await nameRunningPaths(
     [
       path({ center: [48.8566, 2.3522] }),
@@ -97,15 +64,10 @@ test("stores a newly resolved zone and skips unnamed clusters", async () => {
     ],
     {
       knownAreas: [],
-      lookupName: async (center) =>
-        center[0] > 48 ? "Paris" : null,
-      persistAreas: async (areas) => {
-        persisted.push(...areas.map((area) => area.name));
-      },
+      lookupName: async (center) => (center[0] > 48 ? "Paris" : null),
     }
   );
 
   assert.equal(named[0].placeName, "Paris");
   assert.equal(named[1].placeName, null);
-  assert.deepEqual(persisted, ["Paris"]);
 });

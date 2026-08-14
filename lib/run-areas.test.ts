@@ -3,10 +3,7 @@ import test from "node:test";
 import {
   applyRunAreaNames,
   matchRunArea,
-  mergeRunArea,
-  parseStoredRunAreas,
   stayAreasFromPlaces,
-  toStoredRunAreas,
 } from "./run-areas";
 import type { DistinctPath } from "./shape-runs";
 
@@ -36,7 +33,7 @@ function path(overrides: Partial<DistinctPath> = {}): DistinctPath {
   };
 }
 
-test("matches a cluster only when it sits on a known run area", () => {
+test("matches a cluster only when it sits on a known stay", () => {
   const areas = [
     { name: "Azeitão", center: [38.553, -9.018] as [number, number] },
     { name: "Lille", center: [50.665, 3.166] as [number, number] },
@@ -47,7 +44,7 @@ test("matches a cluster only when it sits on a known run area", () => {
   assert.equal(matchRunArea([48.8566, 2.3522], areas), null);
 });
 
-test("names cards from known areas and leaves the rest blank", () => {
+test("names cards from recent stays and leaves the rest blank", () => {
   const named = applyRunAreaNames(
     [
       path(),
@@ -63,29 +60,9 @@ test("names cards from known areas and leaves the rest blank", () => {
   assert.equal(named[1].placeName, null);
 });
 
-test("does not add a cluster that already has a nearby name", () => {
-  const areas = [{ name: "Azeitão", center: [38.553, -9.018] as [number, number] }];
-  const merged = mergeRunArea(areas, {
-    name: "Setúbal",
-    center: [38.55, -9.02],
-  });
-
-  assert.equal(merged.length, 1);
-  assert.equal(merged[0].name, "Azeitão");
-});
-
-test("reads stored run areas and stay cities as name sources", () => {
-  assert.deepEqual(
-    parseStoredRunAreas({
-      version: 1,
-      areas: [{ name: "Lille", latitude: 50.665, longitude: 3.166 }],
-    }),
-    [{ name: "Lille", center: [50.665, 3.166] }]
-  );
-  assert.deepEqual(parseStoredRunAreas({ version: 2, areas: [] }), []);
+test("reads stay cities as name sources", () => {
   assert.deepEqual(
     stayAreasFromPlaces([{ city: "Azeitão", latitude: 38.52, longitude: -9.02 }]),
     [{ name: "Azeitão", center: [38.52, -9.02] }]
   );
-  assert.equal(toStoredRunAreas([{ name: "Lille", center: [50.6651, 3.1662] }]).version, 1);
 });
