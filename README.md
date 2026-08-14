@@ -93,6 +93,20 @@ this Shortcut, enable **Run Immediately**, and disable success notifications.
 Run it manually once before enabling the schedule and confirm the endpoint
 returns `200` with the city and `updatedAt` fields.
 
+### Recent runs
+
+The homepage Running list reads completed `run` activities from
+[Shape Calendar](https://shapecalendar.com/api). Configure:
+
+| Variable | Purpose |
+| --- | --- |
+| `SHAPE_API_KEY` | Bearer token from Shape Settings → API access (`shape_…`) |
+
+The server fetches the last 90 days, drops walks and HealthKit/Strava
+duplicates, and shows the six most recent runs. Strava-sourced rows link to
+the public activity. If the key is missing or Shape is unavailable, the
+section is omitted.
+
 ### Spotify authorization
 
 The footer reads user-specific Spotify data with the Authorization Code flow. Configure
