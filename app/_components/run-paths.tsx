@@ -15,14 +15,25 @@ function PathCard({ path }: { path: DistinctPath }) {
     ? `${path.totalDistanceLabel} total`
     : null;
   const average = averages.length ? `Average ${averages.join(" · ")}` : null;
-  const ariaLabel = [heading, total, average].filter(Boolean).join(". ");
+  const ariaLabel = [path.placeName, heading, total, average]
+    .filter(Boolean)
+    .join(". ");
 
   return (
     <div className="text-center" aria-label={ariaLabel}>
       {path.sketch ? <PathMap sketch={path.sketch} /> : null}
-      <h3 className="mt-3 text-base leading-snug tracking-[-0.015em] text-foreground sm:text-[1.05rem]">
-        {heading}
-      </h3>
+      {path.placeName ? (
+        <>
+          <h3 className="mt-3 text-base leading-snug tracking-[-0.015em] text-foreground sm:text-[1.05rem]">
+            {path.placeName}
+          </h3>
+          <p className="mt-1 text-sm text-muted/70">{heading}</p>
+        </>
+      ) : (
+        <h3 className="mt-3 text-base leading-snug tracking-[-0.015em] text-foreground sm:text-[1.05rem]">
+          {heading}
+        </h3>
+      )}
       {total ? (
         <p className="mt-1 text-sm tabular-nums text-muted/70">{total}</p>
       ) : null}
@@ -38,12 +49,15 @@ function PathCard({ path }: { path: DistinctPath }) {
 
 export function RunPaths({ paths }: { paths: DistinctPath[] }) {
   return (
-    <ul className="mt-8 grid grid-cols-2 justify-items-center gap-x-4 gap-y-8 sm:gap-x-6">
-      {paths.map((path) => (
-        <li key={path.run.id} className="w-full max-w-[15rem]">
-          <PathCard path={path} />
-        </li>
-      ))}
-    </ul>
+    <div className="mt-8">
+      <p className="text-sm text-muted">Areas where I usually run.</p>
+      <ul className="mt-4 grid grid-cols-2 justify-items-center gap-x-4 gap-y-8 sm:gap-x-6">
+        {paths.map((path) => (
+          <li key={path.run.id} className="w-full max-w-[15rem]">
+            <PathCard path={path} />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

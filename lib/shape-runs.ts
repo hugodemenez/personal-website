@@ -54,6 +54,8 @@ export interface DistinctPath {
   count: number;
   spanDays: number;
   sketch: PathSketch | null;
+  center: [number, number];
+  placeName: string | null;
   averageDistanceLabel: string | null;
   averageDurationLabel: string | null;
   averagePaceLabel: string | null;
@@ -74,7 +76,7 @@ const MAP_PADDING = 2;
 const SKETCH_PADDING = 14;
 const MAX_MAP_POINTS = 180;
 const MAX_SKETCH_TRACES = 8;
-const CLUSTER_RADIUS_KM = 8;
+export const CLUSTER_RADIUS_KM = 8;
 const HEATMAP_GRID = 96;
 const HEATMAP_PADDING = 10;
 
@@ -635,6 +637,8 @@ export function selectDistinctPaths(
       count: cluster.activities.length,
       spanDays: spanDays(oldest.date, newest.date),
       sketch: sketchRoutes(cluster.routes),
+      center: cluster.center,
+      placeName: null,
       ...averageClusterStats(cluster.activities),
     };
   });

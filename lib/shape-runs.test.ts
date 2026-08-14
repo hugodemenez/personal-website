@@ -218,6 +218,11 @@ test("selectDistinctPaths keeps one card per similar route", () => {
 
   assert.equal(paths.length, 2);
   assert.equal(paths[0].run.title, "Tempo 2km");
+  assert.equal(paths[0].placeName, null);
+  assert.deepEqual(
+    paths[0].center.map((value) => Number(value.toFixed(3))),
+    [38.553, -9.016]
+  );
   assert.equal(paths[0].count, 2);
   assert.equal(paths[0].spanDays, 5);
   assert.equal(paths[0].averageDistanceLabel, "4.9 km");
@@ -225,6 +230,7 @@ test("selectDistinctPaths keeps one card per similar route", () => {
   assert.equal(paths[0].averagePaceLabel, "5:26/km");
   assert.equal(paths[0].totalDistanceLabel, "9.8 km");
   assert.equal(paths[1].run.title, "Afternoon Run");
+  assert.equal(paths[1].placeName, null);
   assert.equal(paths[1].count, 1);
   assert.equal(paths[1].spanDays, 1);
   assert.equal(paths[1].averageDistanceLabel, "8.0 km");

@@ -46,7 +46,7 @@ interface GlobalConfigWriteEnvironment {
   GLOBAL_CONFIG_TEAM_ID?: string;
 }
 
-const MAX_PLACES = 150;
+export const MAX_STORED_PLACES = 3;
 const MAX_DAYS = 20_000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -114,6 +114,23 @@ function placeFromCurrent(current: LocationUpdate, days: number): StoredPlace {
   };
 }
 
+function trimStoredPlaces(
+  places: StoredPlace[],
+  current: { city: string; country?: string }
+): StoredPlace[] {
+  if (places.length === 0) return [];
+
+  const ranked = [...places].sort((left, right) => {
+    const leftCurrent = samePlace(left, current) ? 1 : 0;
+    const rightCurrent = samePlace(right, current) ? 1 : 0;
+    if (leftCurrent !== rightCurrent) return rightCurrent - leftCurrent;
+    if (left.days !== right.days) return right.days - left.days;
+    return Date.parse(right.lastSeenAt) - Date.parse(left.lastSeenAt);
+  });
+
+  return ranked.slice(0, MAX_STORED_PLACES);
+}
+
 function parseStoredPlace(value: unknown): StoredPlace | null {
   if (!isRecord(value)) return null;
 
@@ -168,15 +185,13 @@ function parseStoredPlaces(
     if (seen.has(identity)) continue;
     seen.add(identity);
     places.push(place);
-    if (places.length >= MAX_PLACES) break;
   }
 
   if (!places.some((place) => samePlace(place, current))) {
     places.unshift(placeFromCurrent(current, 1));
-    if (places.length > MAX_PLACES) places.pop();
   }
 
-  return places.length > 0 ? places : [placeFromCurrent(current, 1)];
+  return trimStoredPlaces(places, current);
 }
 
 export function parseLocationUpdate(
@@ -256,21 +271,6 @@ export function applyLocationVisit(
 
   if (index === -1) {
     places.unshift(placeFromCurrent(update, 1));
-    if (places.length > MAX_PLACES) {
-      const removable = places
-        .map((place, placeIndex) => ({ place, placeIndex }))
-        .filter(({ placeIndex }) => placeIndex !== 0)
-        .sort((left, right) => {
-          if (left.place.days !== right.place.days) {
-            return left.place.days - right.place.days;
-          }
-          return (
-            Date.parse(left.place.lastSeenAt) - Date.parse(right.place.lastSeenAt)
-          );
-        });
-      const drop = removable[0];
-      if (drop) places.splice(drop.placeIndex, 1);
-    }
   } else {
     const previous = places[index];
     const increment = !sameUtcCalendarDay(previous.lastSeenAt, update.updatedAt);
@@ -298,7 +298,7 @@ export function applyLocationVisit(
     latitude: update.latitude,
     longitude: update.longitude,
     updatedAt: update.updatedAt,
-    places,
+    places: trimStoredPlaces(places, update),
   };
 }
 
@@ -399,8 +399,9 @@ export function createGlobalConfigReadRequest(
   };
 }
 
-export function createGlobalConfigWriteRequest(
-  location: StoredLocation,
+export function createGlobalConfigItemWriteRequest(
+  key: string,
+  value: unknown,
   environment: GlobalConfigWriteEnvironment
 ): { url: string; init: RequestInit } | null {
   const token = environment.GLOBAL_CONFIG_WRITE_TOKEN;
@@ -421,11 +422,22 @@ export function createGlobalConfigWriteRequest(
         items: [
           {
             operation: "upsert",
-            key: CURRENT_LOCATION_KEY,
-            value: location,
+            key,
+            value,
           },
         ],
       }),
     },
   };
+}
+
+export function createGlobalConfigWriteRequest(
+  location: StoredLocation,
+  environment: GlobalConfigWriteEnvironment
+): { url: string; init: RequestInit } | null {
+  return createGlobalConfigItemWriteRequest(
+    CURRENT_LOCATION_KEY,
+    location,
+    environment
+  );
 }

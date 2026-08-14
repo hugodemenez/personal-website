@@ -72,7 +72,7 @@ export function PlacesMap() {
         Places
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-muted">
-        A rough map of the regions the days have gone, and a couple still ahead.
+        A rough map of recent regions, and a couple still ahead.
       </p>
 
       <div

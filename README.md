@@ -33,11 +33,15 @@ Deployed on [Vercel](https://vercel.com).
 
 The location pill reads a `current_location` record from Vercel Global Config
 (formerly Edge Config) and combines it with current conditions from Open-Meteo.
-The homepage also draws a rough world map from the same record. Day counts
-stay in storage; the map keeps the whole world in view and circles regions
-by hand — most of the time, casual, and a couple still ahead — rather than
-pins or numbers. San Francisco and Canada sit on the map as places I'd like
-to go; they are not part of the location store.
+The homepage also draws a rough world map from the same record. Global
+Config must stay small, so the store keeps the current place plus at most
+two earlier stays (three distinct places). A fourth new city drops the
+least-used older stay; the next write also trims any oversized record
+already in the store. Day counts stay on those few entries; the map keeps
+the whole world in view and circles regions by hand — most of the time,
+casual, and a couple still ahead — rather than pins or numbers. San
+Francisco and Canada sit on the map as places I'd like to go; they are
+not part of the location store.
 Location reads expire
 within 60 seconds; weather is cached separately by rounded coordinates for
 several minutes. If the store is unavailable or contains an invalid value,
@@ -82,8 +86,9 @@ The protected endpoint accepts `POST /api/location/update` with a bearer token.
 The request body is unchanged: `city`, `country`, `latitude`, and `longitude`.
 It validates city and country names, accepts the numeric or plain-text decimal
 coordinates produced by Apple Shortcuts, and rounds them to two decimals. Each
-accepted ping updates the current place and increments that place's day count
-once per UTC calendar day, so a retried Shortcut run does not double-count.
+accepted ping updates the current place, increments that place's day count
+once per UTC calendar day, and keeps at most three distinct places, so a
+retried Shortcut run does not double-count or grow the store.
 It rejects whole-degree coordinates instead of guessing or substituting a place.
 Never expose `GLOBAL_CONFIG_WRITE_TOKEN` to the Shortcut. Give the token access
 only to this project, set an expiration, and record its rotation date in Vercel.
@@ -128,10 +133,14 @@ Shape fetch happens there. Later requests reuse that HTML and refresh
 in the background. The server loads the last 180 days, drops walks
 and HealthKit/Strava duplicates, then groups mapped routes that start
 in the same area. Each card is a smooth polyline of the latest loop
-with faint traces of the other runs there, titled by run count and
-day span. If the key is missing, Shape is unreachable, or the live
-payload is empty, the page uses a checked-in snapshot of mapped runs
-(the same idea as the Lisbon home base and the Edith Piaf track).
+with faint traces of the other runs there. The grid is captioned
+“Areas where I usually run.” Shape has no city field, so a card
+shows a place name only when the cluster sits near one of the few
+stays in `current_location`. Otherwise the name is omitted. Cards
+also show run count and day span. If the Shape key is missing, Shape
+is unreachable, or the live payload is empty, the page uses a
+checked-in snapshot of mapped runs (the same idea as the Lisbon home
+base and the Edith Piaf track).
 
 ### Spotify authorization
 
