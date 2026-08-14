@@ -9,10 +9,9 @@ function drawDurations(count: number, budget: number): number[] {
   if (count <= 0) return [];
   if (count === 1) return [budget];
 
-  const sum = (count * (count + 1)) / 2;
-  return Array.from({ length: count }, (_, index) => {
-    return (budget * (count - index)) / sum;
-  });
+  const last = budget / 2;
+  const each = (budget - last) / (count - 1);
+  return [...Array.from({ length: count - 1 }, () => each), last];
 }
 
 export function PathMap({ sketch }: { sketch: PathSketch }) {
@@ -66,7 +65,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
           path.style.strokeDashoffset = String(1 - progress);
         });
 
-        if (elapsed < DRAW_BUDGET_MS) {
+        if (elapsed < mark) {
           frameRef.current = requestAnimationFrame(tick);
         }
       };
@@ -118,7 +117,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
         />
       ))}
       <path
-        className="text-foreground/70 group-hover:text-accent"
+        className="text-accent"
         d={sketch.path}
         pathLength="1"
         stroke="currentColor"
