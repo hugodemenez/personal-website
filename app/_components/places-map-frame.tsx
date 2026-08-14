@@ -6,7 +6,6 @@ import {
   MAP_PADDING,
   MAP_WIDTH,
   continentPaths,
-  wantedCircles,
   type PlaceMarkKind,
 } from "@/lib/world-map";
 import { cacheLife } from "next/cache";
@@ -15,7 +14,6 @@ const VIEW_WIDTH = MAP_WIDTH + MAP_PADDING * 2;
 const VIEW_HEIGHT = MAP_HEIGHT + MAP_PADDING * 2;
 
 function CircleSwatch({ kind }: { kind: PlaceMarkKind }) {
-  const dashed = kind === "wanted";
   return (
     <svg
       aria-hidden="true"
@@ -23,7 +21,7 @@ function CircleSwatch({ kind }: { kind: PlaceMarkKind }) {
         kind === "habitual"
           ? "text-accent"
           : kind === "wanted"
-            ? "text-accent-light"
+            ? "text-wish"
             : "text-muted/70"
       }`}
       viewBox="0 0 16 16"
@@ -38,7 +36,6 @@ function CircleSwatch({ kind }: { kind: PlaceMarkKind }) {
         }
         fill="none"
         stroke="currentColor"
-        strokeDasharray={dashed ? "1.6 1.15" : undefined}
         strokeLinecap="round"
         strokeWidth={kind === "habitual" ? 1.55 : 1.2}
       />
@@ -57,7 +54,6 @@ async function CachedVisitedCircles() {
 
 export function PlacesMap() {
   const continents = continentPaths();
-  const wanted = wantedCircles();
 
   return (
     <section
@@ -140,22 +136,6 @@ export function PlacesMap() {
                 key={continent.name}
                 strokeLinejoin="round"
                 strokeWidth="1.35"
-              />
-            ))}
-          </g>
-
-          <g className="text-accent-light" filter="url(#places-map-circles)">
-            {wanted.map((circle) => (
-              <path
-                d={circle.path}
-                fill="none"
-                key={circle.label}
-                pathLength={1}
-                stroke="currentColor"
-                strokeDasharray="0.2 0.09"
-                strokeLinecap="round"
-                strokeOpacity={0.9}
-                strokeWidth={circle.width}
               />
             ))}
           </g>

@@ -413,13 +413,39 @@ function buildCirclePath(
 }
 
 export interface ZoneCircle {
-  dashed: boolean;
+  hitRadius: number;
   kind: PlaceMarkKind;
   label: string;
   path: string;
   width: number;
   x: number;
   y: number;
+}
+
+export const CIRCLE_DRAW_MS = 640;
+export const CIRCLE_STAGGER_MS = 580;
+
+export function closestPlaceCircle(
+  point: ProjectedPoint,
+  circles: readonly ZoneCircle[],
+  extra = 0
+): ZoneCircle | null {
+  let best: ZoneCircle | null = null;
+  let bestDistance = Infinity;
+
+  for (const circle of circles) {
+    const distance = Math.hypot(circle.x - point.x, circle.y - point.y);
+    if (distance <= circle.hitRadius + extra && distance < bestDistance) {
+      best = circle;
+      bestDistance = distance;
+    }
+  }
+
+  return best;
+}
+
+export function drawOrder(circles: readonly ZoneCircle[]): ZoneCircle[] {
+  return [...circles].sort((left, right) => left.x - right.x || left.y - right.y);
 }
 
 const ZONE_STEP_DEGREES = 8;
@@ -446,7 +472,7 @@ export function zoneCircles(places: readonly VisitedPlace[]): ZoneCircle[] {
     const turns = kind === "habitual" ? 1.38 + random() * 0.2 : 1.14 + random() * 0.14;
 
     return {
-      dashed: false,
+      hitRadius: Math.max(radius * 1.35, 36),
       kind,
       label: place.city,
       path: buildCirclePath(origin, radius, radius * stretch, random, turns),
@@ -466,10 +492,10 @@ export function wantedCircles(
     const radius = place.span === "region" ? 36 : 24;
     const stretch = 0.74 + random() * 0.18;
     // Unfinished on purpose — a place not yet gone around.
-    const turns = 0.86 + random() * 0.12;
+    const turns = 1.08 + random() * 0.12;
 
     return {
-      dashed: true,
+      hitRadius: Math.max(radius * 1.35, 36),
       kind: "wanted",
       label: place.name,
       path: buildCirclePath(origin, radius, radius * stretch, random, turns),

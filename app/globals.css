@@ -15,6 +15,7 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
+  --color-wish: var(--wish);
   --color-border: var(--border);
 }
 
@@ -26,6 +27,7 @@
   --muted: #57534E;
   --accent: #EA580C;
   --accent-light: #FDBA74;
+  --wish: #2E6F8A;
   --border: #E6E2D8;
 }
 
@@ -38,6 +40,7 @@
     --muted: #D6D6DD;
     --accent: #EA580C;
     --accent-light: #FDBA74;
+    --wish: #7EB6C9;
     --border: #33302B;
   }
 }
