@@ -5,6 +5,7 @@ import {
   type DistinctPath,
   type ShapeActivity,
 } from "@/lib/shape-runs";
+import { nameRunningPaths } from "@/server/run-areas";
 
 const SHAPE_API_BASE = "https://shapecalendar.com/api/v1";
 const LOOKBACK_DAYS = 180;
@@ -34,7 +35,9 @@ export function resolveRunningPaths(
 export const loadRunningSection = cache(
   async (): Promise<RunningSectionData> => {
     const token = process.env.SHAPE_API_KEY;
-    if (!token) return { paths: resolveRunningPaths([]) };
+    if (!token) {
+      return { paths: await nameRunningPaths(resolveRunningPaths([])) };
+    }
 
     const to = new Date();
     const from = new Date(to);
@@ -61,10 +64,12 @@ export const loadRunningSection = cache(
         throw new Error(data.error ?? `Shape API failed (${response.status})`);
       }
 
-      return { paths: resolveRunningPaths(data.activities ?? []) };
+      return {
+        paths: await nameRunningPaths(resolveRunningPaths(data.activities ?? [])),
+      };
     } catch (error) {
       console.error("Unable to load recent runs from Shape", error);
-      return { paths: resolveRunningPaths([]) };
+      return { paths: await nameRunningPaths(resolveRunningPaths([])) };
     }
   }
 );

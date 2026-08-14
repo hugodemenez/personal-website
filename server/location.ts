@@ -152,3 +152,15 @@ export async function getLocationPageData(): Promise<LocationPageData> {
 export async function getCurrentLocationWeather(): Promise<LocationWeather> {
   return (await getLocationPageData()).weather;
 }
+
+export async function getStayRunAreas(): Promise<
+  Array<{ city: string; latitude: number; longitude: number }>
+> {
+  const saved = await readCurrentLocation();
+  if (!saved) return [];
+  return saved.places.map((place) => ({
+    city: place.city,
+    latitude: place.latitude,
+    longitude: place.longitude,
+  }));
+}

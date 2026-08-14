@@ -17,7 +17,6 @@ import {
   pathContainment,
   selectDistinctPaths,
   sketchRoutes,
-  placeNameFromCenter,
   type ShapeActivity,
 } from "./shape-runs";
 
@@ -219,7 +218,11 @@ test("selectDistinctPaths keeps one card per similar route", () => {
 
   assert.equal(paths.length, 2);
   assert.equal(paths[0].run.title, "Tempo 2km");
-  assert.equal(paths[0].placeName, "Azeitão");
+  assert.equal(paths[0].placeName, null);
+  assert.deepEqual(
+    paths[0].center.map((value) => Number(value.toFixed(3))),
+    [38.553, -9.016]
+  );
   assert.equal(paths[0].count, 2);
   assert.equal(paths[0].spanDays, 5);
   assert.equal(paths[0].averageDistanceLabel, "4.9 km");
@@ -227,7 +230,7 @@ test("selectDistinctPaths keeps one card per similar route", () => {
   assert.equal(paths[0].averagePaceLabel, "5:26/km");
   assert.equal(paths[0].totalDistanceLabel, "9.8 km");
   assert.equal(paths[1].run.title, "Afternoon Run");
-  assert.equal(paths[1].placeName, "Lille");
+  assert.equal(paths[1].placeName, null);
   assert.equal(paths[1].count, 1);
   assert.equal(paths[1].spanDays, 1);
   assert.equal(paths[1].averageDistanceLabel, "8.0 km");
@@ -237,30 +240,6 @@ test("selectDistinctPaths keeps one card per similar route", () => {
   assert.ok(paths[0].sketch?.path);
   assert.match(paths[0].sketch?.path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
   assert.equal(paths[0].sketch?.traces.length, 1);
-});
-
-test("names a cluster only when it sits on a known run area", () => {
-  assert.equal(placeNameFromCenter([38.553, -9.018]), "Azeitão");
-  assert.equal(placeNameFromCenter([50.665, 3.166]), "Lille");
-  assert.equal(placeNameFromCenter([48.8566, 2.3522]), null);
-});
-
-test("leaves an unnamed card when the cluster is not a known area", () => {
-  const paris = activity({
-    id: "paris-1",
-    date: "2026-07-01T07:00:00Z",
-    title: "Morning Run",
-    map: encodePolyline([
-      [48.8566, 2.3522],
-      [48.858, 2.354],
-      [48.857, 2.356],
-    ]),
-  });
-
-  const paths = selectDistinctPaths([paris]);
-
-  assert.equal(paths.length, 1);
-  assert.equal(paths[0].placeName, null);
 });
 
 test("sketchRoutes draws the latest loop and faint traces of the others", () => {

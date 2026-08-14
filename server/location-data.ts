@@ -399,8 +399,9 @@ export function createGlobalConfigReadRequest(
   };
 }
 
-export function createGlobalConfigWriteRequest(
-  location: StoredLocation,
+export function createGlobalConfigItemWriteRequest(
+  key: string,
+  value: unknown,
   environment: GlobalConfigWriteEnvironment
 ): { url: string; init: RequestInit } | null {
   const token = environment.GLOBAL_CONFIG_WRITE_TOKEN;
@@ -421,11 +422,22 @@ export function createGlobalConfigWriteRequest(
         items: [
           {
             operation: "upsert",
-            key: CURRENT_LOCATION_KEY,
-            value: location,
+            key,
+            value,
           },
         ],
       }),
     },
   };
+}
+
+export function createGlobalConfigWriteRequest(
+  location: StoredLocation,
+  environment: GlobalConfigWriteEnvironment
+): { url: string; init: RequestInit } | null {
+  return createGlobalConfigItemWriteRequest(
+    CURRENT_LOCATION_KEY,
+    location,
+    environment
+  );
 }
