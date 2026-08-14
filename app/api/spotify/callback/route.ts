@@ -1,6 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  notifySpotifyReauthorization,
+  persistSpotifyAuthorization,
+} from "@/server/spotify-auth";
 
 const SPOTIFY_OAUTH_STATE_COOKIE = "spotify_oauth_state";
+
+function successResponse() {
+  const result = new NextResponse(
+    `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Spotify reauthorization</title>
+  </head>
+  <body>
+    <p>Spotify reauthorization succeeded. You can close this page.</p>
+  </body>
+</html>`,
+    {
+      status: 200,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    }
+  );
+  result.cookies.delete(SPOTIFY_OAUTH_STATE_COOKIE);
+  return result;
+}
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -23,7 +48,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI } = process.env;
+  const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI } =
+    process.env;
   if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REDIRECT_URI) {
     return NextResponse.json(
       { error: "Spotify OAuth is not configured" },
@@ -54,15 +80,27 @@ export async function GET(request: NextRequest) {
 
   if (!response.ok || data.error || !data.refresh_token) {
     return NextResponse.json(
-      { error: data.error_description ?? data.error ?? "Spotify did not return a refresh token" },
+      {
+        error:
+          data.error_description ??
+          data.error ??
+          "Spotify did not return a refresh token",
+      },
       { status: 400 }
     );
   }
 
-  const result = NextResponse.json({
-    message: "Copy this refresh_token to your .env file as SPOTIFY_REFRESH_TOKEN",
-    refresh_token: data.refresh_token,
-  });
-  result.cookies.delete(SPOTIFY_OAUTH_STATE_COOKIE);
-  return result;
+  const persisted = await persistSpotifyAuthorization(
+    data.refresh_token,
+    new Date()
+  );
+  if (!persisted) {
+    return NextResponse.json(
+      { error: "Could not persist the new Spotify token. Please try again." },
+      { status: 503 }
+    );
+  }
+
+  await notifySpotifyReauthorization();
+  return successResponse();
 }

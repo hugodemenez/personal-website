@@ -147,14 +147,26 @@ base and the Edith Piaf track).
 The homepage reads user-specific Spotify data with the Authorization Code flow
 and shows the most-played track from the last seven days. Spotify only returns
 the 50 most recent plays, so a heavy listening week is ranked from that window
-rather than a complete seven-day history. Configure `SPOTIFY_CLIENT_ID`,
-`SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, and `SPOTIFY_REFRESH_TOKEN` in
-the deployment environment.
+rather than a complete seven-day history.
 
-Spotify refresh tokens expire after six months from July 20, 2026. When Spotify returns
-`invalid_grant`, the site stops retrying that token and serves the fallback track. To
-reauthorize:
+Refresh tokens expire six calendar months after the user clicks Agree. Refreshing
+an access token does not extend that lifetime. A daily Vercel cron
+(`0 8 * * *` UTC, `/api/spotify/cron`) probes expiry and, when the token is
+expired, within 14 days of expiry, or rejected with `invalid_grant`, sends one
+Telegram message with `https://www.hugodemenez.fr/api/spotify/authorize`.
+`/api/spotify/authorize` starts OAuth only in that window; a healthy token
+returns `still valid` and is not rotated. The callback stores the new refresh
+token and `authorized_at` in Redis (no redeploy) and does not echo the secret.
 
-1. Open `/api/spotify/authorize` on the deployed site and sign in to Spotify.
-2. Replace `SPOTIFY_REFRESH_TOKEN` with the token returned by the callback.
-3. Redeploy so all instances discard the expired environment value.
+Required environment variable names:
+
+- `SPOTIFY_CLIENT_ID`
+- `SPOTIFY_CLIENT_SECRET`
+- `SPOTIFY_REDIRECT_URI`
+- `SPOTIFY_REFRESH_TOKEN` (fallback if Redis is empty)
+- `SPOTIFY_AUTHORIZED_AT` (fallback if Redis is empty)
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `CRON_SECRET`

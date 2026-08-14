@@ -6,11 +6,12 @@
     "build": "next build",
     "start": "next start",
     "sync-substack": "tsx scripts/sync-substack-posts.ts",
-    "test": "tsx --test server/location-data.test.ts server/location.test.ts server/shape.test.ts server/spotify.test.ts lib/location-display.test.ts lib/run-areas.test.ts lib/shape-runs.test.ts lib/world-map.test.ts app/api/location/update/route.test.ts"
+    "test": "tsx --test server/location-data.test.ts server/location.test.ts server/shape.test.ts server/spotify.test.ts server/spotify-cron.test.ts lib/location-display.test.ts lib/run-areas.test.ts lib/shape-runs.test.ts lib/world-map.test.ts app/api/location/update/route.test.ts app/api/spotify/authorize/route.test.ts app/api/spotify/callback/route.test.ts"
   },
   "dependencies": {
     "@next/mdx": "^16.0.0",
     "@tailwindcss/postcss": "^4.1.3",
+    "@upstash/redis": "^1.38.2",
     "@vercel/global-config": "1.5.0",
     "next": "^16.2.12",
     "next-mdx-remote": "^6.0.0",
