@@ -29,7 +29,7 @@ function XIcon() {
   return (
     <svg
       aria-hidden="true"
-      className="size-2.5 shrink-0 fill-current"
+      className="size-3 shrink-0 -translate-y-px fill-current"
       viewBox="0 0 1200 1227"
     >
       <path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894L144.011 79.694h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z" />
@@ -208,35 +208,35 @@ export default async function Home() {
             discretionary trading
             <TradingCandlestickIcon />
             and turning rough ideas into useful systems.
-            {track ? (
-              <>
-                {" "}Most days have a soundtrack; this week it has been{" "}
-                <a
-                  className={musicLinkClass}
-                  href={track.url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <SpotifyIcon />
-                  {track.name} by {track.artist}
-                </a>
-                .
-              </>
-            ) : null}
           </p>
+          {track ? (
+            <p className="leading-relaxed">
+              Most days have a soundtrack; this week it has been{" "}
+              <a
+                className={musicLinkClass}
+                href={track.url}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <SpotifyIcon />
+                {track.name} by {track.artist}
+              </a>
+              .
+            </p>
+          ) : null}
           <p className="leading-relaxed">
-            I keep a small social footprint. I’m{" "}
+            I don’t spend much time on social networks, only scouting{" "}
             <a
-              className={socialLinkClass}
+              className="inline-flex items-center align-baseline text-foreground transition-colors hover:text-accent"
               href="https://x.com/hugodemenez"
               rel="noopener noreferrer"
               target="_blank"
+              aria-label="X"
             >
               <XIcon />
-              @hugodemenez
-            </a>
-            —mostly reposting things worth keeping and occasionally sharing a
-            thought of my own.
+            </a>{" "}
+            from time to time to keep an eye on the latest developments around
+            AI or design inspirations.
           </p>
           <p className="leading-relaxed">
             The work itself is less private: I build{" "}
@@ -249,19 +249,26 @@ export default async function Home() {
               <DeltalytixIcon />
               Deltalytix
             </a>{" "}
-            in public on GitHub as{" "}
-            <span className="whitespace-nowrap">
-              <a
-                className={socialLinkClass}
-                href="https://github.com/hugodemenez"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <GitHubIcon />
-                hugodemenez
-              </a>
-              .
-            </span>
+            in{" "}
+            <a
+              className={socialLinkClass}
+              href="https://github.com/hugodemenez/deltalytix"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              public
+            </a>{" "}
+            on{" "}
+            <a
+              className={socialLinkClass}
+              href="https://github.com/hugodemenez"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <GitHubIcon />
+              GitHub
+            </a>
+            .
           </p>
         </section>
         <PlacesMap />
