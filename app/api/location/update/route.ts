@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import {
+  applyLocationVisit,
+  createGlobalConfigReadRequest,
   createGlobalConfigWriteRequest,
   hasValidBearerToken,
   parseLocationUpdate,
+  parseStoredLocationResponse,
 } from "@/server/location-data";
 
 function json(body: object, status: number) {
@@ -91,11 +94,44 @@ export async function POST(request: Request) {
     );
   }
 
-  const writeRequest = createGlobalConfigWriteRequest(location, {
+  const environment = {
     GLOBAL_CONFIG_ID: process.env.GLOBAL_CONFIG_ID,
     GLOBAL_CONFIG_WRITE_TOKEN: process.env.GLOBAL_CONFIG_WRITE_TOKEN,
     GLOBAL_CONFIG_TEAM_ID: process.env.GLOBAL_CONFIG_TEAM_ID,
-  });
+  };
+  const readRequest = createGlobalConfigReadRequest(environment);
+  if (!readRequest) {
+    console.error("Location update failed", {
+      reason: "storage-unavailable",
+      ...loggedPayload(payload),
+    });
+    return json({ ok: false, error: "Location storage unavailable" }, 503);
+  }
+
+  let existing = null;
+  try {
+    const response = await fetch(readRequest.url, readRequest.init);
+    if (response.status === 404) {
+      existing = null;
+    } else if (!response.ok) {
+      throw new Error("Global Config read failed");
+    } else {
+      const body: unknown = await response.json();
+      existing = parseStoredLocationResponse(body);
+      if (body != null && existing === null) {
+        throw new Error("Global Config returned an unreadable location");
+      }
+    }
+  } catch {
+    console.error("Location update failed", {
+      reason: "storage-read-failed",
+      ...loggedPayload(payload),
+    });
+    return json({ ok: false, error: "Location storage unavailable" }, 503);
+  }
+
+  const stored = applyLocationVisit(existing, location);
+  const writeRequest = createGlobalConfigWriteRequest(stored, environment);
   if (!writeRequest) {
     console.error("Location update failed", {
       reason: "storage-unavailable",
@@ -115,18 +151,22 @@ export async function POST(request: Request) {
     return json({ ok: false, error: "Location storage unavailable" }, 503);
   }
 
+  const currentPlace = stored.places.find((place) => place.city === stored.city);
+
   console.info("Location update stored", {
-    city: location.city,
-    country: location.country,
-    latitude: location.latitude,
-    longitude: location.longitude,
-    updatedAt: location.updatedAt,
+    city: stored.city,
+    country: stored.country,
+    latitude: stored.latitude,
+    longitude: stored.longitude,
+    updatedAt: stored.updatedAt,
+    days: currentPlace?.days,
+    places: stored.places.length,
   });
 
   return json(
     {
       ok: true,
-      location: { city: location.city, updatedAt: location.updatedAt },
+      location: { city: stored.city, updatedAt: stored.updatedAt },
     },
     200
   );

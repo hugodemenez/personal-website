@@ -4,12 +4,22 @@ import { composeLocationWeather } from "./location";
 import type { StoredLocation } from "./location-data";
 
 const paris: StoredLocation = {
-  version: 1,
+  version: 2,
   city: "Paris",
   country: "France",
   latitude: 48.86,
   longitude: 2.35,
   updatedAt: "2026-08-01T08:00:00.000Z",
+  places: [
+    {
+      city: "Paris",
+      country: "France",
+      latitude: 48.86,
+      longitude: 2.35,
+      days: 4,
+      lastSeenAt: "2026-08-01T08:00:00.000Z",
+    },
+  ],
 };
 
 test("uses Lisbon as the home base when Global Config has no valid record", () => {

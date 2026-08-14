@@ -1,7 +1,8 @@
 import LocationPill from "./_components/location-pill";
+import PlacesMap from "./_components/places-map";
 import RecentRuns from "./_components/recent-runs";
 import SubstackPosts from "./_components/substack-posts";
-import { getCurrentLocationWeather } from "@/server/location";
+import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
 import { cacheLife } from "next/cache";
 import { Suspense } from "react";
@@ -19,9 +20,27 @@ async function CurrentLocationPill() {
   "use cache";
   cacheLife("seconds");
 
-  const weather = await getCurrentLocationWeather();
+  const { weather } = await getLocationPageData();
 
   return <LocationPill weather={weather} />;
+}
+
+function PlacesMapSkeleton() {
+  return (
+    <div
+      aria-hidden="true"
+      className="mt-10 h-40 animate-pulse rounded-xl bg-surface"
+    />
+  );
+}
+
+async function VisitedPlacesMap() {
+  "use cache";
+  cacheLife("seconds");
+
+  const { places } = await getLocationPageData();
+
+  return <PlacesMap places={places} />;
 }
 
 function XIcon() {
@@ -263,6 +282,9 @@ export default async function Home() {
             </span>
           </p>
         </section>
+        <Suspense fallback={<PlacesMapSkeleton />}>
+          <VisitedPlacesMap />
+        </Suspense>
       </main>
       <RecentRuns />
       <SubstackPosts />

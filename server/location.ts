@@ -3,16 +3,16 @@ import { cacheLife } from "next/cache";
 import {
   CURRENT_LOCATION_KEY,
   parseStoredLocation,
+  toVisitedPlaces,
   type StoredLocation,
+  type VisitedPlace,
 } from "@/server/location-data";
 
-const LISBON_HOME: StoredLocation = {
-  version: 1,
+const LISBON_HOME = {
   city: "Lisbon",
   country: "Portugal",
   latitude: 38.72,
   longitude: -9.14,
-  updatedAt: "",
 };
 
 interface OpenMeteoResponse {
@@ -127,7 +127,12 @@ async function getWeatherForCoordinates(
   }
 }
 
-export async function getCurrentLocationWeather(): Promise<LocationWeather> {
+export interface LocationPageData {
+  weather: LocationWeather;
+  places: VisitedPlace[];
+}
+
+export async function getLocationPageData(): Promise<LocationPageData> {
   "use cache";
   cacheLife("seconds");
 
@@ -137,5 +142,13 @@ export async function getCurrentLocationWeather(): Promise<LocationWeather> {
     location.latitude,
     location.longitude
   );
-  return composeLocationWeather(savedLocation, weather);
+
+  return {
+    weather: composeLocationWeather(savedLocation, weather),
+    places: toVisitedPlaces(savedLocation),
+  };
+}
+
+export async function getCurrentLocationWeather(): Promise<LocationWeather> {
+  return (await getLocationPageData()).weather;
 }

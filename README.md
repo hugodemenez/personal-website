@@ -31,11 +31,17 @@ Deployed on [Vercel](https://vercel.com).
 
 ### Current location
 
-The location pill reads one city-level `current_location` record from Vercel
-Global Config (formerly Edge Config) and combines it with current conditions
-from Open-Meteo. Location reads expire within 60 seconds; weather is cached
-separately by rounded coordinates for several minutes. If the store is
-unavailable or contains an invalid value, Lisbon is used as the home base.
+The location pill reads a `current_location` record from Vercel Global Config
+(formerly Edge Config) and combines it with current conditions from Open-Meteo.
+The homepage also draws a rough world map from the same record. Day counts
+stay in storage; the map keeps the whole world in view and circles regions
+by hand — most of the time, casual, and a couple still ahead — rather than
+pins or numbers. San Francisco and Canada sit on the map as places I'd like
+to go; they are not part of the location store.
+Location reads expire
+within 60 seconds; weather is cached separately by rounded coordinates for
+several minutes. If the store is unavailable or contains an invalid value,
+Lisbon is used as the home base.
 
 Create a Global Config store in Vercel, connect it to this project, and configure:
 
@@ -48,24 +54,37 @@ Create a Global Config store in Vercel, connect it to this project, and configur
 | `LOCATION_UPDATE_SECRET` | A separate, random secret known by the iPhone Shortcut |
 
 The initial store item is optional. When present, its key is
-`current_location` and its value has this shape:
+`current_location`. Version 1 records (current place only) are still readable
+and are upgraded on the next successful update. The stored shape is:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "city": "Lisbon",
   "country": "Portugal",
   "latitude": 38.72,
   "longitude": -9.14,
-  "updatedAt": "2026-08-01T08:00:00.000Z"
+  "updatedAt": "2026-08-01T08:00:00.000Z",
+  "places": [
+    {
+      "city": "Lisbon",
+      "country": "Portugal",
+      "latitude": 38.72,
+      "longitude": -9.14,
+      "days": 12,
+      "lastSeenAt": "2026-08-01T08:00:00.000Z"
+    }
+  ]
 }
 ```
 
 The protected endpoint accepts `POST /api/location/update` with a bearer token.
+The request body is unchanged: `city`, `country`, `latitude`, and `longitude`.
 It validates city and country names, accepts the numeric or plain-text decimal
-coordinates produced by Apple Shortcuts, and rounds them to two decimals before
-upserting the record through Vercel's authenticated Global Config API. It
-rejects whole-degree coordinates instead of guessing or substituting a place.
+coordinates produced by Apple Shortcuts, and rounds them to two decimals. Each
+accepted ping updates the current place and increments that place's day count
+once per UTC calendar day, so a retried Shortcut run does not double-count.
+It rejects whole-degree coordinates instead of guessing or substituting a place.
 Never expose `GLOBAL_CONFIG_WRITE_TOKEN` to the Shortcut. Give the token access
 only to this project, set an expiration, and record its rotation date in Vercel.
 
