@@ -26,8 +26,11 @@ function PathCard({ path }: { path: DistinctPath }) {
       {total ? (
         <p className="mt-1 text-sm tabular-nums text-muted/70">{total}</p>
       ) : null}
-      {average ? (
-        <p className="mt-1 text-sm tabular-nums text-muted/70">{average}</p>
+      {averages.length ? (
+        <p className="mt-1 text-sm text-muted/70">
+          <span className="block">Average</span>
+          <span className="tabular-nums">{averages.join(" · ")}</span>
+        </p>
       ) : null}
     </div>
   );
