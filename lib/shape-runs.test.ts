@@ -236,6 +236,30 @@ test("sketchRoutes draws the latest loop and faint traces of the others", () => 
   assert.equal(sketch?.traces.length, 1);
 });
 
+test("sketchRoutes keeps every drawn route inside the viewBox", () => {
+  const short: Array<[number, number]> = [
+    [50.665, 3.166],
+    [50.666, 3.167],
+    [50.665, 3.168],
+  ];
+  const long: Array<[number, number]> = [
+    [50.66, 3.16],
+    [50.67, 3.18],
+    [50.66, 3.19],
+    [50.65, 3.17],
+  ];
+  const sketch = sketchRoutes([short, long]);
+  const numbers = `${sketch?.path} ${sketch?.traces.join(" ")}`.match(
+    /[\d.]+/g
+  );
+  assert.ok(numbers?.length);
+  for (const value of numbers ?? []) {
+    const n = Number(value);
+    assert.ok(n >= 0);
+    assert.ok(n <= 240);
+  }
+});
+
 test("merges overlapping streets into a frequency heatmap", () => {
   const shared: Array<[number, number]> = [
     [38.55, -9.02],

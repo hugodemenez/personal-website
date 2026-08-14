@@ -67,7 +67,7 @@ export const HEATMAP_MAX_HEIGHT = 300;
 export const PATH_SKETCH_WIDTH = 240;
 export const PATH_SKETCH_HEIGHT = 80;
 const MAP_PADDING = 2;
-const SKETCH_PADDING = 8;
+const SKETCH_PADDING = 14;
 const MAX_MAP_POINTS = 180;
 const MAX_SKETCH_TRACES = 8;
 const CLUSTER_RADIUS_KM = 8;
@@ -257,7 +257,8 @@ export function sketchRoutes(
   const latest = routes[0];
   if (!latest || latest.length < 2) return null;
 
-  const bounds = boundsOf([latest]);
+  const drawn = [latest, ...routes.slice(1, MAX_SKETCH_TRACES + 1)];
+  const bounds = boundsOf(drawn);
   const path = projectPoints(
     downsample(latest, MAX_MAP_POINTS),
     bounds,
@@ -267,8 +268,8 @@ export function sketchRoutes(
   );
   if (!path) return null;
 
-  const traces = routes
-    .slice(1, MAX_SKETCH_TRACES + 1)
+  const traces = drawn
+    .slice(1)
     .map((route) =>
       projectPoints(
         downsample(route, MAX_MAP_POINTS),
