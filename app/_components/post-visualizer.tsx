@@ -407,8 +407,9 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           const collected = isStampCollected(postIndex, selectedPostIndex);
           const showTitleStamp =
             Boolean(post.image) &&
-            titleKeys.includes(seed) &&
-            !collected;
+            !collected &&
+            (isTitleStampActive(postIndex, selectedPostIndex) ||
+              titleFading(seed));
           // 0 for the title currently in the slot, rising for each one passed.
           const titleDepth = Math.min(
             Math.max(selectedPostIndex - postIndex, 0),
@@ -495,7 +496,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     ref={(node) => {
                       stampRefs.current[postIndex] = node;
                     }}
-                    className="relative shrink-0"
+                    className="relative block shrink-0"
                   >
                     <TitleStamp
                       external={!post.slug}

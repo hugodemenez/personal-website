@@ -69,7 +69,7 @@ export function TitleStamp({
   return (
     <span
       ref={ref}
-      className={`relative shrink-0 ${fading ? "stamp-fade-out" : "stamp-fade-in"}`}
+      className={`relative block shrink-0 ${fading ? "stamp-fade-out" : "stamp-fade-in"}`}
       style={{
         width: piece.width,
         aspectRatio: "3 / 2",
