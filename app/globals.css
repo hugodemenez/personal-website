@@ -29,6 +29,9 @@
   --accent-light: #FDBA74;
   --wish: #2E6F8A;
   --border: #E6E2D8;
+  --stamp-paper: #f4efe4;
+  --stamp-ink: rgba(41, 37, 36, 0.14);
+  --stamp-shadow: rgba(41, 37, 36, 0.16);
 }
 
 /* Dark Mode via system preference */
@@ -42,6 +45,9 @@
     --accent-light: #FDBA74;
     --wish: #7EB6C9;
     --border: #33302B;
+    --stamp-paper: #2c281e;
+    --stamp-ink: rgba(228, 228, 228, 0.16);
+    --stamp-shadow: rgba(0, 0, 0, 0.46);
   }
 }
 
@@ -314,6 +320,54 @@ dialog::backdrop {
 
 .artwork-destack-reveal {
   animation-name: artworkDestackReveal;
+}
+
+/* Postage-stamp paper: a solid inner rectangle plus a hole grid. Added
+   together, the holes only survive on the margin — the artwork stays intact,
+   and drop-shadow on the wrapper follows the perforated silhouette. */
+.stamp-paper {
+  --stamp-pitch: 12px;
+  --stamp-hole: calc(var(--stamp-pitch) * 0.38);
+  background-color: var(--stamp-paper);
+  padding: calc(var(--stamp-pitch) * 0.72);
+  transform-origin: center;
+  -webkit-mask-image:
+    linear-gradient(#000 0 0),
+    radial-gradient(circle, #0000 var(--stamp-hole), #000 calc(var(--stamp-hole) + 0.7px));
+  -webkit-mask-size:
+    calc(100% - var(--stamp-pitch)) calc(100% - var(--stamp-pitch)),
+    var(--stamp-pitch) var(--stamp-pitch);
+  -webkit-mask-position:
+    center,
+    calc(var(--stamp-pitch) / -2) calc(var(--stamp-pitch) / -2);
+  -webkit-mask-repeat: no-repeat, repeat;
+  -webkit-mask-composite: source-over;
+  mask-image:
+    linear-gradient(#000 0 0),
+    radial-gradient(circle, #0000 var(--stamp-hole), #000 calc(var(--stamp-hole) + 0.7px));
+  mask-size:
+    calc(100% - var(--stamp-pitch)) calc(100% - var(--stamp-pitch)),
+    var(--stamp-pitch) var(--stamp-pitch);
+  mask-position:
+    center,
+    calc(var(--stamp-pitch) / -2) calc(var(--stamp-pitch) / -2);
+  mask-repeat: no-repeat, repeat;
+  mask-composite: add;
+}
+
+.stamp-window {
+  box-shadow: inset 0 0 0 1px var(--stamp-ink);
+}
+
+.stamp-shadow {
+  filter: drop-shadow(0.12rem 0.4rem 0.65rem var(--stamp-shadow));
+  transform-origin: center;
+  transition: transform 220ms var(--ease-spring);
+}
+
+a.stamp-shadow:hover,
+a.stamp-shadow:focus-visible {
+  transform: translateY(-3px);
 }
 
 @media (prefers-reduced-motion: reduce) {

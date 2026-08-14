@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   type MouseEvent,
@@ -13,6 +12,7 @@ import {
 import type { SubstackPost } from "@/types/substack-post";
 import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
+import { PostStamp } from "./post-stamp";
 
 interface PostsVisualizerProps {
   posts: SubstackPost[];
@@ -414,24 +414,16 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 ) : null}
 
                 {post.image ? (
-                  <Link
-                    aria-hidden="true"
-                    className="mb-8 block overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
-                    href={getPostHref(post)}
-                    rel={post.slug ? undefined : "noopener noreferrer"}
-                    tabIndex={-1}
-                    target={post.slug ? undefined : "_blank"}
-                  >
-                    <Image
-                      alt=""
-                      className="h-[clamp(9rem,34vw,13rem)] w-full object-cover"
-                      height={400}
+                  <div className="mb-8 overflow-visible py-3">
+                    <PostStamp
+                      decorative
+                      external={!post.slug}
+                      href={getPostHref(post)}
+                      seed={post.slug || post.link}
                       sizes={IMAGE_SIZES}
                       src={post.image}
-                      unoptimized
-                      width={700}
                     />
-                  </Link>
+                  </div>
                 ) : null}
               </div>
             </li>
