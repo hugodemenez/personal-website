@@ -1,12 +1,15 @@
-import type { ReactNode, Ref } from "react";
+import { Suspense } from "react";
+import PlaceCircles from "./places-map";
+import { getLocationPageData } from "@/server/location";
 import {
   MAP_HEIGHT,
   MAP_PADDING,
   MAP_WIDTH,
   continentPaths,
-  placeListNames,
+  wantedCircles,
   type PlaceMarkKind,
 } from "@/lib/world-map";
+import { cacheLife } from "next/cache";
 
 const VIEW_WIDTH = MAP_WIDTH + MAP_PADDING * 2;
 const VIEW_HEIGHT = MAP_HEIGHT + MAP_PADDING * 2;
@@ -43,39 +46,24 @@ function CircleSwatch({ kind }: { kind: PlaceMarkKind }) {
   );
 }
 
-function PlaceLine({ label, names }: { label: string; names: string }) {
-  return (
-    <p className="min-h-[1.25rem]">
-      <span className="text-foreground">{label}</span>
-      {names ? ` · ${names}` : null}
-    </p>
-  );
+async function CachedVisitedCircles() {
+  "use cache";
+  cacheLife("seconds");
+
+  const { places } = await getLocationPageData();
+
+  return <PlaceCircles places={places} />;
 }
 
-interface PlacesMapFrameProps {
-  children?: ReactNode;
-  casual?: string;
-  filterExtra?: ReactNode;
-  habitual?: string;
-  sectionRef?: Ref<HTMLElement>;
-  wanted?: string;
-}
-
-export function PlacesMapFrame({
-  children,
-  casual = "",
-  filterExtra,
-  habitual = "",
-  sectionRef,
-  wanted = "",
-}: PlacesMapFrameProps) {
+export function PlacesMap() {
   const continents = continentPaths();
+  const wanted = wantedCircles();
 
   return (
     <section
-      ref={sectionRef}
       aria-labelledby="places-heading"
       className="mt-10"
+      id="places-map"
     >
       <h2
         id="places-heading"
@@ -119,7 +107,29 @@ export function PlacesMapFrame({
                 yChannelSelector="G"
               />
             </filter>
-            {filterExtra}
+            <filter
+              filterUnits="userSpaceOnUse"
+              height={MAP_HEIGHT + 48}
+              id="places-map-circles"
+              width={MAP_WIDTH + 48}
+              x={-24}
+              y={-24}
+            >
+              <feTurbulence
+                baseFrequency="0.04"
+                numOctaves={2}
+                result="grain"
+                seed={11}
+                type="fractalNoise"
+              />
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="grain"
+                scale={1.8}
+                xChannelSelector="R"
+                yChannelSelector="G"
+              />
+            </filter>
           </defs>
 
           <g filter="url(#places-map-ink)">
@@ -133,7 +143,26 @@ export function PlacesMapFrame({
               />
             ))}
           </g>
-          {children}
+
+          <g className="text-accent-light" filter="url(#places-map-circles)">
+            {wanted.map((circle) => (
+              <path
+                d={circle.path}
+                fill="none"
+                key={circle.label}
+                pathLength={1}
+                stroke="currentColor"
+                strokeDasharray="0.2 0.09"
+                strokeLinecap="round"
+                strokeOpacity={0.9}
+                strokeWidth={circle.width}
+              />
+            ))}
+          </g>
+
+          <Suspense fallback={null}>
+            <CachedVisitedCircles />
+          </Suspense>
         </svg>
       </div>
 
@@ -151,18 +180,6 @@ export function PlacesMapFrame({
           <span>I&apos;d like to go</span>
         </p>
       </div>
-
-      <div className="mt-3 grid grid-rows-3 gap-1 text-xs leading-relaxed text-muted">
-        <PlaceLine label="Most of the time" names={habitual} />
-        <PlaceLine label="Casual" names={casual} />
-        <PlaceLine label="I&apos;d like to go" names={wanted} />
-      </div>
     </section>
   );
-}
-
-export function PlacesMapSkeleton() {
-  const { wanted } = placeListNames([]);
-
-  return <PlacesMapFrame wanted={wanted} />;
 }
