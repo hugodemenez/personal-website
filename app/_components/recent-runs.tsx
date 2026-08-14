@@ -2,10 +2,14 @@ import { RunPathCarousel } from "./run-path-carousel";
 import { getRunningSection } from "@/server/shape";
 import { Suspense } from "react";
 
-async function RecentRunsList() {
+async function RecentRunsCarousel() {
   const { paths } = await getRunningSection();
   if (!paths.length) return null;
 
+  return <RunPathCarousel paths={paths} />;
+}
+
+export default function RecentRuns() {
   return (
     <section aria-labelledby="runs-heading" className="mt-10">
       <h2
@@ -14,15 +18,14 @@ async function RecentRunsList() {
       >
         Running
       </h2>
-      <RunPathCarousel paths={paths} />
+      <p className="mt-4 leading-relaxed text-muted">
+        I started running as a trader, to empty my mind after intense sessions.
+        I kept the habit for stamina and endurance as I get older. I run early,
+        without music: birds, sunlight, and the occasional race for fun.
+      </p>
+      <Suspense fallback={null}>
+        <RecentRunsCarousel />
+      </Suspense>
     </section>
-  );
-}
-
-export default function RecentRuns() {
-  return (
-    <Suspense fallback={null}>
-      <RecentRunsList />
-    </Suspense>
   );
 }
