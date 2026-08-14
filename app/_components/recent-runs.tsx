@@ -1,23 +1,39 @@
-import { getRecentRuns } from "@/server/shape";
-import { MAP_HEIGHT, MAP_WIDTH, type RecentRun } from "@/lib/shape-runs";
+import { getRunningSection } from "@/server/shape";
+import type { RecentRun, RouteHeatmap } from "@/lib/shape-runs";
 import { Suspense } from "react";
 
-function RunMap({ path }: { path: string }) {
+function RouteHeatmapMap({ heatmap }: { heatmap: RouteHeatmap }) {
   return (
-    <svg
-      aria-hidden="true"
-      className="h-10 w-[7.5rem] shrink-0 text-muted/50"
-      fill="none"
-      viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-    >
-      <path
-        d={path}
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.6"
-      />
-    </svg>
+    <figure className="mt-5">
+      <svg
+        aria-hidden="true"
+        className="h-auto w-full overflow-hidden rounded-xl border border-border bg-surface"
+        viewBox={`0 0 ${heatmap.width} ${heatmap.height}`}
+      >
+        {heatmap.edges.map((edge) => {
+          const accent = Math.round(18 + edge.intensity * 82);
+          return (
+            <line
+              key={`${edge.x1},${edge.y1}-${edge.x2},${edge.y2}`}
+              opacity={0.22 + edge.intensity * 0.78}
+              strokeLinecap="round"
+              strokeWidth={(1.1 + edge.intensity * 2.6).toFixed(2)}
+              style={{
+                stroke: `color-mix(in srgb, var(--accent) ${accent}%, var(--muted))`,
+              }}
+              x1={edge.x1}
+              x2={edge.x2}
+              y1={edge.y1}
+              y2={edge.y2}
+            />
+          );
+        })}
+      </svg>
+      <figcaption className="mt-2 text-sm text-muted/70">
+        Streets from {heatmap.routeCount} overlapping runs. Brighter lines are
+        the ones I repeat most.
+      </figcaption>
+    </figure>
   );
 }
 
@@ -50,7 +66,6 @@ function RunItem({ run }: { run: RecentRun }) {
         </h3>
         <RunStats run={run} />
       </div>
-      {run.mapPath ? <RunMap path={run.mapPath} /> : null}
     </>
   );
 
@@ -71,7 +86,7 @@ function RunItem({ run }: { run: RecentRun }) {
 }
 
 async function RecentRunsList() {
-  const runs = await getRecentRuns();
+  const { runs, heatmap } = await getRunningSection();
   if (!runs.length) return null;
 
   return (
@@ -82,6 +97,7 @@ async function RecentRunsList() {
       >
         Running
       </h2>
+      {heatmap ? <RouteHeatmapMap heatmap={heatmap} /> : null}
       <ol className="mt-4 divide-y divide-border">
         {runs.map((run) => (
           <li key={run.id}>

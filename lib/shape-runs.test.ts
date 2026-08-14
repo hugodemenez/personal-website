@@ -9,8 +9,10 @@ import {
   formatPace,
   formatRunDate,
   isWalkingActivity,
+  selectPrimaryRouteCluster,
   selectRecentRuns,
   toRecentRun,
+  buildRouteHeatmapFromRoutes,
   type ShapeActivity,
 } from "./shape-runs";
 
@@ -105,6 +107,48 @@ test("turns a polyline into an SVG path", () => {
   const path = polylineToSvgPath("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
   assert.equal(typeof path, "string");
   assert.match(path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
+});
+
+test("keeps nearby routes together and drops a distant one", () => {
+  const lisbonLoop: Array<[number, number]> = [
+    [38.553, -9.018],
+    [38.554, -9.016],
+    [38.552, -9.015],
+  ];
+  const sameLoop: Array<[number, number]> = [
+    [38.5531, -9.0181],
+    [38.5542, -9.0162],
+    [38.5521, -9.0151],
+  ];
+  const lille: Array<[number, number]> = [
+    [50.665, 3.166],
+    [50.667, 3.168],
+  ];
+
+  const cluster = selectPrimaryRouteCluster([lisbonLoop, sameLoop, lille]);
+  assert.equal(cluster.length, 2);
+});
+
+test("merges overlapping streets into a frequency heatmap", () => {
+  const shared: Array<[number, number]> = [
+    [38.55, -9.02],
+    [38.551, -9.018],
+    [38.552, -9.016],
+  ];
+  const withSpur: Array<[number, number]> = [
+    [38.55, -9.02],
+    [38.551, -9.018],
+    [38.553, -9.014],
+  ];
+
+  const heatmap = buildRouteHeatmapFromRoutes([shared, shared, withSpur]);
+  assert.ok(heatmap);
+  assert.equal(heatmap?.routeCount, 3);
+  assert.ok((heatmap?.edges.length ?? 0) > 0);
+  assert.equal(
+    Math.max(...(heatmap?.edges.map((edge) => edge.intensity) ?? [])),
+    1
+  );
 });
 
 test("maps a Shape activity onto the homepage card", () => {

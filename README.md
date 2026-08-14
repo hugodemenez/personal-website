@@ -102,10 +102,11 @@ The homepage Running list reads completed `run` activities from
 | --- | --- |
 | `SHAPE_API_KEY` | Bearer token from Shape Settings → API access (`shape_…`) |
 
-The server fetches the last 90 days, drops walks and HealthKit/Strava
-duplicates, and shows the six most recent runs. Strava-sourced rows link to
-the public activity. If the key is missing or Shape is unavailable, the
-section is omitted.
+The server fetches the last 180 days, drops walks and HealthKit/Strava
+duplicates, and shows the six most recent runs. Mapped routes in the same
+city are merged into one heatmap: overlapping streets get a stronger accent
+color. Strava-sourced rows link to the public activity. If the key is missing
+or Shape is unavailable, the section is omitted.
 
 ### Spotify authorization
 

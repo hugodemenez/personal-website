@@ -27,12 +27,32 @@ export interface RecentRun {
   href: string | null;
 }
 
+export interface HeatmapEdge {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  intensity: number;
+}
+
+export interface RouteHeatmap {
+  width: number;
+  height: number;
+  edges: HeatmapEdge[];
+  routeCount: number;
+}
+
 export const RECENT_RUN_LIMIT = 6;
 export const WALKING_PACE_SEC_PER_KM = 9 * 60;
 export const MAP_WIDTH = 120;
 export const MAP_HEIGHT = 40;
+export const HEATMAP_WIDTH = 560;
+export const HEATMAP_MAX_HEIGHT = 300;
 const MAP_PADDING = 2;
 const MAX_MAP_POINTS = 180;
+const CLUSTER_RADIUS_KM = 8;
+const HEATMAP_GRID = 96;
+const HEATMAP_PADDING = 10;
 
 export function calendarDate(value: string): string {
   const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
@@ -195,6 +215,216 @@ export function polylineToSvgPath(
       return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
     })
     .join(" ");
+}
+
+function centroid(points: Array<[number, number]>): [number, number] {
+  const sum = points.reduce(
+    (acc, [lat, lng]) => [acc[0] + lat, acc[1] + lng] as [number, number],
+    [0, 0]
+  );
+  return [sum[0] / points.length, sum[1] / points.length];
+}
+
+export function distanceKm(
+  a: [number, number],
+  b: [number, number]
+): number {
+  const dLat = (a[0] - b[0]) * 111.32;
+  const dLng = (a[1] - b[1]) * 111.32 * Math.cos((a[0] * Math.PI) / 180);
+  return Math.hypot(dLat, dLng);
+}
+
+function boundsOf(routes: Array<Array<[number, number]>>): {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+} {
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+
+  for (const route of routes) {
+    for (const [lat, lng] of route) {
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lng < minLng) minLng = lng;
+      if (lng > maxLng) maxLng = lng;
+    }
+  }
+
+  return { minLat, maxLat, minLng, maxLng };
+}
+
+export function selectPrimaryRouteCluster(
+  routes: Array<Array<[number, number]>>,
+  radiusKm = CLUSTER_RADIUS_KM
+): Array<Array<[number, number]>> {
+  if (!routes.length) return [];
+
+  const clusters: Array<{
+    routes: Array<Array<[number, number]>>;
+    center: [number, number];
+  }> = [];
+
+  for (const route of routes) {
+    if (route.length < 2) continue;
+    const routeCenter = centroid(route);
+    let nearest: (typeof clusters)[number] | null = null;
+    let nearestDistance = Infinity;
+
+    for (const cluster of clusters) {
+      const distance = distanceKm(routeCenter, cluster.center);
+      if (distance < nearestDistance) {
+        nearest = cluster;
+        nearestDistance = distance;
+      }
+    }
+
+    if (nearest && nearestDistance <= radiusKm) {
+      nearest.routes.push(route);
+      const n = nearest.routes.length;
+      nearest.center = [
+        (nearest.center[0] * (n - 1) + routeCenter[0]) / n,
+        (nearest.center[1] * (n - 1) + routeCenter[1]) / n,
+      ];
+    } else {
+      clusters.push({ routes: [route], center: routeCenter });
+    }
+  }
+
+  return clusters[0]?.routes ?? [];
+}
+
+function walkGridLine(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  visit: (x: number, y: number) => void
+) {
+  const dx = Math.abs(x1 - x0);
+  const dy = Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1;
+  const sy = y0 < y1 ? 1 : -1;
+  let err = dx - dy;
+  let x = x0;
+  let y = y0;
+
+  while (true) {
+    visit(x, y);
+    if (x === x1 && y === y1) break;
+    const doubled = err * 2;
+    if (doubled > -dy) {
+      err -= dy;
+      x += sx;
+    }
+    if (doubled < dx) {
+      err += dx;
+      y += sy;
+    }
+  }
+}
+
+export function buildRouteHeatmapFromRoutes(
+  routes: Array<Array<[number, number]>>,
+  width = HEATMAP_WIDTH
+): RouteHeatmap | null {
+  const cluster = selectPrimaryRouteCluster(routes);
+  if (!cluster.length) return null;
+
+  const { minLat, maxLat, minLng, maxLng } = boundsOf(cluster);
+  const latSpan = maxLat - minLat || 0.001;
+  const lngSpan = maxLng - minLng || 0.001;
+  const aspect = lngSpan / latSpan;
+  const innerWidth = width - HEATMAP_PADDING * 2;
+  const innerHeight = Math.min(HEATMAP_MAX_HEIGHT - HEATMAP_PADDING * 2, innerWidth / aspect);
+  const height = Math.round(innerHeight + HEATMAP_PADDING * 2);
+  const cols = HEATMAP_GRID;
+  const rows = Math.max(2, Math.round(HEATMAP_GRID * (innerHeight / innerWidth)));
+  const counts = new Map<string, { x1: number; y1: number; x2: number; y2: number; count: number }>();
+
+  const toCell = (lat: number, lng: number): [number, number] => [
+    Math.max(
+      0,
+      Math.min(cols - 1, Math.round(((lng - minLng) / lngSpan) * (cols - 1)))
+    ),
+    Math.max(
+      0,
+      Math.min(rows - 1, Math.round(((maxLat - lat) / latSpan) * (rows - 1)))
+    ),
+  ];
+
+  const toPixel = (col: number, row: number): [number, number] => [
+    HEATMAP_PADDING + (col / (cols - 1)) * innerWidth,
+    HEATMAP_PADDING + (row / (rows - 1)) * innerHeight,
+  ];
+
+  for (const route of cluster) {
+    const cells = downsample(route, 400).map(([lat, lng]) => toCell(lat, lng));
+    let previous: [number, number] | null = null;
+
+    for (const cell of cells) {
+      if (!previous) {
+        previous = cell;
+        continue;
+      }
+
+      let last: [number, number] | null = null;
+      walkGridLine(previous[0], previous[1], cell[0], cell[1], (x, y) => {
+        if (last && (last[0] !== x || last[1] !== y)) {
+          const a = `${last[0]},${last[1]}`;
+          const b = `${x},${y}`;
+          const key = a < b ? `${a}|${b}` : `${b}|${a}`;
+          const existing = counts.get(key);
+          if (existing) {
+            existing.count += 1;
+          } else {
+            const [x1, y1] = toPixel(last[0], last[1]);
+            const [x2, y2] = toPixel(x, y);
+            counts.set(key, { x1, y1, x2, y2, count: 1 });
+          }
+        }
+        last = [x, y];
+      });
+
+      previous = cell;
+    }
+  }
+
+  const values = [...counts.values()];
+  const maxCount = Math.max(0, ...values.map((edge) => edge.count));
+  if (!maxCount) return null;
+
+  const minCount = maxCount >= 3 ? 2 : 1;
+
+  return {
+    width,
+    height,
+    routeCount: cluster.length,
+    edges: values
+      .filter((edge) => edge.count >= minCount)
+      .map((edge) => ({
+        x1: Number(edge.x1.toFixed(2)),
+        y1: Number(edge.y1.toFixed(2)),
+        x2: Number(edge.x2.toFixed(2)),
+        y2: Number(edge.y2.toFixed(2)),
+        intensity: edge.count / maxCount,
+      }))
+      .sort((a, b) => a.intensity - b.intensity),
+  };
+}
+
+export function buildRouteHeatmap(
+  activities: ShapeActivity[]
+): RouteHeatmap | null {
+  const routes = selectRecentRuns(activities, Number.POSITIVE_INFINITY)
+    .filter((activity) => activity.map)
+    .map((activity) => decodePolyline(activity.map as string))
+    .filter((points) => points.length >= 2);
+
+  return buildRouteHeatmapFromRoutes(routes);
 }
 
 function activityScore(activity: ShapeActivity): number {
