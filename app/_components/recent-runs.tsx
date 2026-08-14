@@ -1,15 +1,15 @@
-import { RunPathCarousel } from "./run-path-carousel";
+import { RunPaths } from "./run-paths";
 import { loadRunningSection } from "@/server/shape";
 import { cacheLife } from "next/cache";
 
-async function CachedRunningCarousel() {
+async function CachedRunningPaths() {
   "use cache";
   cacheLife("hours");
 
   const { paths } = await loadRunningSection();
   if (!paths.length) return null;
 
-  return <RunPathCarousel paths={paths} />;
+  return <RunPaths paths={paths} />;
 }
 
 export default function RecentRuns() {
@@ -26,7 +26,7 @@ export default function RecentRuns() {
         I kept the habit for stamina and endurance as I get older. I run early,
         without music: birds, sunlight, and the occasional race for fun.
       </p>
-      <CachedRunningCarousel />
+      <CachedRunningPaths />
     </section>
   );
 }

@@ -102,16 +102,16 @@ The homepage Running carousel reads completed `run` activities from
 | --- | --- |
 | `SHAPE_API_KEY` | Bearer token from Shape Settings → API access (`shape_…`) |
 
-The heading and why-I-run note are static. The carousel is a cached
-component (`use cache`, `cacheLife("hours")`) rendered in the static
-tree, not behind Suspense, so Next prerenders it during `next build`
-and the first Shape fetch happens there. Later requests reuse that
-HTML and refresh in the background. The server loads the last 180
-days, drops walks and HealthKit/Strava duplicates, then groups mapped
-routes that start in the same area. Each card is a smooth polyline of
-the latest loop with faint traces of the other runs there.
-Strava-sourced cards link to the public activity. If the key is
-missing at build, the carousel is omitted.
+The heading and why-I-run note are static. The route cards are a
+cached component (`use cache`, `cacheLife("hours")`) rendered in the
+static tree, so Next prerenders them during `next build` and the first
+Shape fetch happens there. Later requests reuse that HTML and refresh
+in the background. The server loads the last 180 days, drops walks
+and HealthKit/Strava duplicates, then groups mapped routes that start
+in the same area. Each card is a smooth polyline of the latest loop
+with faint traces of the other runs there, titled by run count and
+day span. Strava-sourced cards link to the public activity. If the
+key is missing at build, the cards are omitted.
 
 ### Spotify authorization
 
