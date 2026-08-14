@@ -37,7 +37,7 @@ The homepage also draws a rough world map from the same record. Day counts
 stay in storage; the map keeps the whole world in view and circles regions
 by hand — most of the time, casual, and a couple still ahead — rather than
 pins or numbers. San Francisco and Canada sit on the map as places I'd like
-to go; they are not part of the location store.
+to go, in a complementary blue; they are not part of the location store.
 Location reads expire
 within 60 seconds; weather is cached separately by rounded coordinates for
 several minutes. If the store is unavailable or contains an invalid value,
