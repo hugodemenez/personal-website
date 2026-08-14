@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   type MouseEvent,
+  useCallback,
   useEffect,
   useMemo,
   useReducer,
@@ -11,14 +11,21 @@ import {
   useState,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
+import { getAlbumPiece, layoutStampAlbum } from "@/lib/stamp-album";
+import {
+  isStampCollected,
+  isTitleStampActive,
+} from "@/lib/stamp-visibility";
 import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
+import type { StampOffset } from "./playable-stamp";
+import { StampAlbum } from "./stamp-album";
+import { TitleStamp } from "./title-stamp";
+import { useFadingPresence } from "./use-fading-presence";
 
 interface PostsVisualizerProps {
   posts: SubstackPost[];
 }
-
-const IMAGE_SIZES = "(max-width: 768px) 92vw, 700px";
 
 /** How many titles back still count as "just passed" for the exit animation. */
 const TITLE_HISTORY = 4;
@@ -126,9 +133,16 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   );
   const sectionRef = useRef<HTMLElement>(null);
   const postRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const stampRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const writingBarRef = useRef<HTMLDivElement>(null);
+  const originsRef = useRef<Map<string, DOMRect>>(new Map());
+  const albumRectsRef = useRef<Map<string, DOMRect>>(new Map());
   // Average row height, used to release each pinned title after about one row
   // so it hands the slot to the next one instead of staying put.
   const [rowSpan, setRowSpan] = useState(0);
+  const [titleOffset, setTitleOffset] = useState(TITLE_OFFSET);
+  const [trayWidth, setTrayWidth] = useState(0);
+  const [offsets, setOffsets] = useState<Record<string, StampOffset>>({});
 
   const sortedPosts = useMemo(
     () =>
@@ -159,7 +173,30 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
   useEffect(() => {
     dispatchSelection({ type: "reset" });
+    originsRef.current.clear();
+    albumRectsRef.current.clear();
+    setOffsets({});
   }, [posts]);
+
+  useEffect(() => {
+    const bar = writingBarRef.current;
+    if (!bar) return;
+
+    const measureBar = () => {
+      const bounds = bar.getBoundingClientRect();
+      setTrayWidth(Math.round(bounds.width));
+      setTitleOffset(Math.round(52 + bounds.height));
+    };
+
+    measureBar();
+    const observer = new ResizeObserver(measureBar);
+    observer.observe(bar);
+    window.addEventListener("resize", measureBar);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measureBar);
+    };
+  }, [selection.currentIndex]);
 
   useEffect(() => {
     const measureRowSpan = () => {
@@ -199,6 +236,16 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
       });
 
       dispatchSelection({ type: "select", index: nearestIndex });
+
+      stampRefs.current.forEach((stamp, index) => {
+        if (!stamp) return;
+        const post = sortedPosts[index];
+        if (!post?.image) return;
+        originsRef.current.set(
+          post.slug || post.link,
+          stamp.getBoundingClientRect()
+        );
+      });
     };
 
     const scheduleSelection = () => {
@@ -217,9 +264,44 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
     };
   }, [sortedPosts]);
 
+  const selectedPostIndex = selection.currentIndex;
+  const titleSeeds = useMemo(
+    () =>
+      sortedPosts.flatMap((post, postIndex) =>
+        post.image && isTitleStampActive(postIndex, selectedPostIndex)
+          ? [post.slug || post.link]
+          : []
+      ),
+    [selectedPostIndex, sortedPosts]
+  );
+  const { fading: titleFading, keys: titleKeys } = useFadingPresence(titleSeeds);
+  const handleOffset = useCallback((seed: string, offset: StampOffset) => {
+    setOffsets((current) => ({ ...current, [seed]: offset }));
+  }, []);
+  const handleAlbumPositions = useCallback((rects: Map<string, DOMRect>) => {
+    albumRectsRef.current = rects;
+  }, []);
+
   if (!sortedPosts.length) return null;
 
-  const selectedPostIndex = selection.currentIndex;
+  const albumItems = sortedPosts.flatMap((post, postIndex) => {
+    if (!isStampCollected(postIndex, selectedPostIndex) || !post.image) {
+      return [];
+    }
+    const seed = post.slug || post.link;
+    return [
+      {
+        href: getPostHref(post),
+        origin: originsRef.current.get(seed),
+        seed,
+        src: post.image,
+      },
+    ];
+  });
+  const albumSlots = layoutStampAlbum(
+    albumItems.map((item) => item.seed),
+    trayWidth
+  );
 
   const returnToWritingStart = (event: MouseEvent<HTMLButtonElement>) => {
     const shouldReduceMotion = window.matchMedia(
@@ -253,26 +335,34 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           className="pointer-events-none absolute inset-x-0 top-full h-8 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
         />
 
-        <div className="relative flex items-baseline justify-between gap-4">
-          <h2
-            id="posts-heading"
-            className="font-serif text-3xl tracking-[-0.035em] text-foreground"
-          >
-            <button
-              aria-label="Return to the beginning of Writing"
-              className="-mx-2 min-h-11 cursor-pointer px-2 text-left transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
-              onClick={returnToWritingStart}
-              type="button"
+        <div className="relative" ref={writingBarRef}>
+          <div className="flex items-baseline justify-between gap-4">
+            <h2
+              id="posts-heading"
+              className="font-serif text-3xl tracking-[-0.035em] text-foreground"
             >
-              Writing
-            </button>
-          </h2>
-          <p className="text-sm tabular-nums text-muted/70">
-            {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
-            {String(sortedPosts.length).padStart(2, "0")}
-          </p>
+              <button
+                aria-label="Return to the beginning of Writing"
+                className="-mx-2 min-h-11 cursor-pointer px-2 text-left transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
+                onClick={returnToWritingStart}
+                type="button"
+              >
+                Writing
+              </button>
+            </h2>
+            <p className="text-sm tabular-nums text-muted/70">
+              {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
+              {String(sortedPosts.length).padStart(2, "0")}
+            </p>
+          </div>
+          <StampAlbum
+            items={albumItems}
+            offsets={offsets}
+            onOffset={handleOffset}
+            onPositions={handleAlbumPositions}
+            slots={albumSlots}
+          />
         </div>
-
       </PinnedShell>
 
       <ol className="relative px-1 pb-24 before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
@@ -313,6 +403,14 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
           const { post, postIndex } = entry;
           const isSelected = postIndex === selectedPostIndex;
+          const seed = post.slug || post.link;
+          const collected = isStampCollected(postIndex, selectedPostIndex);
+          const showTitleStamp =
+            Boolean(post.image) &&
+            !collected &&
+            (isTitleStampActive(postIndex, selectedPostIndex) ||
+              titleFading(seed));
+          const stampPiece = post.image ? getAlbumPiece(seed) : null;
           // 0 for the title currently in the slot, rising for each one passed.
           const titleDepth = Math.min(
             Math.max(selectedPostIndex - postIndex, 0),
@@ -344,11 +442,19 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     on an inner node — PinnedShell owns transform on the shell. */}
                 <PinnedShell
                   className="relative z-30"
-                  offset={TITLE_OFFSET}
+                  offset={titleOffset}
                   releaseAfter={rowSpan || undefined}
                 >
                 <div
-                  className="origin-left transition-[transform,opacity] duration-500 [transition-timing-function:var(--ease-spring)] motion-reduce:transition-none"
+                  className="flex items-center gap-3 pb-1.5 pt-4"
+                  style={
+                    stampPiece
+                      ? { minHeight: stampPiece.height }
+                      : undefined
+                  }
+                >
+                <div
+                  className="min-w-0 flex-1 origin-left transition-[transform,opacity] duration-500 [transition-timing-function:var(--ease-spring)] motion-reduce:transition-none"
                   style={{
                     opacity: titleDepth > 0 ? 0 : 1,
                     transform:
@@ -365,7 +471,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 >
                 <Link
                   aria-current={isSelected ? "true" : undefined}
-                  className={`flex min-h-11 min-w-0 items-center pb-1.5 pt-4 text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
+                  className={`flex min-h-11 min-w-0 items-center text-[1.05rem] leading-snug tracking-[-0.015em] transition-colors duration-150 motion-reduce:transition-none ${
                     isSelected
                       ? "font-bold text-foreground"
                       : "font-normal text-muted/65 hover:text-foreground"
@@ -393,6 +499,32 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   </span>
                 </Link>
                 </div>
+                {stampPiece ? (
+                  <span
+                    ref={(node) => {
+                      stampRefs.current[postIndex] = node;
+                    }}
+                    className="relative block shrink-0 self-center"
+                    style={{
+                      width: stampPiece.width,
+                      height: stampPiece.height,
+                    }}
+                  >
+                    {showTitleStamp ? (
+                      <TitleStamp
+                        external={!post.slug}
+                        fading={titleFading(seed)}
+                        href={getPostHref(post)}
+                        offset={offsets[seed] ?? { x: 0, y: 0 }}
+                        onOffset={(next) => handleOffset(seed, next)}
+                        origin={albumRectsRef.current.get(seed)}
+                        seed={seed}
+                        src={post.image}
+                      />
+                    ) : null}
+                  </span>
+                ) : null}
+                </div>
                 </PinnedShell>
 
                 {post.description ? (
@@ -401,7 +533,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   // a second one would announce the same destination twice.
                   <Link
                     aria-hidden="true"
-                    className={`mb-6 block max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
+                    className={`mb-8 block max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
                       isSelected ? "text-muted/75" : "text-muted/45"
                     }`}
                     href={getPostHref(post)}
@@ -413,26 +545,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   </Link>
                 ) : null}
 
-                {post.image ? (
-                  <Link
-                    aria-hidden="true"
-                    className="mb-8 block overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
-                    href={getPostHref(post)}
-                    rel={post.slug ? undefined : "noopener noreferrer"}
-                    tabIndex={-1}
-                    target={post.slug ? undefined : "_blank"}
-                  >
-                    <Image
-                      alt=""
-                      className="h-[clamp(9rem,34vw,13rem)] w-full object-cover"
-                      height={400}
-                      sizes={IMAGE_SIZES}
-                      src={post.image}
-                      unoptimized
-                      width={700}
-                    />
-                  </Link>
-                ) : null}
               </div>
             </li>
           );

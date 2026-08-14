@@ -1,6 +1,6 @@
 import { ComponentPropsWithoutRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { PostStamp } from "./post-stamp";
 import { Tweet } from "./tweet";
 
 export const mdxComponents = {
@@ -99,22 +99,18 @@ export const mdxComponents = {
       </Link>
     );
   },
-  img: ({ src, alt, ...props }: ComponentPropsWithoutRef<"img">) => {
+  img: ({ src, alt }: ComponentPropsWithoutRef<"img">) => {
     if (!src || typeof src !== "string") return null;
 
-    const isExternal = src.startsWith("http");
-
     return (
-      <span className="block relative w-full bg-surface my-4 overflow-hidden rounded-lg border border-border aspect-3/2 scale-105">
-          <Image
-            src={src}
-            alt={typeof alt === "string" ? alt : ""}
-            fill
-            className="object-contain"
-            sizes="(max-width: 768px) 90vw, 700px"
-            loading="lazy"
-            unoptimized={isExternal}
-          />
+      <span className="my-6 block overflow-visible py-2">
+        <PostStamp
+          alt={typeof alt === "string" ? alt : ""}
+          seed={src}
+          sizes="(max-width: 768px) 90vw, 700px"
+          src={src}
+          variant="feature"
+        />
       </span>
     );
   },
