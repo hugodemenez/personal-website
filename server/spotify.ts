@@ -1,4 +1,3 @@
-"use server";
 import { createHash } from "node:crypto";
 import { cacheLife } from "next/cache";
 
