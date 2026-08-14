@@ -1,9 +1,9 @@
 "use client";
 
 import type { PathSketch } from "@/lib/shape-runs";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
-const DRAW_BUDGET_SECONDS = 1.5;
+const DRAW_BUDGET_MS = 5000;
 
 function drawDurations(count: number, budget: number): number[] {
   if (count <= 0) return [];
@@ -17,58 +17,82 @@ function drawDurations(count: number, budget: number): number[] {
 
 export function PathMap({ sketch }: { sketch: PathSketch }) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [visible, setVisible] = useState(false);
+  const frameRef = useRef(0);
 
   useEffect(() => {
     const node = svgRef.current;
     if (!node) return;
 
+    const paths = [...node.querySelectorAll("path")];
+    const hide = () => {
+      for (const path of paths) {
+        path.style.strokeDasharray = "1";
+        path.style.strokeDashoffset = "1";
+      }
+    };
+    const reveal = () => {
+      for (const path of paths) {
+        path.style.strokeDashoffset = "0";
+      }
+    };
+
+    hide();
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setVisible(true);
+      reveal();
       return;
     }
 
+    const play = () => {
+      cancelAnimationFrame(frameRef.current);
+      hide();
+
+      const durations = drawDurations(paths.length, DRAW_BUDGET_MS);
+      const starts: number[] = [];
+      let mark = 0;
+      for (const duration of durations) {
+        starts.push(mark);
+        mark += duration;
+      }
+
+      const begin = performance.now();
+      const tick = (now: number) => {
+        const elapsed = now - begin;
+
+        paths.forEach((path, index) => {
+          const duration = durations[index] ?? 1;
+          const local = (elapsed - (starts[index] ?? 0)) / duration;
+          const progress = Math.min(1, Math.max(0, local));
+          path.style.strokeDashoffset = String(1 - progress);
+        });
+
+        if (elapsed < DRAW_BUDGET_MS) {
+          frameRef.current = requestAnimationFrame(tick);
+        }
+      };
+
+      frameRef.current = requestAnimationFrame(tick);
+    };
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setVisible(true);
-        observer.disconnect();
+        if (entry.isIntersecting) {
+          play();
+          return;
+        }
+
+        cancelAnimationFrame(frameRef.current);
+        hide();
       },
       { threshold: 0.35 }
     );
 
     observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  useLayoutEffect(() => {
-    const node = svgRef.current;
-    if (!node) return;
-
-    const paths = [...node.querySelectorAll("path")];
-    const reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-
-    for (const path of paths) {
-      path.style.strokeDasharray = "1";
-      path.style.strokeDashoffset = visible || reduceMotion ? "0" : "1";
-      path.style.transition = "none";
-    }
-
-    if (!visible || reduceMotion) return;
-
-    node.getBoundingClientRect();
-    const durations = drawDurations(paths.length, DRAW_BUDGET_SECONDS);
-    let delay = 0;
-
-    paths.forEach((path, index) => {
-      const duration = durations[index] ?? 0;
-      path.style.transition = `stroke-dashoffset ${duration}s linear ${delay}s`;
-      path.style.strokeDashoffset = "0";
-      delay += duration;
-    });
-  }, [visible]);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frameRef.current);
+    };
+  }, [sketch.path, sketch.traces]);
 
   return (
     <svg
@@ -94,7 +118,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
         />
       ))}
       <path
-        className="text-foreground/70 transition-colors group-hover:text-accent"
+        className="text-foreground/70 group-hover:text-accent"
         d={sketch.path}
         pathLength="1"
         stroke="currentColor"
