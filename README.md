@@ -95,7 +95,7 @@ returns `200` with the city and `updatedAt` fields.
 
 ### Recent runs
 
-The homepage Running carousel reads completed `run` activities from
+The homepage Running section reads completed `run` activities from
 [Shape Calendar](https://shapecalendar.com/api). Configure:
 
 | Variable | Purpose |
