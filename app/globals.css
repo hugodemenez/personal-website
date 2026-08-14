@@ -55,7 +55,8 @@
    one uniform colour edge to edge and Safari can tint its chrome from it. */
 html {
   min-width: 360px;
-  overflow-x: clip;
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-gutter: stable;
 }
 
@@ -67,6 +68,7 @@ body {
   font-family: var(--font-family-sans);
   max-width: 36rem;
   margin: 0 auto;
+  overflow-x: hidden;
   /* The header is in normal flow (pinned by transform), so no extra top space
      is needed for it. env() on the bottom is a no-op without viewport-fit=cover
      but is kept so the padding stays correct if cover is ever re-enabled. */
