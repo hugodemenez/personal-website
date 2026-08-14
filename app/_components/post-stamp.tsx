@@ -8,7 +8,7 @@ interface PostStampProps {
   alt?: string;
   href?: string;
   sizes?: string;
-  variant?: "collectible" | "feature";
+  variant?: "collectible" | "feature" | "album";
   /** Hide the link from assistive tech when a title already points here. */
   decorative?: boolean;
   external?: boolean;
@@ -30,26 +30,31 @@ export function PostStamp({
   decorative = false,
   external = false,
 }: PostStampProps) {
-  const pose = getStampPose(seed, variant);
+  const pose = getStampPose(seed, variant === "album" ? "collectible" : variant);
   const isExternal = src.startsWith("http");
+  const album = variant === "album";
   const collectible = variant === "collectible";
 
   const picture = (
     <span
-      className="stamp-paper block"
+      className={`stamp-paper block ${album ? "stamp-paper-album" : ""}`}
       style={{
-        ["--stamp-pitch" as string]: `${pose.pitch}px`,
-        transform: `rotate(${pose.rotate}deg) translate(${pose.shiftX}px, ${pose.shiftY}px)`,
+        ["--stamp-pitch" as string]: album
+          ? `${Math.max(6.5, pose.pitch * 0.58)}px`
+          : `${pose.pitch}px`,
+        transform: album
+          ? undefined
+          : `rotate(${pose.rotate}deg) translate(${pose.shiftX}px, ${pose.shiftY}px)`,
       }}
     >
       <span
         className={
-          collectible
+          collectible || album
             ? "stamp-window relative block aspect-3/2 overflow-hidden"
             : "stamp-window relative block overflow-hidden"
         }
       >
-        {collectible ? (
+        {collectible || album ? (
           <Image
             alt={alt}
             className="object-cover"
@@ -87,6 +92,10 @@ export function PostStamp({
   ) : (
     <span className="stamp-shadow block w-full">{picture}</span>
   );
+
+  if (album) {
+    return body;
+  }
 
   return (
     <span

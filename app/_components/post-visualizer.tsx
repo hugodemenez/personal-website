@@ -10,9 +10,11 @@ import {
   useState,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
+import { layoutStampAlbum } from "@/lib/stamp-album";
 import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
 import { PostStamp } from "./post-stamp";
+import { StampAlbum } from "./stamp-album";
 
 interface PostsVisualizerProps {
   posts: SubstackPost[];
@@ -126,9 +128,17 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   );
   const sectionRef = useRef<HTMLElement>(null);
   const postRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const stampRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const collectLineRef = useRef<HTMLDivElement>(null);
+  const writingBarRef = useRef<HTMLDivElement>(null);
+  const collectedRef = useRef<boolean[]>([]);
+  const originsRef = useRef<Map<string, DOMRect>>(new Map());
   // Average row height, used to release each pinned title after about one row
   // so it hands the slot to the next one instead of staying put.
   const [rowSpan, setRowSpan] = useState(0);
+  const [collected, setCollected] = useState<boolean[]>([]);
+  const [titleOffset, setTitleOffset] = useState(TITLE_OFFSET);
+  const [trayWidth, setTrayWidth] = useState(0);
 
   const sortedPosts = useMemo(
     () =>
@@ -159,7 +169,30 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
 
   useEffect(() => {
     dispatchSelection({ type: "reset" });
+    collectedRef.current = [];
+    originsRef.current.clear();
+    setCollected([]);
   }, [posts]);
+
+  useEffect(() => {
+    const bar = writingBarRef.current;
+    if (!bar) return;
+
+    const measureBar = () => {
+      const bounds = bar.getBoundingClientRect();
+      setTrayWidth(Math.round(bounds.width));
+      setTitleOffset(Math.round(52 + bounds.height));
+    };
+
+    measureBar();
+    const observer = new ResizeObserver(measureBar);
+    observer.observe(bar);
+    window.addEventListener("resize", measureBar);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measureBar);
+    };
+  }, [collected]);
 
   useEffect(() => {
     const measureRowSpan = () => {
@@ -199,6 +232,35 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
       });
 
       dispatchSelection({ type: "select", index: nearestIndex });
+
+      // A stamp collects the first time it meets the Writing bar. The list
+      // slot stays put — collapsing it would yank the next stamp up into the
+      // line and collect the whole deck in one frame.
+      const line =
+        collectLineRef.current?.getBoundingClientRect().bottom ?? TITLE_OFFSET;
+      const previous = collectedRef.current;
+      const next = sortedPosts.map((post, index) => {
+        if (!post.image) return false;
+        const stamp = stampRefs.current[index];
+        if (!stamp) return previous[index] ?? false;
+
+        const top = stamp.getBoundingClientRect().top;
+        if (!(previous[index] ?? false)) {
+          originsRef.current.set(post.slug || post.link, stamp.getBoundingClientRect());
+        }
+
+        if (top < line - 4) return true;
+        if (top > line + 32) return false;
+        return previous[index] ?? false;
+      });
+
+      if (
+        next.length !== previous.length ||
+        next.some((value, index) => value !== previous[index])
+      ) {
+        collectedRef.current = next;
+        setCollected(next);
+      }
     };
 
     const scheduleSelection = () => {
@@ -220,6 +282,22 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
   if (!sortedPosts.length) return null;
 
   const selectedPostIndex = selection.currentIndex;
+  const albumItems = sortedPosts.flatMap((post, postIndex) => {
+    if (!collected[postIndex] || !post.image) return [];
+    const seed = post.slug || post.link;
+    return [
+      {
+        href: getPostHref(post),
+        origin: originsRef.current.get(seed),
+        seed,
+        src: post.image,
+      },
+    ];
+  });
+  const albumSlots = layoutStampAlbum(
+    albumItems.map((item) => item.seed),
+    trayWidth
+  );
 
   const returnToWritingStart = (event: MouseEvent<HTMLButtonElement>) => {
     const shouldReduceMotion = window.matchMedia(
@@ -253,26 +331,31 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           className="pointer-events-none absolute inset-x-0 top-full h-8 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
         />
 
-        <div className="relative flex items-baseline justify-between gap-4">
-          <h2
-            id="posts-heading"
-            className="font-serif text-3xl tracking-[-0.035em] text-foreground"
+        <div className="relative" ref={writingBarRef}>
+          <div
+            className="flex items-baseline justify-between gap-4"
+            ref={collectLineRef}
           >
-            <button
-              aria-label="Return to the beginning of Writing"
-              className="-mx-2 min-h-11 cursor-pointer px-2 text-left transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
-              onClick={returnToWritingStart}
-              type="button"
+            <h2
+              id="posts-heading"
+              className="font-serif text-3xl tracking-[-0.035em] text-foreground"
             >
-              Writing
-            </button>
-          </h2>
-          <p className="text-sm tabular-nums text-muted/70">
-            {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
-            {String(sortedPosts.length).padStart(2, "0")}
-          </p>
+              <button
+                aria-label="Return to the beginning of Writing"
+                className="-mx-2 min-h-11 cursor-pointer px-2 text-left transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none"
+                onClick={returnToWritingStart}
+                type="button"
+              >
+                Writing
+              </button>
+            </h2>
+            <p className="text-sm tabular-nums text-muted/70">
+              {String(selectedPostIndex + 1).padStart(2, "0")} /{" "}
+              {String(sortedPosts.length).padStart(2, "0")}
+            </p>
+          </div>
+          <StampAlbum items={albumItems} slots={albumSlots} />
         </div>
-
       </PinnedShell>
 
       <ol className="relative px-1 pb-24 before:absolute before:bottom-0 before:left-4 before:top-0 before:w-px before:bg-border before:content-[''] sm:px-3 sm:before:left-[1.625rem]">
@@ -344,7 +427,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     on an inner node — PinnedShell owns transform on the shell. */}
                 <PinnedShell
                   className="relative z-30"
-                  offset={TITLE_OFFSET}
+                  offset={titleOffset}
                   releaseAfter={rowSpan || undefined}
                 >
                 <div
@@ -414,7 +497,14 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                 ) : null}
 
                 {post.image ? (
-                  <div className="mb-8 overflow-visible py-3">
+                  <div
+                    ref={(node) => {
+                      stampRefs.current[postIndex] = node;
+                    }}
+                    className={`mb-8 overflow-visible py-3 ${
+                      collected[postIndex] ? "invisible pointer-events-none" : ""
+                    }`}
+                  >
                     <PostStamp
                       decorative
                       external={!post.slug}
