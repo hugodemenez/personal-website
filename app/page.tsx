@@ -1,5 +1,6 @@
 import LocationPill from "./_components/location-pill";
 import PlacesMap from "./_components/places-map";
+import RecentRuns from "./_components/recent-runs";
 import SubstackPosts from "./_components/substack-posts";
 import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
@@ -201,7 +202,7 @@ const musicLinkClass =
   "font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent";
 
 export default async function Home() {
-  const { recentTrack: track } = await getSpotifyData();
+  const { weeklyTopTrack: track } = await getSpotifyData();
 
   return (
     <>
@@ -227,7 +228,7 @@ export default async function Home() {
             and turning rough ideas into useful systems.
             {track ? (
               <>
-                {" "}Most days have a soundtrack; lately it has been{" "}
+                {" "}Most days have a soundtrack; this week it has been{" "}
                 <a
                   className={musicLinkClass}
                   href={track.url}
@@ -285,6 +286,7 @@ export default async function Home() {
           <VisitedPlacesMap />
         </Suspense>
       </main>
+      <RecentRuns />
       <SubstackPosts />
     </>
   );

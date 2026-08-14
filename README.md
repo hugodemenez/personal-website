@@ -112,11 +112,35 @@ this Shortcut, enable **Run Immediately**, and disable success notifications.
 Run it manually once before enabling the schedule and confirm the endpoint
 returns `200` with the city and `updatedAt` fields.
 
+### Recent runs
+
+The homepage Running section reads completed `run` activities from
+[Shape Calendar](https://shapecalendar.com/api). Configure:
+
+| Variable | Purpose |
+| --- | --- |
+| `SHAPE_API_KEY` | Bearer token from Shape Settings → API access (`shape_…`) |
+
+The heading and why-I-run note are static. The route cards are a
+cached component (`use cache`, `cacheLife("hours")`) rendered in the
+static tree, so Next prerenders them during `next build` and the first
+Shape fetch happens there. Later requests reuse that HTML and refresh
+in the background. The server loads the last 180 days, drops walks
+and HealthKit/Strava duplicates, then groups mapped routes that start
+in the same area. Each card is a smooth polyline of the latest loop
+with faint traces of the other runs there, titled by run count and
+day span. If the key is missing, Shape is unreachable, or the live
+payload is empty, the page uses a checked-in snapshot of mapped runs
+(the same idea as the Lisbon home base and the Edith Piaf track).
+
 ### Spotify authorization
 
-The footer reads user-specific Spotify data with the Authorization Code flow. Configure
-`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, and
-`SPOTIFY_REFRESH_TOKEN` in the deployment environment.
+The homepage reads user-specific Spotify data with the Authorization Code flow
+and shows the most-played track from the last seven days. Spotify only returns
+the 50 most recent plays, so a heavy listening week is ranked from that window
+rather than a complete seven-day history. Configure `SPOTIFY_CLIENT_ID`,
+`SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`, and `SPOTIFY_REFRESH_TOKEN` in
+the deployment environment.
 
 Spotify refresh tokens expire after six months from July 20, 2026. When Spotify returns
 `invalid_grant`, the site stops retrying that token and serves the fallback track. To
