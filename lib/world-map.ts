@@ -337,6 +337,24 @@ export const WANTED_PLACES: readonly WantedPlace[] = [
   },
 ];
 
+export function placeListNames(places: readonly VisitedPlace[]): {
+  casual: string;
+  habitual: string;
+  wanted: string;
+} {
+  return {
+    casual: places
+      .filter((place) => stayKind(place, places) === "casual")
+      .map((place) => place.city)
+      .join(" · "),
+    habitual: places
+      .filter((place) => stayKind(place, places) === "habitual")
+      .map((place) => place.city)
+      .join(" · "),
+    wanted: WANTED_PLACES.map((place) => place.name).join(" · "),
+  };
+}
+
 export function stayKind(
   place: VisitedPlace,
   places: readonly VisitedPlace[]

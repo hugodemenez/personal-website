@@ -1,5 +1,6 @@
 import LocationPill from "./_components/location-pill";
 import PlacesMap from "./_components/places-map";
+import { PlacesMapSkeleton } from "./_components/places-map-frame";
 import RecentRuns from "./_components/recent-runs";
 import SubstackPosts from "./_components/substack-posts";
 import { getLocationPageData } from "@/server/location";
@@ -23,15 +24,6 @@ async function CurrentLocationPill() {
   const { weather } = await getLocationPageData();
 
   return <LocationPill weather={weather} />;
-}
-
-function PlacesMapSkeleton() {
-  return (
-    <div
-      aria-hidden="true"
-      className="mt-10 h-40 animate-pulse rounded-xl bg-surface"
-    />
-  );
 }
 
 async function VisitedPlacesMap() {
