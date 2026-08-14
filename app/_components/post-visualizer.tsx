@@ -353,18 +353,28 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   >
                     <Image
                       alt=""
-                      className="post-thumb object-contain"
+                      className="rounded-none object-contain"
                       fill
                       sizes={IMAGE_SIZES}
                       src={post.image}
                       unoptimized
+                    />
+                    {/* Same from-background dissolve as the pinned chrome —
+                        left fade is wider so overlapping text stays readable. */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-y-0 left-0 w-[42%] bg-linear-to-r from-background to-transparent"
+                    />
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-y-0 right-0 w-[24%] bg-linear-to-l from-background to-transparent"
                     />
                   </Link>
                 ) : null}
 
                 <div
                   className={`pointer-events-none relative z-10 flex min-w-0 flex-col gap-y-0.5 ${
-                    post.image ? "pr-16 sm:pr-[4.75rem]" : ""
+                    post.image ? "pr-8 sm:pr-10" : ""
                   }`}
                 >
                 {/* Pins just below the Writing bar so the title comes to rest in
