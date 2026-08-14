@@ -6,7 +6,7 @@
     "build": "next build",
     "start": "next start",
     "sync-substack": "tsx scripts/sync-substack-posts.ts",
-    "test": "tsx --test server/location-data.test.ts server/location.test.ts lib/location-display.test.ts app/api/location/update/route.test.ts"
+    "test": "tsx --test server/location-data.test.ts server/location.test.ts server/spotify.test.ts lib/location-display.test.ts app/api/location/update/route.test.ts"
   },
   "dependencies": {
     "@next/mdx": "^16.0.0",
