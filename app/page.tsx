@@ -1,4 +1,5 @@
 import LocationPill from "./_components/location-pill";
+import RecentRuns from "./_components/recent-runs";
 import SubstackPosts from "./_components/substack-posts";
 import { getCurrentLocationWeather } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
@@ -263,6 +264,7 @@ export default async function Home() {
           </p>
         </section>
       </main>
+      <RecentRuns />
       <SubstackPosts />
     </>
   );
