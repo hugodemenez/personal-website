@@ -29,7 +29,7 @@ function PathCard({ path }: { path: DistinctPath }) {
 
 export function RunPaths({ paths }: { paths: DistinctPath[] }) {
   return (
-    <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
+    <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-6">
       {paths.map((path) => (
         <li key={path.run.id}>
           <PathCard path={path} />
