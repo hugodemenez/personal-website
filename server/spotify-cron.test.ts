@@ -3,7 +3,6 @@ import test from "node:test";
 import { GET } from "../app/api/spotify/cron/route";
 import {
   SpotifyRefreshError,
-  createMemorySpotifyAuthStore,
   isAuthorizedCronRequest,
   runSpotifyExpiryCron,
 } from "./spotify-auth";
@@ -50,18 +49,14 @@ test("cron route returns 401 when the request is not from Vercel cron", async ()
 });
 
 test("healthy tokens outside the warning window are a no-op", async () => {
-  const store = createMemorySpotifyAuthStore({
-    refreshToken: "healthy-token",
-    authorizedAt,
-  });
   const messages: string[] = [];
-
   const result = await runSpotifyExpiryCron({
     now: new Date("2026-12-01T00:00:00.000Z"),
-    store,
     env: {
       SPOTIFY_CLIENT_ID: "id",
       SPOTIFY_CLIENT_SECRET: "secret",
+      SPOTIFY_REFRESH_TOKEN: "healthy-token",
+      SPOTIFY_AUTHORIZED_AT: authorizedAt,
     },
     refresh: async () => "access-token",
     sendTelegram: async (text) => {
@@ -75,20 +70,22 @@ test("healthy tokens outside the warning window are a no-op", async () => {
 });
 
 test("near expiry sends one Telegram ping keyed by authorized_at", async () => {
-  const store = createMemorySpotifyAuthStore({
-    refreshToken: "aging-token",
-    authorizedAt,
-  });
-  const messages: string[] = [];
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     SPOTIFY_CLIENT_ID: "id",
     SPOTIFY_CLIENT_SECRET: "secret",
+    SPOTIFY_REFRESH_TOKEN: "aging-token",
+    SPOTIFY_AUTHORIZED_AT: authorizedAt,
+  };
+  const messages: string[] = [];
+  const persistEnv = async (vars: Record<string, string>) => {
+    Object.assign(env, vars);
+    return true;
   };
 
   const first = await runSpotifyExpiryCron({
     now: warningStartsAt,
-    store,
     env,
+    persistEnv,
     refresh: async () => "access-token",
     sendTelegram: async (text) => {
       messages.push(text);
@@ -97,8 +94,8 @@ test("near expiry sends one Telegram ping keyed by authorized_at", async () => {
   });
   const second = await runSpotifyExpiryCron({
     now: warningStartsAt,
-    store,
     env,
+    persistEnv,
     refresh: async () => {
       throw new Error("already pinged; no need to probe");
     },
@@ -112,21 +109,25 @@ test("near expiry sends one Telegram ping keyed by authorized_at", async () => {
   assert.deepEqual(second, { ok: true, action: "noop" });
   assert.deepEqual(messages, [SPOTIFY_EXPIRY_TELEGRAM_MESSAGE]);
   assert.match(messages[0], new RegExp(SPOTIFY_AUTHORIZE_URL));
-  assert.equal(await store.getExpiryPingedFor(), authorizedAt);
+  assert.equal(env.SPOTIFY_EXPIRY_PINGED_FOR, authorizedAt);
 });
 
 test("invalid_grant pings once even when authorized_at is unknown", async () => {
-  const store = createMemorySpotifyAuthStore({ refreshToken: "revoked-token" });
-  const messages: string[] = [];
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     SPOTIFY_CLIENT_ID: "id",
     SPOTIFY_CLIENT_SECRET: "secret",
+    SPOTIFY_REFRESH_TOKEN: "revoked-token",
+  };
+  const messages: string[] = [];
+  const persistEnv = async (vars: Record<string, string>) => {
+    Object.assign(env, vars);
+    return true;
   };
 
   const first = await runSpotifyExpiryCron({
     now: new Date("2026-12-01T00:00:00.000Z"),
-    store,
     env,
+    persistEnv,
     refresh: async () => {
       throw new SpotifyRefreshError("expired", "invalid_grant");
     },
@@ -137,8 +138,8 @@ test("invalid_grant pings once even when authorized_at is unknown", async () => 
   });
   const second = await runSpotifyExpiryCron({
     now: new Date("2026-12-01T00:00:00.000Z"),
-    store,
     env,
+    persistEnv,
     refresh: async () => {
       throw new Error("already pinged");
     },
@@ -151,5 +152,5 @@ test("invalid_grant pings once even when authorized_at is unknown", async () => 
   assert.deepEqual(first, { ok: true, action: "pinged" });
   assert.deepEqual(second, { ok: true, action: "noop" });
   assert.equal(messages.length, 1);
-  assert.equal(await store.getExpiryPingedFor(), "unknown");
+  assert.equal(env.SPOTIFY_EXPIRY_PINGED_FOR, "unknown");
 });

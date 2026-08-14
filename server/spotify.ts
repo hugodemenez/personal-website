@@ -1,8 +1,5 @@
 import { cacheLife } from "next/cache";
-import {
-  refreshSpotifyAccessToken,
-  resolveRefreshToken,
-} from "@/server/spotify-auth";
+import { refreshSpotifyAccessToken } from "@/server/spotify-auth";
 
 export interface Track {
   name: string;
@@ -106,9 +103,9 @@ export async function getSpotifyData(): Promise<SpotifyData> {
   "use cache";
   cacheLife("minutes");
 
-  const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } = process.env;
-  const refreshToken = await resolveRefreshToken();
-  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !refreshToken) {
+  const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN } =
+    process.env;
+  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REFRESH_TOKEN) {
     return FALLBACK_DATA;
   }
 
@@ -116,7 +113,7 @@ export async function getSpotifyData(): Promise<SpotifyData> {
     const accessToken = await refreshSpotifyAccessToken(
       SPOTIFY_CLIENT_ID,
       SPOTIFY_CLIENT_SECRET,
-      refreshToken
+      SPOTIFY_REFRESH_TOKEN
     );
     const headers = { Authorization: `Bearer ${accessToken}` };
 

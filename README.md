@@ -155,18 +155,21 @@ an access token does not extend that lifetime. A daily Vercel cron
 expired, within 14 days of expiry, or rejected with `invalid_grant`, sends one
 Telegram message with `https://www.hugodemenez.fr/api/spotify/authorize`.
 `/api/spotify/authorize` starts OAuth only in that window; a healthy token
-returns `still valid` and is not rotated. The callback stores the new refresh
-token and `authorized_at` in Redis (no redeploy) and does not echo the secret.
+returns `still valid` and is not rotated. The callback writes
+`SPOTIFY_REFRESH_TOKEN` and `SPOTIFY_AUTHORIZED_AT` through the Vercel API and
+redeploys production so the new values load. It does not echo the secret.
 
 Required environment variable names:
 
 - `SPOTIFY_CLIENT_ID`
 - `SPOTIFY_CLIENT_SECRET`
 - `SPOTIFY_REDIRECT_URI`
-- `SPOTIFY_REFRESH_TOKEN` (fallback if Redis is empty)
-- `SPOTIFY_AUTHORIZED_AT` (fallback if Redis is empty)
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
+- `SPOTIFY_REFRESH_TOKEN`
+- `SPOTIFY_AUTHORIZED_AT`
+- `SPOTIFY_EXPIRY_PINGED_FOR`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
 - `CRON_SECRET`
+- `VERCEL_TOKEN`
+- `VERCEL_PROJECT_ID` (optional; documented project fallback is used if unset)
+- `VERCEL_TEAM_ID` (optional; `VERCEL_ORG_ID` or the documented team fallback)

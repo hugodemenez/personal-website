@@ -1,15 +1,15 @@
 import { createHash } from "node:crypto";
 import { hasValidBearerToken } from "@/server/location-data";
-import { createRedis, getRedis } from "@/server/redis";
 import {
   SPOTIFY_EXPIRY_TELEGRAM_MESSAGE,
   SPOTIFY_REAUTH_TELEGRAM_MESSAGE,
   sendTelegramMessage,
 } from "@/server/telegram";
+import {
+  persistVercelEnvAndRedeploy,
+  type VercelEnvWrites,
+} from "@/server/vercel-env";
 
-export const SPOTIFY_REFRESH_TOKEN_KEY = "spotify:refresh_token";
-export const SPOTIFY_AUTHORIZED_AT_KEY = "spotify:authorized_at";
-export const SPOTIFY_EXPIRY_PINGED_FOR_KEY = "spotify:expiry_pinged_for";
 export const UNKNOWN_AUTHORIZATION_PERIOD = "unknown";
 
 export const REFRESH_TOKEN_LIFETIME_MONTHS = 6;
@@ -34,80 +34,10 @@ export class SpotifyRefreshError extends Error {
   }
 }
 
-export interface SpotifyAuthStore {
-  getRefreshToken(): Promise<string | null>;
-  getAuthorizedAt(): Promise<string | null>;
-  getExpiryPingedFor(): Promise<string | null>;
-  saveAuthorization(refreshToken: string, authorizedAt: string): Promise<void>;
-  markExpiryPinged(periodKey: string): Promise<void>;
-}
-
-export function createMemorySpotifyAuthStore(
-  initial: {
-    refreshToken?: string | null;
-    authorizedAt?: string | null;
-    expiryPingedFor?: string | null;
-  } = {}
-): SpotifyAuthStore {
-  let refreshToken = initial.refreshToken ?? null;
-  let authorizedAt = initial.authorizedAt ?? null;
-  let expiryPingedFor = initial.expiryPingedFor ?? null;
-
-  return {
-    async getRefreshToken() {
-      return refreshToken;
-    },
-    async getAuthorizedAt() {
-      return authorizedAt;
-    },
-    async getExpiryPingedFor() {
-      return expiryPingedFor;
-    },
-    async saveAuthorization(nextRefreshToken, nextAuthorizedAt) {
-      refreshToken = nextRefreshToken;
-      authorizedAt = nextAuthorizedAt;
-    },
-    async markExpiryPinged(periodKey) {
-      expiryPingedFor = periodKey;
-    },
-  };
-}
-
-export function createRedisSpotifyAuthStore(
-  redis: NonNullable<ReturnType<typeof getRedis>>
-): SpotifyAuthStore {
-  return {
-    async getRefreshToken() {
-      const value = await redis.get<string>(SPOTIFY_REFRESH_TOKEN_KEY);
-      return typeof value === "string" && value ? value : null;
-    },
-    async getAuthorizedAt() {
-      const value = await redis.get<string>(SPOTIFY_AUTHORIZED_AT_KEY);
-      return typeof value === "string" && value ? value : null;
-    },
-    async getExpiryPingedFor() {
-      const value = await redis.get<string>(SPOTIFY_EXPIRY_PINGED_FOR_KEY);
-      return typeof value === "string" && value ? value : null;
-    },
-    async saveAuthorization(refreshToken, authorizedAt) {
-      await redis.mset({
-        [SPOTIFY_REFRESH_TOKEN_KEY]: refreshToken,
-        [SPOTIFY_AUTHORIZED_AT_KEY]: authorizedAt,
-      });
-    },
-    async markExpiryPinged(periodKey) {
-      await redis.set(SPOTIFY_EXPIRY_PINGED_FOR_KEY, periodKey);
-    },
-  };
-}
-
-export function getSpotifyAuthStore(
-  env: NodeJS.ProcessEnv = process.env
-): SpotifyAuthStore | null {
-  const redis = env === process.env ? getRedis() : createRedis(env);
-  if (!redis) return null;
-  return createRedisSpotifyAuthStore(redis);
-}
+export type PersistEnv = (
+  vars: VercelEnvWrites,
+  env?: NodeJS.ProcessEnv
+) => Promise<boolean>;
 
 export function addUtcCalendarMonths(date: Date, months: number): Date {
   const monthIndex = date.getUTCMonth() + months;
@@ -231,38 +161,15 @@ export async function refreshSpotifyAccessToken(
   return data.access_token;
 }
 
-export async function resolveRefreshToken(
-  store: SpotifyAuthStore | null = getSpotifyAuthStore(),
+export function resolveRefreshToken(
   env: NodeJS.ProcessEnv = process.env
-): Promise<string | null> {
-  try {
-    const stored = store ? await store.getRefreshToken() : null;
-    if (stored) return stored;
-  } catch (error) {
-    console.error(
-      "Failed to read Spotify refresh token from Redis",
-      error instanceof Error ? error.message : "unknown error"
-    );
-  }
-
+): string | null {
   return env.SPOTIFY_REFRESH_TOKEN ?? null;
 }
 
-export async function resolveAuthorizedAt(
-  store: SpotifyAuthStore | null = getSpotifyAuthStore(),
+export function resolveAuthorizedAt(
   env: NodeJS.ProcessEnv = process.env
-): Promise<Date | null> {
-  try {
-    const stored = store ? await store.getAuthorizedAt() : null;
-    const fromStore = parseAuthorizedAt(stored);
-    if (fromStore) return fromStore;
-  } catch (error) {
-    console.error(
-      "Failed to read Spotify authorized_at from Redis",
-      error instanceof Error ? error.message : "unknown error"
-    );
-  }
-
+): Date | null {
   return parseAuthorizedAt(env.SPOTIFY_AUTHORIZED_AT);
 }
 
@@ -273,16 +180,13 @@ export type AuthorizeDecision =
 
 export async function evaluateAuthorizeRequest(options: {
   now?: Date;
-  store?: SpotifyAuthStore | null;
   env?: NodeJS.ProcessEnv;
   refresh?: typeof refreshSpotifyAccessToken;
 } = {}): Promise<AuthorizeDecision> {
   const now = options.now ?? new Date();
   const env = options.env ?? process.env;
-  const store =
-    options.store !== undefined ? options.store : getSpotifyAuthStore(env);
-  const refreshToken = await resolveRefreshToken(store, env);
-  const authorizedAt = await resolveAuthorizedAt(store, env);
+  const refreshToken = resolveRefreshToken(env);
+  const authorizedAt = resolveAuthorizedAt(env);
 
   if (refreshToken && authorizedAt && !isRefreshTokenNearExpiry(authorizedAt, now)) {
     return { action: "still_valid" };
@@ -299,11 +203,7 @@ export async function evaluateAuthorizeRequest(options: {
     return { action: "start_oauth" };
   }
 
-  if (
-    !refreshToken ||
-    !env.SPOTIFY_CLIENT_ID ||
-    !env.SPOTIFY_CLIENT_SECRET
-  ) {
+  if (!refreshToken || !env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
     return { action: "start_oauth" };
   }
 
@@ -329,19 +229,19 @@ export async function evaluateAuthorizeRequest(options: {
 export async function persistSpotifyAuthorization(
   refreshToken: string,
   authorizedAt: Date,
-  store: SpotifyAuthStore | null = getSpotifyAuthStore()
+  options: {
+    env?: NodeJS.ProcessEnv;
+    persistEnv?: PersistEnv;
+  } = {}
 ): Promise<boolean> {
-  if (!store) return false;
-  try {
-    await store.saveAuthorization(refreshToken, authorizedAt.toISOString());
-    return true;
-  } catch (error) {
-    console.error(
-      "Failed to persist Spotify authorization",
-      error instanceof Error ? error.message : "unknown error"
-    );
-    return false;
-  }
+  const persist = options.persistEnv ?? persistVercelEnvAndRedeploy;
+  return persist(
+    {
+      SPOTIFY_REFRESH_TOKEN: refreshToken,
+      SPOTIFY_AUTHORIZED_AT: authorizedAt.toISOString(),
+    },
+    options.env ?? process.env
+  );
 }
 
 export async function notifySpotifyReauthorization(
@@ -362,18 +262,16 @@ export function isAuthorizedCronRequest(
 
 export async function runSpotifyExpiryCron(options: {
   now?: Date;
-  store?: SpotifyAuthStore | null;
   env?: NodeJS.ProcessEnv;
   refresh?: typeof refreshSpotifyAccessToken;
   sendTelegram?: (text: string, env?: NodeJS.ProcessEnv) => Promise<boolean>;
+  persistEnv?: PersistEnv;
 } = {}): Promise<{ ok: true; action: "noop" | "pinged" }> {
   const now = options.now ?? new Date();
   const env = options.env ?? process.env;
-  const store =
-    options.store !== undefined ? options.store : getSpotifyAuthStore(env);
-  const refreshToken = await resolveRefreshToken(store, env);
-  const authorizedAt = await resolveAuthorizedAt(store, env);
-  const pingedFor = store ? await store.getExpiryPingedFor() : null;
+  const refreshToken = resolveRefreshToken(env);
+  const authorizedAt = resolveAuthorizedAt(env);
+  const pingedFor = env.SPOTIFY_EXPIRY_PINGED_FOR ?? null;
   const period = authorizationPeriodKey(authorizedAt);
 
   if (pingedFor === period) {
@@ -381,11 +279,7 @@ export async function runSpotifyExpiryCron(options: {
   }
 
   let tokenInvalid = !refreshToken;
-  if (
-    refreshToken &&
-    env.SPOTIFY_CLIENT_ID &&
-    env.SPOTIFY_CLIENT_SECRET
-  ) {
+  if (refreshToken && env.SPOTIFY_CLIENT_ID && env.SPOTIFY_CLIENT_SECRET) {
     try {
       await (options.refresh ?? refreshSpotifyAccessToken)(
         env.SPOTIFY_CLIENT_ID,
@@ -421,9 +315,8 @@ export async function runSpotifyExpiryCron(options: {
   );
   if (!sent) return { ok: true, action: "noop" };
 
-  if (store) {
-    await store.markExpiryPinged(period);
-  }
+  const persist = options.persistEnv ?? persistVercelEnvAndRedeploy;
+  await persist({ SPOTIFY_EXPIRY_PINGED_FOR: period }, env);
 
   return { ok: true, action: "pinged" };
 }

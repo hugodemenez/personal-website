@@ -3,7 +3,6 @@ import test from "node:test";
 import { mostListenedTrack, type RecentlyPlayedItem } from "./spotify";
 import {
   SpotifyRefreshError,
-  createMemorySpotifyAuthStore,
   evaluateAuthorizeRequest,
   persistSpotifyAuthorization,
   refreshSpotifyAccessToken,
@@ -168,19 +167,16 @@ test("skips OAuth while the refresh token is valid and outside the warning windo
 });
 
 test("evaluateAuthorizeRequest refuses to rotate a healthy token", async () => {
-  const store = createMemorySpotifyAuthStore({
-    refreshToken: "healthy-token",
-    authorizedAt: authorizedAt.toISOString(),
-  });
   const env = {
     SPOTIFY_CLIENT_ID: "id",
     SPOTIFY_CLIENT_SECRET: "secret",
+    SPOTIFY_REFRESH_TOKEN: "healthy-token",
+    SPOTIFY_AUTHORIZED_AT: authorizedAt.toISOString(),
   };
 
   assert.deepEqual(
     await evaluateAuthorizeRequest({
       now: new Date("2026-12-01T00:00:00.000Z"),
-      store,
       env,
       refresh: async () => {
         throw new Error("must not probe a token that is still in date");
@@ -192,7 +188,6 @@ test("evaluateAuthorizeRequest refuses to rotate a healthy token", async () => {
   assert.deepEqual(
     await evaluateAuthorizeRequest({
       now: warningStartsAt,
-      store,
       env,
     }),
     { action: "start_oauth" }
@@ -200,16 +195,15 @@ test("evaluateAuthorizeRequest refuses to rotate a healthy token", async () => {
 });
 
 test("unknown authorized_at only starts OAuth after invalid_grant", async () => {
-  const store = createMemorySpotifyAuthStore({ refreshToken: "mystery-token" });
   const env = {
     SPOTIFY_CLIENT_ID: "id",
     SPOTIFY_CLIENT_SECRET: "secret",
+    SPOTIFY_REFRESH_TOKEN: "mystery-token",
   };
 
   assert.deepEqual(
     await evaluateAuthorizeRequest({
       now: new Date("2026-12-01T00:00:00.000Z"),
-      store,
       env,
       refresh: async () => "access-token",
     }),
@@ -219,7 +213,6 @@ test("unknown authorized_at only starts OAuth after invalid_grant", async () => 
   assert.deepEqual(
     await evaluateAuthorizeRequest({
       now: new Date("2026-12-01T00:00:00.000Z"),
-      store,
       env,
       refresh: async () => {
         throw new SpotifyRefreshError("expired", "invalid_grant");
@@ -306,22 +299,23 @@ test("does not retry a refresh token after invalid_grant", async () => {
   }
 });
 
-test("reads the refresh token from Redis before the environment fallback", async () => {
-  const store = createMemorySpotifyAuthStore({ refreshToken: "redis-token" });
-  assert.equal(
-    await resolveRefreshToken(store, { SPOTIFY_REFRESH_TOKEN: "env-token" }),
-    "redis-token"
-  );
-  assert.equal(
-    await resolveRefreshToken(null, { SPOTIFY_REFRESH_TOKEN: "env-token" }),
-    "env-token"
-  );
+test("reads the refresh token from the environment", () => {
+  assert.equal(resolveRefreshToken({ SPOTIFY_REFRESH_TOKEN: "env-token" }), "env-token");
+  assert.equal(resolveRefreshToken({}), null);
 });
 
-test("persists authorization without exposing the refresh token", async () => {
-  const store = createMemorySpotifyAuthStore();
+test("persists authorization through Vercel env writes without exposing the token", async () => {
   const token = "new-refresh-token-secret";
-  assert.equal(await persistSpotifyAuthorization(token, authorizedAt, store), true);
-  assert.equal(await store.getRefreshToken(), token);
-  assert.equal(await store.getAuthorizedAt(), authorizedAt.toISOString());
+  const written: Record<string, string> = {};
+  assert.equal(
+    await persistSpotifyAuthorization(token, authorizedAt, {
+      persistEnv: async (vars) => {
+        Object.assign(written, vars);
+        return true;
+      },
+    }),
+    true
+  );
+  assert.equal(written.SPOTIFY_REFRESH_TOKEN, token);
+  assert.equal(written.SPOTIFY_AUTHORIZED_AT, authorizedAt.toISOString());
 });
