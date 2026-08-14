@@ -83,9 +83,17 @@ test("circles a region instead of pinning a city", () => {
   assert.ok(circle);
   assert.equal(circle.kind, "habitual");
   assert.match(circle.path, /^M /);
+  assert.ok(!circle.path.endsWith("Z"));
   assert.ok(circle.width < 4);
+  assert.ok((circle.path.match(/Q /g) ?? []).length >= 16);
 
   const snapped = zoneCenter(lisbon);
   const exact = projectLocation(lisbon.longitude, lisbon.latitude);
   assert.ok(Math.hypot(snapped.x - exact.x, snapped.y - exact.y) < 30);
+});
+
+test("keeps nearby Europe stays as two open circles on the world plane", () => {
+  const circles = zoneCircles([lisbon, paris]);
+  assert.equal(circles.length, 2);
+  assert.ok(Math.hypot(circles[0].x - circles[1].x, circles[0].y - circles[1].y) > 18);
 });

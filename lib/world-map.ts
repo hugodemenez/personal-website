@@ -364,20 +364,25 @@ function buildCirclePath(
   origin: ProjectedPoint,
   radiusX: number,
   radiusY: number,
-  random: () => number
+  random: () => number,
+  turns: number
 ): string {
-  const turns = 1.06 + random() * 0.1;
   const start = random() * Math.PI * 2;
-  const steps = 18;
+  const steps = 24;
   const points: ProjectedPoint[] = [];
+  // A hand rarely stays on one radius — the loop opens or tightens as it goes.
+  const spiral = (random() - 0.4) * 0.22;
+  const driftX = (random() - 0.5) * 3.2;
+  const driftY = (random() - 0.5) * 3.2;
 
   for (let index = 0; index <= steps; index += 1) {
     const progress = index / steps;
     const angle = start + progress * turns * Math.PI * 2;
-    const wobble = 1 + (random() - 0.5) * 0.2;
+    const wobble = 1 + (random() - 0.5) * 0.26;
+    const grow = 1 + spiral * progress;
     points.push({
-      x: origin.x + Math.cos(angle) * radiusX * wobble,
-      y: origin.y + Math.sin(angle) * radiusY * wobble,
+      x: origin.x + driftX + Math.cos(angle) * radiusX * wobble * grow,
+      y: origin.y + driftY + Math.sin(angle) * radiusY * wobble * grow,
     });
   }
 
@@ -407,14 +412,17 @@ export function zoneCircles(places: readonly VisitedPlace[]): ZoneCircle[] {
     const kind = stayKind(place, places);
     const origin = zoneCenter(place);
     const random = createRandom(`${place.city}|${place.country ?? ""}`);
-    const radius = kind === "habitual" ? 28 : 21;
-    const stretch = 0.82 + random() * 0.12;
+    const radius = kind === "habitual" ? 30 : 20;
+    const stretch = 0.78 + random() * 0.16;
+    // Habitual: almost two loops, the way a hand circles twice to mark a place.
+    // Casual: once around and a little past the start.
+    const turns = kind === "habitual" ? 1.38 + random() * 0.2 : 1.14 + random() * 0.14;
 
     return {
       city: place.city,
       kind,
-      path: buildCirclePath(origin, radius, radius * stretch, random),
-      width: kind === "habitual" ? 2.6 : 1.9,
+      path: buildCirclePath(origin, radius, radius * stretch, random, turns),
+      width: kind === "habitual" ? 2.7 : 1.85,
       x: origin.x,
       y: origin.y,
     };

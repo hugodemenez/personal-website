@@ -26,11 +26,15 @@ function CircleSwatch({ kind }: { kind: StayKind }) {
       viewBox="0 0 16 16"
     >
       <path
-        d="M 3.2 8.4 Q 3.6 3.8 8.1 3.4 T 13.1 8.2 Q 12.4 12.8 7.8 12.6 T 3.4 8.1"
+        d={
+          kind === "habitual"
+            ? "M 3.1 8.6 Q 3.4 3.6 8.2 3.3 T 13.2 8.1 Q 12.6 13.0 7.7 12.7 T 3.3 8.4 Q 4.1 4.8 8.0 4.6"
+            : "M 3.4 8.5 Q 3.8 4.0 8.1 3.6 T 12.8 8.2 Q 12.2 12.6 7.9 12.4 T 3.6 8.3"
+        }
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
-        strokeWidth={kind === "habitual" ? 1.6 : 1.25}
+        strokeWidth={kind === "habitual" ? 1.55 : 1.2}
       />
     </svg>
   );
