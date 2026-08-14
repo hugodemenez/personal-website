@@ -118,5 +118,9 @@ test("circles San Francisco and Canada as places still ahead", () => {
   assert.ok(canada.dashed);
   assert.ok(sanFrancisco.x < canada.x);
   assert.ok(sanFrancisco.y > canada.y);
+  assert.ok(
+    Math.hypot(canada.x - sanFrancisco.x, canada.y - sanFrancisco.y) > 70,
+    "San Francisco and Canada should not read as one North American scribble"
+  );
   assert.ok((canada.path.match(/Q /g) ?? []).length >= 12);
 });

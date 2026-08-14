@@ -331,8 +331,8 @@ export const WANTED_PLACES: readonly WantedPlace[] = [
   },
   {
     name: "Canada",
-    latitude: 54.2,
-    longitude: -98.4,
+    latitude: 55.4,
+    longitude: -86.0,
     span: "region",
   },
 ];
@@ -463,7 +463,7 @@ export function wantedCircles(
   return places.map((place) => {
     const origin = zoneCenter(place);
     const random = createRandom(`wanted|${place.name}`);
-    const radius = place.span === "region" ? 46 : 24;
+    const radius = place.span === "region" ? 36 : 24;
     const stretch = 0.74 + random() * 0.18;
     // Unfinished on purpose — a place not yet gone around.
     const turns = 0.86 + random() * 0.12;

@@ -195,7 +195,7 @@ export default function PlacesMap({ places }: PlacesMapProps) {
                   fill="none"
                   pathLength={1}
                   stroke="currentColor"
-                  strokeDasharray={circle.dashed ? "0.16 0.1" : "1 1"}
+                  strokeDasharray={circle.dashed ? "0.2 0.09" : "1 1"}
                   strokeDashoffset={drawn ? 0 : 1}
                   strokeLinecap="round"
                   strokeOpacity={
