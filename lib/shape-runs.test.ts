@@ -222,8 +222,8 @@ test("selectDistinctPaths keeps one card per similar route", () => {
 test("sketchRoutes draws the latest loop and faint traces of the others", () => {
   const sketch = sketchRoutes([LISBON_LOOP, LILLE_LOOP]);
   assert.ok(sketch);
-  assert.equal(sketch?.width, 560);
-  assert.equal(sketch?.height, 96);
+  assert.equal(sketch?.width, 240);
+  assert.equal(sketch?.height, 80);
   assert.match(sketch?.path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
   assert.equal(sketch?.traces.length, 1);
 });

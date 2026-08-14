@@ -7,8 +7,9 @@ function PathMap({ sketch }: { sketch: PathSketch }) {
   return (
     <svg
       aria-hidden="true"
-      className="h-24 w-full text-muted/45"
+      className="mx-auto h-20 w-[15rem] text-muted/45"
       fill="none"
+      shapeRendering="geometricPrecision"
       viewBox={`0 0 ${sketch.width} ${sketch.height}`}
     >
       {sketch.traces.map((trace) => (
