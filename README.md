@@ -110,8 +110,9 @@ in the background. The server loads the last 180 days, drops walks
 and HealthKit/Strava duplicates, then groups mapped routes that start
 in the same area. Each card is a smooth polyline of the latest loop
 with faint traces of the other runs there, titled by run count and
-day span. Strava-sourced cards link to the public activity. If the
-key is missing at build, the cards are omitted.
+day span. If the key is missing, Shape is unreachable, or the live
+payload is empty, the page uses a checked-in snapshot of mapped runs
+(the same idea as the Lisbon home base and the Edith Piaf track).
 
 ### Spotify authorization
 
