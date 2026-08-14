@@ -157,7 +157,7 @@ export function RunPathCarousel({ paths }: { paths: DistinctPath[] }) {
       <ul
         ref={scrollerRef}
         aria-label="Distinct running paths"
-        className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {paths.map((path) => (
           <li
