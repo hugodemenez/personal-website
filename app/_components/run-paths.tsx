@@ -1,36 +1,5 @@
-import type { DistinctPath, PathSketch } from "@/lib/shape-runs";
-
-function PathMap({ sketch }: { sketch: PathSketch }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className="mx-auto h-20 w-[15rem] text-muted/45"
-      fill="none"
-      shapeRendering="geometricPrecision"
-      viewBox={`0 0 ${sketch.width} ${sketch.height}`}
-    >
-      {sketch.traces.map((trace) => (
-        <path
-          d={trace}
-          key={trace}
-          opacity="0.35"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.2"
-        />
-      ))}
-      <path
-        className="text-foreground/70 transition-colors group-hover:text-accent"
-        d={sketch.path}
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      />
-    </svg>
-  );
-}
+import { PathMap } from "./path-map";
+import type { DistinctPath } from "@/lib/shape-runs";
 
 function PathCard({ path }: { path: DistinctPath }) {
   const stats = [
@@ -38,8 +7,9 @@ function PathCard({ path }: { path: DistinctPath }) {
     path.run.durationLabel,
     path.run.paceLabel,
   ].filter(Boolean);
+  const spanDays = path.spanDays ?? 1;
   const runLabel = path.count === 1 ? "1 run" : `${path.count} runs`;
-  const spanLabel = path.spanDays === 1 ? "1 day" : `${path.spanDays} days`;
+  const spanLabel = spanDays === 1 ? "1 day" : `${spanDays} days`;
   const content = (
     <>
       {path.sketch ? <PathMap sketch={path.sketch} /> : null}
@@ -87,7 +57,7 @@ export function RunPaths({ paths }: { paths: DistinctPath[] }) {
       {paths.map((path) => (
         <li
           key={path.run.id}
-          aria-label={`${path.count === 1 ? "1 run" : `${path.count} runs`} over ${path.spanDays === 1 ? "1 day" : `${path.spanDays} days`}, last run was ${path.run.title}`}
+          aria-label={`${path.count === 1 ? "1 run" : `${path.count} runs`} over ${(path.spanDays ?? 1) === 1 ? "1 day" : `${path.spanDays} days`}, last run was ${path.run.title}`}
         >
           <PathCard path={path} />
         </li>
