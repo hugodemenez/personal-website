@@ -7,6 +7,7 @@ import {
   WANTED_PLACES,
   continentPaths,
   continentRing,
+  placeListNames,
   projectLocation,
   stayKind,
   wantedCircles,
@@ -99,6 +100,18 @@ test("keeps nearby Europe stays as two open circles on the world plane", () => {
   const circles = zoneCircles([lisbon, paris]);
   assert.equal(circles.length, 2);
   assert.ok(Math.hypot(circles[0].x - circles[1].x, circles[0].y - circles[1].y) > 18);
+});
+
+test("reserves three list lines even before any stay is known", () => {
+  const empty = placeListNames([]);
+  assert.equal(empty.habitual, "");
+  assert.equal(empty.casual, "");
+  assert.equal(empty.wanted, "San Francisco · Canada");
+
+  const filled = placeListNames([lisbon, paris]);
+  assert.equal(filled.habitual, "Lisbon");
+  assert.equal(filled.casual, "Paris");
+  assert.equal(filled.wanted, empty.wanted);
 });
 
 test("circles San Francisco and Canada as places still ahead", () => {
