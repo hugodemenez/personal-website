@@ -85,7 +85,12 @@ export async function persistRunAreas(areas: RunArea[]): Promise<void> {
       GLOBAL_CONFIG_TEAM_ID: process.env.GLOBAL_CONFIG_TEAM_ID,
     }
   );
-  if (!request) return;
+  if (!request) {
+    console.error(
+      "Unable to store resolved running areas: Global Config write is not configured"
+    );
+    return;
+  }
 
   try {
     const response = await fetch(request.url, request.init);
@@ -106,6 +111,8 @@ export async function nameRunningPaths(
   const lookupName = options.lookupName ?? lookupRunAreaName;
   const persistAreas = options.persistAreas ?? persistRunAreas;
 
+  // Store first: a cluster already in `run_areas` or Places is named
+  // here and never sent to the model again.
   let named = applyRunAreaNames(paths, known);
   const discovered: RunArea[] = [];
 

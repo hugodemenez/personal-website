@@ -131,9 +131,11 @@ in the same area. Each card is a smooth polyline of the latest loop
 with faint traces of the other runs there. The grid is captioned
 “Areas where I usually run.” Shape has no city field, so a card gets
 a name only after the cluster centroid matches a stay in Places
-history or AI Gateway names the locality. Newly named zones are
-stored in Global Config (`run_areas`) and reused; if neither source
-is sure, the name is omitted. On Vercel the Gateway call uses OIDC.
+history or AI Gateway names the locality. A successful name is
+written to Global Config (`run_areas`) and later loads resolve from
+that store — the model is not called again for a cluster already
+within 8 km of a saved zone. If neither source is sure, the name is
+omitted. On Vercel the Gateway call uses OIDC.
 Locally, `vercel env pull` or `AI_GATEWAY_API_KEY` is enough. Cards
 also show run count and day span. If the Shape key is missing, Shape
 is unreachable, or the live payload is empty, the page uses a
