@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import { cacheLife } from "next/cache";
+import { refreshSpotifyAccessToken } from "@/server/spotify-auth";
 
 export interface Track {
   name: string;
@@ -40,60 +40,6 @@ interface SpotifyTrack {
 export interface RecentlyPlayedItem {
   played_at: string;
   track?: SpotifyTrack | null;
-}
-
-interface SpotifyTokenResponse {
-  access_token?: string;
-  error?: string;
-  error_description?: string;
-}
-
-const rejectedRefreshTokens = new Set<string>();
-
-function tokenFingerprint(refreshToken: string): string {
-  return createHash("sha256").update(refreshToken).digest("hex");
-}
-
-async function getAccessToken(
-  clientId: string,
-  clientSecret: string,
-  refreshToken: string
-): Promise<string> {
-  const fingerprint = tokenFingerprint(refreshToken);
-  if (rejectedRefreshTokens.has(fingerprint)) {
-    throw new Error("Spotify refresh token has expired; reauthorization is required");
-  }
-
-  const response = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(
-        `${clientId}:${clientSecret}`
-      ).toString("base64")}`,
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
-    }),
-  });
-
-  const data = (await response.json()) as SpotifyTokenResponse;
-  if (!response.ok || !data.access_token) {
-    if (data.error === "invalid_grant") {
-      // Do not retry an expired token in this process. A changed environment token
-      // has a different fingerprint and will be accepted after redeployment.
-      rejectedRefreshTokens.add(fingerprint);
-    }
-
-    throw new Error(
-      data.error === "invalid_grant"
-        ? "Spotify refresh token has expired; reauthorization is required"
-        : `Spotify token refresh failed (${data.error ?? response.status})`
-    );
-  }
-
-  return data.access_token;
 }
 
 function formatTrack(item: SpotifyTrack): Track {
@@ -157,13 +103,14 @@ export async function getSpotifyData(): Promise<SpotifyData> {
   "use cache";
   cacheLife("minutes");
 
-  const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN } = process.env;
+  const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN } =
+    process.env;
   if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REFRESH_TOKEN) {
     return FALLBACK_DATA;
   }
 
   try {
-    const accessToken = await getAccessToken(
+    const accessToken = await refreshSpotifyAccessToken(
       SPOTIFY_CLIENT_ID,
       SPOTIFY_CLIENT_SECRET,
       SPOTIFY_REFRESH_TOKEN
@@ -185,7 +132,11 @@ export async function getSpotifyData(): Promise<SpotifyData> {
     const weeklyTopTrack = mostListenedTrack(items, new Date()) ?? recentTrack;
 
     return { recentTrack, weeklyTopTrack };
-  } catch {
+  } catch (error) {
+    console.error(
+      "Spotify data fetch failed",
+      error instanceof Error ? error.message : "unknown error"
+    );
     return FALLBACK_DATA;
   }
 }

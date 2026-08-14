@@ -67,15 +67,28 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
       return;
     }
 
-    const observer = new IntersectionObserver(
+    // Two observers, far enough apart that a later pass can redraw without
+    // catching the loops erasing themselves on screen.
+    const drawObserver = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) setDrawn(true);
       },
       { rootMargin: "0px 0px -15% 0px", threshold: 0.35 }
     );
 
-    observer.observe(section);
-    return () => observer.disconnect();
+    const armObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.every((entry) => !entry.isIntersecting)) setDrawn(false);
+      },
+      { threshold: 0 }
+    );
+
+    drawObserver.observe(section);
+    armObserver.observe(section);
+    return () => {
+      drawObserver.disconnect();
+      armObserver.disconnect();
+    };
   }, []);
 
   function activateClosest(event: PointerEvent<Element>, sticky: boolean) {
