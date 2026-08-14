@@ -15,6 +15,7 @@ import {
   buildRouteHeatmapFromRoutes,
   pathContainment,
   selectDistinctPaths,
+  sketchRoutes,
   type ShapeActivity,
 } from "./shape-runs";
 
@@ -213,7 +214,18 @@ test("selectDistinctPaths keeps one card per similar route", () => {
   assert.equal(paths[0].count, 2);
   assert.equal(paths[1].run.title, "Afternoon Run");
   assert.equal(paths[1].count, 1);
-  assert.ok(paths[0].heatmap);
+  assert.ok(paths[0].sketch?.path);
+  assert.match(paths[0].sketch?.path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
+  assert.equal(paths[0].sketch?.traces.length, 1);
+});
+
+test("sketchRoutes draws the latest loop and faint traces of the others", () => {
+  const sketch = sketchRoutes([LISBON_LOOP, LILLE_LOOP]);
+  assert.ok(sketch);
+  assert.equal(sketch?.width, 560);
+  assert.equal(sketch?.height, 96);
+  assert.match(sketch?.path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
+  assert.equal(sketch?.traces.length, 1);
 });
 
 test("merges overlapping streets into a frequency heatmap", () => {

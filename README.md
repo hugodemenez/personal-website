@@ -104,8 +104,8 @@ The homepage Running carousel reads completed `run` activities from
 
 The server fetches the last 180 days, drops walks and HealthKit/Strava
 duplicates, then groups mapped routes that start in the same area. The
-homepage shows a short carousel: one card per place, with a frequency
-heatmap of the streets I repeat there and the latest run on that loop.
+homepage shows a short carousel: one card per place, with a smooth
+polyline of the latest loop and faint traces of the other runs there.
 Strava-sourced cards link to the public activity. If the key is missing
 or Shape is unavailable, the section is omitted.
 

@@ -42,10 +42,17 @@ export interface RouteHeatmap {
   routeCount: number;
 }
 
+export interface PathSketch {
+  width: number;
+  height: number;
+  path: string;
+  traces: string[];
+}
+
 export interface DistinctPath {
   run: RecentRun;
   count: number;
-  heatmap: RouteHeatmap | null;
+  sketch: PathSketch | null;
 }
 
 export const RECENT_RUN_LIMIT = 6;
@@ -56,9 +63,12 @@ export const MAP_WIDTH = 120;
 export const MAP_HEIGHT = 40;
 export const HEATMAP_WIDTH = 560;
 export const HEATMAP_MAX_HEIGHT = 300;
-export const HEATMAP_CARD_MAX_HEIGHT = 188;
+export const PATH_SKETCH_WIDTH = 560;
+export const PATH_SKETCH_HEIGHT = 96;
 const MAP_PADDING = 2;
+const SKETCH_PADDING = 8;
 const MAX_MAP_POINTS = 180;
+const MAX_SKETCH_TRACES = 8;
 const CLUSTER_RADIUS_KM = 8;
 const HEATMAP_GRID = 96;
 const HEATMAP_PADDING = 10;
@@ -183,47 +193,85 @@ function downsample<T>(items: T[], limit: number): T[] {
   return sampled;
 }
 
+function projectPoints(
+  points: Array<[number, number]>,
+  bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number },
+  width: number,
+  height: number,
+  padding: number
+): string | null {
+  if (points.length < 2) return null;
+
+  const latSpan = bounds.maxLat - bounds.minLat || 1;
+  const lngSpan = bounds.maxLng - bounds.minLng || 1;
+  const innerWidth = width - padding * 2;
+  const innerHeight = height - padding * 2;
+  const aspect = lngSpan / latSpan;
+  const boxAspect = innerWidth / innerHeight;
+
+  let drawWidth = innerWidth;
+  let drawHeight = innerHeight;
+  let offsetX = padding;
+  let offsetY = padding;
+
+  if (aspect > boxAspect) {
+    drawHeight = innerWidth / aspect;
+    offsetY = padding + (innerHeight - drawHeight) / 2;
+  } else {
+    drawWidth = innerHeight * aspect;
+    offsetX = padding + (innerWidth - drawWidth) / 2;
+  }
+
+  return points
+    .map(([lat, lng], index) => {
+      const x = offsetX + ((lng - bounds.minLng) / lngSpan) * drawWidth;
+      const y = offsetY + ((bounds.maxLat - lat) / latSpan) * drawHeight;
+      return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
 export function polylineToSvgPath(
   encoded: string,
   width = MAP_WIDTH,
   height = MAP_HEIGHT
 ): string | null {
   const points = downsample(decodePolyline(encoded), MAX_MAP_POINTS);
-  if (points.length < 2) return null;
+  return projectPoints(points, boundsOf([points]), width, height, MAP_PADDING);
+}
 
-  const lats = points.map(([lat]) => lat);
-  const lngs = points.map(([, lng]) => lng);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const latSpan = maxLat - minLat || 1;
-  const lngSpan = maxLng - minLng || 1;
-  const innerWidth = width - MAP_PADDING * 2;
-  const innerHeight = height - MAP_PADDING * 2;
-  const aspect = lngSpan / latSpan;
-  const boxAspect = innerWidth / innerHeight;
+export function sketchRoutes(
+  routes: Array<Array<[number, number]>>,
+  width = PATH_SKETCH_WIDTH,
+  height = PATH_SKETCH_HEIGHT
+): PathSketch | null {
+  const latest = routes[0];
+  if (!latest || latest.length < 2) return null;
 
-  let drawWidth = innerWidth;
-  let drawHeight = innerHeight;
-  let offsetX = MAP_PADDING;
-  let offsetY = MAP_PADDING;
+  const bounds = boundsOf([latest]);
+  const path = projectPoints(
+    downsample(latest, MAX_MAP_POINTS),
+    bounds,
+    width,
+    height,
+    SKETCH_PADDING
+  );
+  if (!path) return null;
 
-  if (aspect > boxAspect) {
-    drawHeight = innerWidth / aspect;
-    offsetY = MAP_PADDING + (innerHeight - drawHeight) / 2;
-  } else {
-    drawWidth = innerHeight * aspect;
-    offsetX = MAP_PADDING + (innerWidth - drawWidth) / 2;
-  }
+  const traces = routes
+    .slice(1, MAX_SKETCH_TRACES + 1)
+    .map((route) =>
+      projectPoints(
+        downsample(route, MAX_MAP_POINTS),
+        bounds,
+        width,
+        height,
+        SKETCH_PADDING
+      )
+    )
+    .filter((trace): trace is string => Boolean(trace));
 
-  return points
-    .map(([lat, lng], index) => {
-      const x = offsetX + ((lng - minLng) / lngSpan) * drawWidth;
-      const y = offsetY + ((maxLat - lat) / latSpan) * drawHeight;
-      return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(" ");
+  return { width, height, path, traces };
 }
 
 function centroid(points: Array<[number, number]>): [number, number] {
@@ -532,11 +580,7 @@ export function selectDistinctPaths(
   return clusters.slice(0, limit).map((cluster) => ({
     run: toRecentRun(cluster.activities[0]),
     count: cluster.activities.length,
-    heatmap: paintRouteHeatmap(
-      cluster.routes,
-      HEATMAP_WIDTH,
-      HEATMAP_CARD_MAX_HEIGHT
-    ),
+    sketch: sketchRoutes(cluster.routes),
   }));
 }
 

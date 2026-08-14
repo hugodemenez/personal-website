@@ -1,33 +1,35 @@
 "use client";
 
-import type { DistinctPath, RouteHeatmap } from "@/lib/shape-runs";
+import type { DistinctPath, PathSketch } from "@/lib/shape-runs";
 import { useEffect, useRef, useState } from "react";
 
-function PathHeatmap({ heatmap }: { heatmap: RouteHeatmap }) {
+function PathMap({ sketch }: { sketch: PathSketch }) {
   return (
     <svg
       aria-hidden="true"
-      className="h-auto w-full"
-      viewBox={`0 0 ${heatmap.width} ${heatmap.height}`}
+      className="h-24 w-full text-muted/45"
+      fill="none"
+      viewBox={`0 0 ${sketch.width} ${sketch.height}`}
     >
-      {heatmap.edges.map((edge) => {
-        const accent = Math.round(18 + edge.intensity * 82);
-        return (
-          <line
-            key={`${edge.x1},${edge.y1}-${edge.x2},${edge.y2}`}
-            opacity={0.22 + edge.intensity * 0.78}
-            strokeLinecap="round"
-            strokeWidth={(1.1 + edge.intensity * 2.6).toFixed(2)}
-            style={{
-              stroke: `color-mix(in srgb, var(--accent) ${accent}%, var(--muted))`,
-            }}
-            x1={edge.x1}
-            x2={edge.x2}
-            y1={edge.y1}
-            y2={edge.y2}
-          />
-        );
-      })}
+      {sketch.traces.map((trace) => (
+        <path
+          d={trace}
+          key={trace}
+          opacity="0.35"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.2"
+        />
+      ))}
+      <path
+        className="text-foreground/70 transition-colors group-hover:text-accent"
+        d={sketch.path}
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+      />
     </svg>
   );
 }
@@ -40,11 +42,7 @@ function PathCard({ path }: { path: DistinctPath }) {
   ].filter(Boolean);
   const content = (
     <>
-      {path.heatmap ? (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface">
-          <PathHeatmap heatmap={path.heatmap} />
-        </div>
-      ) : null}
+      {path.sketch ? <PathMap sketch={path.sketch} /> : null}
       <div className="mt-4 flex items-baseline justify-between gap-3">
         <h3 className="min-w-0 truncate text-[1.05rem] leading-snug tracking-[-0.015em] text-foreground transition-colors group-hover:text-accent">
           {path.run.title}
