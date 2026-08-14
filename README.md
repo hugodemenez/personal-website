@@ -128,8 +128,11 @@ Shape fetch happens there. Later requests reuse that HTML and refresh
 in the background. The server loads the last 180 days, drops walks
 and HealthKit/Strava duplicates, then groups mapped routes that start
 in the same area. Each card is a smooth polyline of the latest loop
-with faint traces of the other runs there, titled by run count and
-day span. If the key is missing, Shape is unreachable, or the live
+with faint traces of the other runs there. The grid is captioned
+“Areas where I usually run.” A card shows a place name only when the
+cluster sits on a known area (Azeitão or Lille); otherwise the name
+is omitted. Cards also show run count and day span. If the key is
+missing, Shape is unreachable, or the live
 payload is empty, the page uses a checked-in snapshot of mapped runs
 (the same idea as the Lisbon home base and the Edith Piaf track).
 

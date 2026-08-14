@@ -54,11 +54,20 @@ export interface DistinctPath {
   count: number;
   spanDays: number;
   sketch: PathSketch | null;
+  placeName: string | null;
   averageDistanceLabel: string | null;
   averageDurationLabel: string | null;
   averagePaceLabel: string | null;
   totalDistanceLabel: string | null;
 }
+
+export const KNOWN_RUN_AREAS: Array<{
+  name: string;
+  center: [number, number];
+}> = [
+  { name: "Azeitão", center: [38.553, -9.018] },
+  { name: "Lille", center: [50.665, 3.166] },
+];
 
 export const RECENT_RUN_LIMIT = 6;
 export const DISTINCT_PATH_LIMIT = 8;
@@ -294,6 +303,24 @@ function centroid(points: Array<[number, number]>): [number, number] {
     [0, 0]
   );
   return [sum[0] / points.length, sum[1] / points.length];
+}
+
+export function placeNameFromCenter(
+  center: [number, number],
+  radiusKm = CLUSTER_RADIUS_KM
+): string | null {
+  let nearest: string | null = null;
+  let nearestDistance = Infinity;
+
+  for (const area of KNOWN_RUN_AREAS) {
+    const distance = distanceKm(center, area.center);
+    if (distance <= radiusKm && distance < nearestDistance) {
+      nearest = area.name;
+      nearestDistance = distance;
+    }
+  }
+
+  return nearest;
 }
 
 export function distanceKm(
@@ -635,6 +662,7 @@ export function selectDistinctPaths(
       count: cluster.activities.length,
       spanDays: spanDays(oldest.date, newest.date),
       sketch: sketchRoutes(cluster.routes),
+      placeName: placeNameFromCenter(cluster.center),
       ...averageClusterStats(cluster.activities),
     };
   });

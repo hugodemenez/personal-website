@@ -7,6 +7,8 @@ test("the checked-in snapshot still draws the two place cards", () => {
   const paths = resolveRunningPaths(FALLBACK_SHAPE_ACTIVITIES);
 
   assert.equal(paths.length, 2);
+  assert.equal(paths[0].placeName, "Azeitão");
+  assert.equal(paths[1].placeName, "Lille");
   assert.equal(paths[0].count, 14);
   assert.equal(paths[0].spanDays, 36);
   assert.equal(paths[0].totalDistanceLabel, "88.4 km");
