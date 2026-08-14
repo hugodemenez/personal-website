@@ -96,7 +96,15 @@ function FlyingStamp({
         className="block"
         style={{ transform: `rotate(${slot.rotate}deg)` }}
       >
-        <PlayableStamp offset={offset} onOffset={onOffset}>
+        <PlayableStamp
+          offset={offset}
+          onOffset={(next) =>
+            onOffset({
+              x: Math.max(-72, Math.min(72, next.x)),
+              y: Math.max(-40, Math.min(40, next.y)),
+            })
+          }
+        >
           <PostStamp
             decorative
             href={item.href}
@@ -149,8 +157,6 @@ export function StampAlbum({
     });
     onPositions(rects);
   }, [keys, onPositions, offsets]);
-
-  if (!items.length) return null;
 
   return (
     <div

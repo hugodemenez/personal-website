@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import type { SubstackPost } from "@/types/substack-post";
-import { layoutStampAlbum } from "@/lib/stamp-album";
+import { getAlbumPiece, layoutStampAlbum } from "@/lib/stamp-album";
 import {
   isStampCollected,
   isTitleStampActive,
@@ -410,6 +410,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
             !collected &&
             (isTitleStampActive(postIndex, selectedPostIndex) ||
               titleFading(seed));
+          const stampPiece = post.image ? getAlbumPiece(seed) : null;
           // 0 for the title currently in the slot, rising for each one passed.
           const titleDepth = Math.min(
             Math.max(selectedPostIndex - postIndex, 0),
@@ -444,7 +445,14 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   offset={titleOffset}
                   releaseAfter={rowSpan || undefined}
                 >
-                <div className="flex items-center gap-3 pb-1.5 pt-4">
+                <div
+                  className="flex items-center gap-3 pb-1.5 pt-4"
+                  style={
+                    stampPiece
+                      ? { minHeight: stampPiece.height }
+                      : undefined
+                  }
+                >
                 <div
                   className="min-w-0 flex-1 origin-left transition-[transform,opacity] duration-500 [transition-timing-function:var(--ease-spring)] motion-reduce:transition-none"
                   style={{
@@ -491,23 +499,29 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   </span>
                 </Link>
                 </div>
-                {showTitleStamp && post.image ? (
+                {stampPiece ? (
                   <span
                     ref={(node) => {
                       stampRefs.current[postIndex] = node;
                     }}
-                    className="relative block shrink-0"
+                    className="relative block shrink-0 self-center"
+                    style={{
+                      width: stampPiece.width,
+                      height: stampPiece.height,
+                    }}
                   >
-                    <TitleStamp
-                      external={!post.slug}
-                      fading={titleFading(seed)}
-                      href={getPostHref(post)}
-                      offset={offsets[seed] ?? { x: 0, y: 0 }}
-                      onOffset={(next) => handleOffset(seed, next)}
-                      origin={albumRectsRef.current.get(seed)}
-                      seed={seed}
-                      src={post.image}
-                    />
+                    {showTitleStamp ? (
+                      <TitleStamp
+                        external={!post.slug}
+                        fading={titleFading(seed)}
+                        href={getPostHref(post)}
+                        offset={offsets[seed] ?? { x: 0, y: 0 }}
+                        onOffset={(next) => handleOffset(seed, next)}
+                        origin={albumRectsRef.current.get(seed)}
+                        seed={seed}
+                        src={post.image}
+                      />
+                    ) : null}
                   </span>
                 ) : null}
                 </div>

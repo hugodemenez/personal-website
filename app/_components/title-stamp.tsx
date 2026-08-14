@@ -69,10 +69,8 @@ export function TitleStamp({
   return (
     <span
       ref={ref}
-      className={`relative block shrink-0 ${fading ? "stamp-fade-out" : "stamp-fade-in"}`}
+      className={`absolute inset-0 ${fading ? "stamp-fade-out" : "stamp-fade-in"}`}
       style={{
-        width: piece.width,
-        aspectRatio: "3 / 2",
         transformOrigin: "top left",
       }}
     >

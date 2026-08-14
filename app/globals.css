@@ -55,6 +55,7 @@
    one uniform colour edge to edge and Safari can tint its chrome from it. */
 html {
   min-width: 360px;
+  overflow-x: clip;
   scrollbar-gutter: stable;
 }
 
