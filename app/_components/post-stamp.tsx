@@ -37,7 +37,7 @@ export function PostStamp({
 
   const picture = (
     <span
-      className={`stamp-paper block ${album ? "stamp-paper-album" : ""}`}
+      className={`stamp-paper block w-full ${album ? "stamp-paper-album" : ""}`}
       style={{
         ["--stamp-pitch" as string]: album
           ? `${Math.max(6.5, pose.pitch * 0.58)}px`
@@ -50,7 +50,7 @@ export function PostStamp({
       <span
         className={
           collectible || album
-            ? "stamp-window relative block aspect-3/2 overflow-hidden"
+            ? "stamp-window relative block aspect-3/2 w-full overflow-hidden"
             : "stamp-window relative block overflow-hidden"
         }
       >

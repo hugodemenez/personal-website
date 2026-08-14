@@ -87,6 +87,7 @@ function FlyingStamp({
         left: slot.x,
         top: slot.y,
         width: slot.width,
+        aspectRatio: "3 / 2",
         transformOrigin: "top left",
         zIndex: slot.z,
       }}

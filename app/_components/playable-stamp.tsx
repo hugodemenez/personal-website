@@ -70,7 +70,7 @@ export function PlayableStamp({
   return (
     <span
       ref={hostRef}
-      className={`stamp-play relative block ${className ?? ""}`}
+      className={`stamp-play relative block w-full ${className ?? ""}`}
       data-allow-scroll={allowVerticalScroll ? "true" : undefined}
       data-dragging={dragging ? "true" : undefined}
       onClickCapture={(event) => {
