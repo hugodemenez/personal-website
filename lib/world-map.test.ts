@@ -5,8 +5,10 @@ import {
   MAP_HEIGHT,
   MAP_WIDTH,
   WANTED_PLACES,
+  closestPlaceCircle,
   continentPaths,
   continentRing,
+  drawOrder,
   projectLocation,
   stayKind,
   wantedCircles,
@@ -114,8 +116,8 @@ test("circles San Francisco and Canada as places still ahead", () => {
   assert.ok(canada);
   assert.equal(sanFrancisco.kind, "wanted");
   assert.equal(canada.kind, "wanted");
-  assert.ok(sanFrancisco.dashed);
-  assert.ok(canada.dashed);
+  assert.ok(sanFrancisco.hitRadius >= 36);
+  assert.ok(canada.hitRadius >= 36);
   assert.ok(sanFrancisco.x < canada.x);
   assert.ok(sanFrancisco.y > canada.y);
   assert.ok(
@@ -123,4 +125,29 @@ test("circles San Francisco and Canada as places still ahead", () => {
     "San Francisco and Canada should not read as one North American scribble"
   );
   assert.ok((canada.path.match(/Q /g) ?? []).length >= 12);
+});
+
+test("picks the closest circle inside a broad hit zone", () => {
+  const [lisbonMark, parisMark] = zoneCircles([lisbon, paris]);
+  assert.ok(lisbonMark);
+  assert.ok(parisMark);
+
+  const nearerLisbon = closestPlaceCircle(
+    { x: lisbonMark.x + 10, y: lisbonMark.y + 8 },
+    [lisbonMark, parisMark]
+  );
+  assert.equal(nearerLisbon?.label, "Lisbon");
+
+  const miss = closestPlaceCircle(
+    { x: lisbonMark.x + 200, y: lisbonMark.y + 200 },
+    [lisbonMark, parisMark]
+  );
+  assert.equal(miss, null);
+});
+
+test("draws circles west to east so they appear one by one", () => {
+  const ordered = drawOrder([...wantedCircles(), ...zoneCircles([lisbon, paris])]);
+  for (let index = 1; index < ordered.length; index += 1) {
+    assert.ok(ordered[index].x >= ordered[index - 1].x);
+  }
 });
