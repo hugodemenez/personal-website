@@ -134,18 +134,13 @@ in the background. The server loads the last 180 days, drops walks
 and HealthKit/Strava duplicates, then groups mapped routes that start
 in the same area. Each card is a smooth polyline of the latest loop
 with faint traces of the other runs there. The grid is captioned
-“Areas where I usually run.” Shape has no city field, so a card gets
-a name only after the cluster centroid matches one of the few stays
-in `current_location`, or AI Gateway names the locality. Resolved
-names are not written back to Global Config. The homepage Running
-block is cached for an hour, and Gateway can reuse an identical
-centroid lookup, so a new city is named without growing the store.
-If neither source is sure, the name is omitted. On Vercel the
-Gateway call uses OIDC. Locally, `vercel env pull` or
-`AI_GATEWAY_API_KEY` is enough. Cards also show run count and day
-span. If the Shape key is missing, Shape is unreachable, or the live
-payload is empty, the page uses a checked-in snapshot of mapped runs
-(the same idea as the Lisbon home base and the Edith Piaf track).
+“Areas where I usually run.” Shape has no city field, so a card
+shows a place name only when the cluster sits near one of the few
+stays in `current_location`. Otherwise the name is omitted. Cards
+also show run count and day span. If the Shape key is missing, Shape
+is unreachable, or the live payload is empty, the page uses a
+checked-in snapshot of mapped runs (the same idea as the Lisbon home
+base and the Edith Piaf track).
 
 ### Spotify authorization
 

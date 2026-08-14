@@ -1,11 +1,15 @@
 import { cache } from "react";
 import { FALLBACK_SHAPE_ACTIVITIES } from "@/lib/shape-runs-fallback";
 import {
+  applyRunAreaNames,
+  stayAreasFromPlaces,
+} from "@/lib/run-areas";
+import {
   selectDistinctPaths,
   type DistinctPath,
   type ShapeActivity,
 } from "@/lib/shape-runs";
-import { nameRunningPaths } from "@/server/run-areas";
+import { getStayRunAreas } from "@/server/location";
 
 const SHAPE_API_BASE = "https://shapecalendar.com/api/v1";
 const LOOKBACK_DAYS = 180;
@@ -32,11 +36,18 @@ export function resolveRunningPaths(
     : selectDistinctPaths(FALLBACK_SHAPE_ACTIVITIES);
 }
 
+async function nameResolvedPaths(
+  paths: DistinctPath[]
+): Promise<DistinctPath[]> {
+  const stays = await getStayRunAreas().catch(() => []);
+  return applyRunAreaNames(paths, stayAreasFromPlaces(stays));
+}
+
 export const loadRunningSection = cache(
   async (): Promise<RunningSectionData> => {
     const token = process.env.SHAPE_API_KEY;
     if (!token) {
-      return { paths: await nameRunningPaths(resolveRunningPaths([])) };
+      return { paths: await nameResolvedPaths(resolveRunningPaths([])) };
     }
 
     const to = new Date();
@@ -65,11 +76,13 @@ export const loadRunningSection = cache(
       }
 
       return {
-        paths: await nameRunningPaths(resolveRunningPaths(data.activities ?? [])),
+        paths: await nameResolvedPaths(
+          resolveRunningPaths(data.activities ?? [])
+        ),
       };
     } catch (error) {
       console.error("Unable to load recent runs from Shape", error);
-      return { paths: await nameRunningPaths(resolveRunningPaths([])) };
+      return { paths: await nameResolvedPaths(resolveRunningPaths([])) };
     }
   }
 );
