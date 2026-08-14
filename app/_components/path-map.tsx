@@ -97,7 +97,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
     <svg
       ref={svgRef}
       aria-hidden="true"
-      className="mx-auto h-20 w-[15rem] text-muted/45"
+      className="mx-auto h-16 w-full max-w-[11rem] text-muted/45 sm:h-20 sm:max-w-[15rem]"
       fill="none"
       shapeRendering="geometricPrecision"
       viewBox={`0 0 ${sketch.width} ${sketch.height}`}

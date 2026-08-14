@@ -198,6 +198,7 @@ test("selectDistinctPaths keeps one card per similar route", () => {
     date: "2026-08-10T07:00:00Z",
     title: "Tempo 5km",
     distance: 5200,
+    duration: 1680,
     map: encodePolyline([
       [38.5532, -9.0181],
       [38.556, -9.012],
@@ -219,9 +220,15 @@ test("selectDistinctPaths keeps one card per similar route", () => {
   assert.equal(paths[0].run.title, "Tempo 2km");
   assert.equal(paths[0].count, 2);
   assert.equal(paths[0].spanDays, 5);
+  assert.equal(paths[0].averageDistanceLabel, "4.9 km");
+  assert.equal(paths[0].averageDurationLabel, "26:44");
+  assert.equal(paths[0].averagePaceLabel, "5:26/km");
   assert.equal(paths[1].run.title, "Afternoon Run");
   assert.equal(paths[1].count, 1);
   assert.equal(paths[1].spanDays, 1);
+  assert.equal(paths[1].averageDistanceLabel, "8.0 km");
+  assert.equal(paths[1].averageDurationLabel, "25:28");
+  assert.equal(paths[1].averagePaceLabel, "3:11/km");
   assert.ok(paths[0].sketch?.path);
   assert.match(paths[0].sketch?.path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
   assert.equal(paths[0].sketch?.traces.length, 1);

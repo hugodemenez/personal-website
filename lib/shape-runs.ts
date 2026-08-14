@@ -54,6 +54,9 @@ export interface DistinctPath {
   count: number;
   spanDays: number;
   sketch: PathSketch | null;
+  averageDistanceLabel: string | null;
+  averageDurationLabel: string | null;
+  averagePaceLabel: string | null;
 }
 
 export const RECENT_RUN_LIMIT = 6;
@@ -596,6 +599,7 @@ export function selectDistinctPaths(
       count: cluster.activities.length,
       spanDays: spanDays(oldest.date, newest.date),
       sketch: sketchRoutes(cluster.routes),
+      ...averageClusterStats(cluster.activities),
     };
   });
 }
@@ -633,6 +637,36 @@ export function selectRecentRuns(
   return [...chosen.values()]
     .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
     .slice(0, limit);
+}
+
+function averageClusterStats(activities: ShapeActivity[]): {
+  averageDistanceLabel: string | null;
+  averageDurationLabel: string | null;
+  averagePaceLabel: string | null;
+} {
+  const distances = activities.flatMap((activity) =>
+    typeof activity.distance === "number" ? [activity.distance] : []
+  );
+  const durations = activities.flatMap((activity) =>
+    typeof activity.duration === "number" ? [activity.duration] : []
+  );
+  const distance =
+    distances.length > 0
+      ? distances.reduce((sum, value) => sum + value, 0) / distances.length
+      : null;
+  const duration =
+    durations.length > 0
+      ? durations.reduce((sum, value) => sum + value, 0) / durations.length
+      : null;
+
+  return {
+    averageDistanceLabel: distance !== null ? formatDistance(distance) : null,
+    averageDurationLabel: duration !== null ? formatDuration(duration) : null,
+    averagePaceLabel:
+      distance !== null && duration !== null
+        ? formatPace(distance, duration)
+        : null,
+  };
 }
 
 export function toRecentRun(activity: ShapeActivity): RecentRun {
