@@ -410,7 +410,8 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
             !collected &&
             (isTitleStampActive(postIndex, selectedPostIndex) ||
               titleFading(seed));
-          const stampPiece = post.image ? getAlbumPiece(seed) : null;
+          const image = post.image;
+          const stampPiece = image ? getAlbumPiece(seed) : null;
           // 0 for the title currently in the slot, rising for each one passed.
           const titleDepth = Math.min(
             Math.max(selectedPostIndex - postIndex, 0),
@@ -499,7 +500,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   </span>
                 </Link>
                 </div>
-                {stampPiece ? (
+                {stampPiece && image ? (
                   <span
                     ref={(node) => {
                       stampRefs.current[postIndex] = node;
@@ -519,7 +520,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                         onOffset={(next) => handleOffset(seed, next)}
                         origin={albumRectsRef.current.get(seed)}
                         seed={seed}
-                        src={post.image}
+                        src={image}
                       />
                     ) : null}
                   </span>
