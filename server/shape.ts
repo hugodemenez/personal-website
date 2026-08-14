@@ -1,6 +1,4 @@
-"use server";
-
-import { cacheLife } from "next/cache";
+import { cache } from "react";
 import {
   selectDistinctPaths,
   type DistinctPath,
@@ -23,41 +21,40 @@ function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-export async function getRunningSection(): Promise<RunningSectionData> {
-  "use cache";
-  cacheLife("minutes");
+export const loadRunningSection = cache(
+  async (): Promise<RunningSectionData> => {
+    const token = process.env.SHAPE_API_KEY;
+    if (!token) return { paths: [] };
 
-  const token = process.env.SHAPE_API_KEY;
-  if (!token) return { paths: [] };
+    const to = new Date();
+    const from = new Date(to);
+    from.setUTCDate(from.getUTCDate() - LOOKBACK_DAYS);
 
-  const to = new Date();
-  const from = new Date(to);
-  from.setUTCDate(from.getUTCDate() - LOOKBACK_DAYS);
-
-  const params = new URLSearchParams({
-    from: isoDate(from),
-    to: isoDate(to),
-    sportType: "run",
-    completed: "true",
-    limit: "200",
-  });
-
-  try {
-    const response = await fetch(`${SHAPE_API_BASE}/activities?${params}`, {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+    const params = new URLSearchParams({
+      from: isoDate(from),
+      to: isoDate(to),
+      sportType: "run",
+      completed: "true",
+      limit: "200",
     });
-    const data = (await response.json()) as ShapeActivitiesResponse;
 
-    if (!response.ok) {
-      throw new Error(data.error ?? `Shape API failed (${response.status})`);
+    try {
+      const response = await fetch(`${SHAPE_API_BASE}/activities?${params}`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = (await response.json()) as ShapeActivitiesResponse;
+
+      if (!response.ok) {
+        throw new Error(data.error ?? `Shape API failed (${response.status})`);
+      }
+
+      return { paths: selectDistinctPaths(data.activities ?? []) };
+    } catch (error) {
+      console.error("Unable to load recent runs from Shape", error);
+      return { paths: [] };
     }
-
-    return { paths: selectDistinctPaths(data.activities ?? []) };
-  } catch (error) {
-    console.error("Unable to load recent runs from Shape", error);
-    return { paths: [] };
   }
-}
+);
