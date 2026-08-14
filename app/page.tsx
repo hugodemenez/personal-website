@@ -208,22 +208,22 @@ export default async function Home() {
             discretionary trading
             <TradingCandlestickIcon />
             and turning rough ideas into useful systems.
-            {track ? (
-              <>
-                {" "}Most days have a soundtrack; this week it has been{" "}
-                <a
-                  className={musicLinkClass}
-                  href={track.url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <SpotifyIcon />
-                  {track.name} by {track.artist}
-                </a>
-                .
-              </>
-            ) : null}
           </p>
+          {track ? (
+            <p className="leading-relaxed">
+              Most days have a soundtrack; this week it has been{" "}
+              <a
+                className={musicLinkClass}
+                href={track.url}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <SpotifyIcon />
+                {track.name} by {track.artist}
+              </a>
+              .
+            </p>
+          ) : null}
           <p className="leading-relaxed">
             I keep a small social footprint. I’m{" "}
             <a
@@ -249,19 +249,26 @@ export default async function Home() {
               <DeltalytixIcon />
               Deltalytix
             </a>{" "}
-            in public on GitHub as{" "}
-            <span className="whitespace-nowrap">
-              <a
-                className={socialLinkClass}
-                href="https://github.com/hugodemenez"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <GitHubIcon />
-                hugodemenez
-              </a>
-              .
-            </span>
+            in{" "}
+            <a
+              className={socialLinkClass}
+              href="https://github.com/hugodemenez/deltalytix"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              public
+            </a>{" "}
+            on{" "}
+            <a
+              className={socialLinkClass}
+              href="https://github.com/hugodemenez"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <GitHubIcon />
+              GitHub
+            </a>
+            .
           </p>
         </section>
         <PlacesMap />
