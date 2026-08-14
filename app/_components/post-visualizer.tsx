@@ -36,9 +36,9 @@ interface TimelineMilestone {
 const TIMELINE_MILESTONES: TimelineMilestone[] = [
   {
     date: "2026-02-01T00:00:00.000Z",
-    id: "first-developer-role",
+    id: "joined-a-large-tech-company",
     label: "February 2026",
-    text: "Started my first developer role at a large technology company.",
+    text: "Joined a large technology company after three years of building on my own, still learning.",
   },
   {
     date: "2025-07-01T00:00:00.000Z",
