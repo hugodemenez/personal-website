@@ -35,7 +35,9 @@ The location pill reads a `current_location` record from Vercel Global Config
 (formerly Edge Config) and combines it with current conditions from Open-Meteo.
 The homepage also draws a rough world map from the same record. Day counts
 stay in storage; the map keeps the whole world in view and circles regions
-by hand — most of the time versus casual — rather than pins or numbers.
+by hand — most of the time, casual, and a couple still ahead — rather than
+pins or numbers. San Francisco and Canada sit on the map as places I'd like
+to go; they are not part of the location store.
 Location reads expire
 within 60 seconds; weather is cached separately by rounded coordinates for
 several minutes. If the store is unavailable or contains an invalid value,

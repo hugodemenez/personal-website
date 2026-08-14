@@ -313,6 +313,29 @@ export function continentPaths(): ContinentPath[] {
 }
 
 export type StayKind = "habitual" | "casual";
+export type PlaceMarkKind = StayKind | "wanted";
+
+export interface WantedPlace {
+  name: string;
+  latitude: number;
+  longitude: number;
+  span: "city" | "region";
+}
+
+export const WANTED_PLACES: readonly WantedPlace[] = [
+  {
+    name: "San Francisco",
+    latitude: 37.77,
+    longitude: -122.42,
+    span: "city",
+  },
+  {
+    name: "Canada",
+    latitude: 54.2,
+    longitude: -98.4,
+    span: "region",
+  },
+];
 
 export function stayKind(
   place: VisitedPlace,
@@ -390,8 +413,9 @@ function buildCirclePath(
 }
 
 export interface ZoneCircle {
-  city: string;
-  kind: StayKind;
+  dashed: boolean;
+  kind: PlaceMarkKind;
+  label: string;
   path: string;
   width: number;
   x: number;
@@ -400,7 +424,10 @@ export interface ZoneCircle {
 
 const ZONE_STEP_DEGREES = 8;
 
-export function zoneCenter(place: VisitedPlace): ProjectedPoint {
+export function zoneCenter(place: {
+  latitude: number;
+  longitude: number;
+}): ProjectedPoint {
   return projectLocation(
     Math.round(place.longitude / ZONE_STEP_DEGREES) * ZONE_STEP_DEGREES,
     Math.round(place.latitude / ZONE_STEP_DEGREES) * ZONE_STEP_DEGREES
@@ -419,10 +446,34 @@ export function zoneCircles(places: readonly VisitedPlace[]): ZoneCircle[] {
     const turns = kind === "habitual" ? 1.38 + random() * 0.2 : 1.14 + random() * 0.14;
 
     return {
-      city: place.city,
+      dashed: false,
       kind,
+      label: place.city,
       path: buildCirclePath(origin, radius, radius * stretch, random, turns),
       width: kind === "habitual" ? 2.7 : 1.85,
+      x: origin.x,
+      y: origin.y,
+    };
+  });
+}
+
+export function wantedCircles(
+  places: readonly WantedPlace[] = WANTED_PLACES
+): ZoneCircle[] {
+  return places.map((place) => {
+    const origin = zoneCenter(place);
+    const random = createRandom(`wanted|${place.name}`);
+    const radius = place.span === "region" ? 44 : 22;
+    const stretch = 0.74 + random() * 0.18;
+    // Unfinished on purpose — a place not yet gone around.
+    const turns = 0.78 + random() * 0.14;
+
+    return {
+      dashed: true,
+      kind: "wanted",
+      label: place.name,
+      path: buildCirclePath(origin, radius, radius * stretch, random, turns),
+      width: place.span === "region" ? 1.7 : 1.55,
       x: origin.x,
       y: origin.y,
     };

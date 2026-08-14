@@ -4,10 +4,12 @@ import type { VisitedPlace } from "../server/location-data";
 import {
   MAP_HEIGHT,
   MAP_WIDTH,
+  WANTED_PLACES,
   continentPaths,
   continentRing,
   projectLocation,
   stayKind,
+  wantedCircles,
   zoneCenter,
   zoneCircles,
 } from "./world-map";
@@ -82,6 +84,7 @@ test("circles a region instead of pinning a city", () => {
   const [circle] = zoneCircles([lisbon]);
   assert.ok(circle);
   assert.equal(circle.kind, "habitual");
+  assert.equal(circle.label, "Lisbon");
   assert.match(circle.path, /^M /);
   assert.ok(!circle.path.endsWith("Z"));
   assert.ok(circle.width < 4);
@@ -96,4 +99,24 @@ test("keeps nearby Europe stays as two open circles on the world plane", () => {
   const circles = zoneCircles([lisbon, paris]);
   assert.equal(circles.length, 2);
   assert.ok(Math.hypot(circles[0].x - circles[1].x, circles[0].y - circles[1].y) > 18);
+});
+
+test("circles San Francisco and Canada as places still ahead", () => {
+  const circles = wantedCircles();
+  assert.deepEqual(
+    circles.map((circle) => circle.label),
+    WANTED_PLACES.map((place) => place.name)
+  );
+
+  const sanFrancisco = circles.find((circle) => circle.label === "San Francisco");
+  const canada = circles.find((circle) => circle.label === "Canada");
+  assert.ok(sanFrancisco);
+  assert.ok(canada);
+  assert.equal(sanFrancisco.kind, "wanted");
+  assert.equal(canada.kind, "wanted");
+  assert.ok(sanFrancisco.dashed);
+  assert.ok(canada.dashed);
+  assert.ok(sanFrancisco.x < canada.x);
+  assert.ok(sanFrancisco.y > canada.y);
+  assert.ok((canada.path.match(/Q /g) ?? []).length >= 12);
 });
