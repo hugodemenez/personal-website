@@ -427,6 +427,39 @@ a.stamp-shadow:focus-visible {
   }
 }
 
+/* Location pill: keep the last city/temp on screen and crossfade when the
+   cached value is replaced, instead of dropping back to a skeleton. */
+@keyframes locationSwapOut {
+  to {
+    filter: blur(4px);
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes locationSwapIn {
+  from {
+    filter: blur(4px);
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+.location-swap-out,
+.location-swap-in {
+  animation-duration: 320ms;
+  animation-fill-mode: both;
+  animation-timing-function: var(--ease-spring);
+}
+
+.location-swap-out {
+  animation-name: locationSwapOut;
+}
+
+.location-swap-in {
+  animation-name: locationSwapIn;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -460,7 +493,9 @@ a.stamp-shadow:focus-visible {
   .artwork-stack-under,
   .artwork-destack-out,
   .artwork-destack-reveal,
-  .stamp-fade-in {
+  .stamp-fade-in,
+  .location-swap-out,
+  .location-swap-in {
     animation: none;
   }
 

@@ -1,5 +1,25 @@
 const MAX_LOCATION_AGE_MS = 7 * 24 * 60 * 60 * 1_000;
 
+export interface LocationWeatherView {
+  location: string;
+  temperature: number | null;
+  condition: string | null;
+}
+
+export function locationWeatherSignature(
+  weather: LocationWeatherView | null
+): string {
+  if (!weather) return "";
+  return `${weather.location}|${weather.temperature ?? ""}|${weather.condition ?? ""}`;
+}
+
+export function locationWeatherChanged(
+  previous: LocationWeatherView | null,
+  next: LocationWeatherView | null
+): boolean {
+  return locationWeatherSignature(previous) !== locationWeatherSignature(next);
+}
+
 export function isLocationStale(
   updatedAt: string | null,
   now = new Date()

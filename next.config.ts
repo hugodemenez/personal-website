@@ -3,6 +3,16 @@ import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
   pageExtensions: ['mdx', 'ts', 'tsx'],
+  // Last known city + weather stays in the static shell. `seconds` expires in
+  // 60s and is treated as a dynamic hole, which is why the pill always
+  // suspended into a skeleton. Revalidate often; expire only after a quiet week.
+  cacheLife: {
+    location: {
+      stale: 300,
+      revalidate: 60,
+      expire: 604800,
+    },
+  },
   images: {
     remotePatterns: [
       {

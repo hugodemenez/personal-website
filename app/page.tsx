@@ -4,7 +4,8 @@ import RecentRuns from "./_components/recent-runs";
 import SubstackPosts from "./_components/substack-posts";
 import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
-import { cacheLife } from "next/cache";
+import { LOCATION_CACHE_TAG } from "@/server/location-data";
+import { cacheLife, cacheTag } from "next/cache";
 import { Suspense } from "react";
 
 function LocationPillSkeleton() {
@@ -18,7 +19,8 @@ function LocationPillSkeleton() {
 
 async function CurrentLocationPill() {
   "use cache";
-  cacheLife("seconds");
+  cacheLife("location");
+  cacheTag(LOCATION_CACHE_TAG);
 
   const { weather } = await getLocationPageData();
 

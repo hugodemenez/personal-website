@@ -1,7 +1,8 @@
 import { createClient } from "@vercel/global-config";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import {
   CURRENT_LOCATION_KEY,
+  LOCATION_CACHE_TAG,
   parseStoredLocation,
   toVisitedPlaces,
   type StoredLocation,
@@ -70,7 +71,8 @@ function describeWeatherCode(code: number): string {
 
 async function readCurrentLocation(): Promise<StoredLocation | null> {
   "use cache";
-  cacheLife("seconds");
+  cacheLife("location");
+  cacheTag(LOCATION_CACHE_TAG);
 
   if (!process.env.GLOBAL_CONFIG) return null;
 
@@ -134,7 +136,8 @@ export interface LocationPageData {
 
 export async function getLocationPageData(): Promise<LocationPageData> {
   "use cache";
-  cacheLife("seconds");
+  cacheLife("location");
+  cacheTag(LOCATION_CACHE_TAG);
 
   const savedLocation = await readCurrentLocation();
   const location = savedLocation ?? LISBON_HOME;
