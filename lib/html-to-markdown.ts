@@ -787,8 +787,7 @@ function postProcessMarkdown(markdown: string): string {
 
 /**
  * Substack's HTML-to-Markdown sync used to emit list/quote markers on their
- * own line. Markdown then treats "paragraph\\n-" as a setext heading. Reattach
- * those markers at read time so already-synced .mdx files do not need edits.
+ * own line. Markdown then treats "paragraph\\n-" as a setext heading.
  */
 export function repairDetachedMarkdownMarkers(markdown: string): string {
   return markdown

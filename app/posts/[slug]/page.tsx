@@ -8,7 +8,6 @@ import { cacheLife } from "next/cache";
 import { ImageGallery } from "./_components/image-gallery";
 import Link from "next/link";
 import { PinnedShell } from "@/app/_components/pinned-shell";
-import { repairDetachedMarkdownMarkers } from "@/lib/html-to-markdown";
 
 const CONTENT_DIR = path.join(process.cwd(), "content", "substack");
 
@@ -69,16 +68,14 @@ async function CachedBlogPost({ slug }: { slug: string }) {
     notFound();
   }
 
-  const source = repairDetachedMarkdownMarkers(
-    stripLeadingTitle(fs.readFileSync(filePath, "utf-8"))
-  );
+  const source = fs.readFileSync(filePath, "utf-8");
 
   try {
     const { content, frontmatter } = await compileMDX<{
       title?: string;
       date?: string;
     }>({
-      source,
+      source: stripLeadingTitle(source),
       options: { parseFrontmatter: true },
       components: mdxComponents,
     });
