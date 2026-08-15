@@ -2,8 +2,10 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { getAlbumPiece } from "@/lib/stamp-album";
+import { postStampTransitionName } from "@/lib/view-transitions";
 import { PlayableStamp, type StampOffset } from "./playable-stamp";
 import { PostStamp } from "./post-stamp";
+import { SharedTransition } from "./shared-transition";
 
 interface TitleStampProps {
   fading?: boolean;
@@ -67,38 +69,44 @@ export function TitleStamp({
   }, [fading, origin]);
 
   return (
-    <span
-      ref={ref}
-      className={`absolute inset-0 ${fading ? "stamp-fade-out" : "stamp-fade-in"}`}
-      style={{
-        transformOrigin: "top left",
-      }}
+    <SharedTransition
+      name={
+        fading || external ? undefined : postStampTransitionName(seed)
+      }
     >
       <span
-        className="block"
-        style={{ transform: `rotate(${piece.rotate}deg)` }}
+        ref={ref}
+        className={`absolute inset-0 ${fading ? "stamp-fade-out" : "stamp-fade-in"}`}
+        style={{
+          transformOrigin: "top left",
+        }}
       >
-        <PlayableStamp
-          allowVerticalScroll
-          offset={offset}
-          onOffset={(next) =>
-            onOffset({
-              x: Math.max(-56, Math.min(56, next.x)),
-              y: Math.max(-32, Math.min(32, next.y)),
-            })
-          }
+        <span
+          className="block"
+          style={{ transform: `rotate(${piece.rotate}deg)` }}
         >
-          <PostStamp
-            decorative
-            external={external}
-            href={href}
-            seed={seed}
-            sizes="96px"
-            src={src}
-            variant="album"
-          />
-        </PlayableStamp>
+          <PlayableStamp
+            allowVerticalScroll
+            offset={offset}
+            onOffset={(next) =>
+              onOffset({
+                x: Math.max(-56, Math.min(56, next.x)),
+                y: Math.max(-32, Math.min(32, next.y)),
+              })
+            }
+          >
+            <PostStamp
+              decorative
+              external={external}
+              href={href}
+              seed={seed}
+              sizes="96px"
+              src={src}
+              variant="album"
+            />
+          </PlayableStamp>
+        </span>
       </span>
-    </span>
+    </SharedTransition>
   );
 }

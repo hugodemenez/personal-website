@@ -16,9 +16,14 @@ import {
   isStampCollected,
   isTitleStampActive,
 } from "@/lib/stamp-visibility";
+import {
+  postDateTransitionName,
+  postTitleTransitionName,
+} from "@/lib/view-transitions";
 import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
 import type { StampOffset } from "./playable-stamp";
+import { SharedTransition } from "./shared-transition";
 import { StampAlbum } from "./stamp-album";
 import { TitleStamp } from "./title-stamp";
 import { useFadingPresence } from "./use-fading-presence";
@@ -487,16 +492,33 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                   }
                   rel={post.slug ? undefined : "noopener noreferrer"}
                   target={post.slug ? undefined : "_blank"}
+                  transitionTypes={post.slug ? ["nav-forward"] : undefined}
                 >
                   <span className="flex min-w-0 items-baseline">
-                    <span className="truncate">{post.title}</span>
-                    <span
-                      className={`ml-2 shrink-0 whitespace-nowrap text-sm font-normal tracking-normal ${
-                        isSelected ? "text-muted/70" : "text-muted/45"
-                      }`}
+                    <SharedTransition
+                      name={
+                        post.slug && titleDepth === 0
+                          ? postTitleTransitionName(post.slug)
+                          : undefined
+                      }
                     >
-                      • {formatPostDate(post.pubDate)}
-                    </span>
+                      <span className="truncate">{post.title}</span>
+                    </SharedTransition>
+                    <SharedTransition
+                      name={
+                        post.slug && titleDepth === 0
+                          ? postDateTransitionName(post.slug)
+                          : undefined
+                      }
+                    >
+                      <span
+                        className={`ml-2 shrink-0 whitespace-nowrap text-sm font-normal tracking-normal ${
+                          isSelected ? "text-muted/70" : "text-muted/45"
+                        }`}
+                      >
+                        • {formatPostDate(post.pubDate)}
+                      </span>
+                    </SharedTransition>
                   </span>
                 </Link>
                 </div>
@@ -541,6 +563,7 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     rel={post.slug ? undefined : "noopener noreferrer"}
                     tabIndex={-1}
                     target={post.slug ? undefined : "_blank"}
+                    transitionTypes={post.slug ? ["nav-forward"] : undefined}
                   >
                     {formatPostDescription(post.description)}
                   </Link>

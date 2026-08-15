@@ -52,6 +52,47 @@ export default function RootLayout({
 }`,
         }}
       />
+      {/* Same reason as pinShell: Lightning CSS drops ::view-transition
+          pseudos from globals.css before they reach the browser. */}
+      <style
+        href="view-transitions"
+        precedence="default"
+        dangerouslySetInnerHTML={{
+          __html: `
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-group(.morph) {
+  animation-duration: 560ms;
+  animation-timing-function: var(--ease-spring);
+  z-index: 20;
+}
+::view-transition-image-pair(.morph) {
+  animation-name: via-blur;
+}
+@keyframes via-blur {
+  30% { filter: blur(3px); }
+}
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}`,
+        }}
+      />
       <body className="antialiased">
         {/* -mt/pt pair extends the backdrop upward without moving the content,
             so the pinned header also covers the status-bar strip that page
@@ -68,7 +109,7 @@ export default function RootLayout({
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-full h-10 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
           />
-          <div className="relative">
+          <div className="relative" style={{ viewTransitionName: "site-header" }}>
             <Header />
           </div>
         </PinnedShell>

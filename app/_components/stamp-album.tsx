@@ -3,8 +3,10 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { STAMP_ALBUM_HEIGHT, type AlbumSlot } from "@/lib/stamp-album";
 import { albumMountSeeds } from "@/lib/stamp-visibility";
+import { postStampTransitionName } from "@/lib/view-transitions";
 import { PlayableStamp, type StampOffset } from "./playable-stamp";
 import { PostStamp } from "./post-stamp";
+import { SharedTransition } from "./shared-transition";
 import { useFadingPresence } from "./use-fading-presence";
 
 export interface AlbumStampItem {
@@ -77,45 +79,53 @@ function FlyingStamp({
   }, [fading, item.origin]);
 
   return (
-    <span
-      ref={ref}
-      className={`absolute will-change-transform ${
-        fading ? "stamp-fade-out" : ""
-      }`}
-      data-stamp-seed={item.seed}
-      style={{
-        left: slot.x,
-        top: slot.y,
-        width: slot.width,
-        aspectRatio: "3 / 2",
-        transformOrigin: "top left",
-        zIndex: slot.z,
-      }}
+    <SharedTransition
+      name={
+        fading || !item.href.startsWith("/posts/")
+          ? undefined
+          : postStampTransitionName(item.seed)
+      }
     >
       <span
-        className="block"
-        style={{ transform: `rotate(${slot.rotate}deg)` }}
+        ref={ref}
+        className={`absolute will-change-transform ${
+          fading ? "stamp-fade-out" : ""
+        }`}
+        data-stamp-seed={item.seed}
+        style={{
+          left: slot.x,
+          top: slot.y,
+          width: slot.width,
+          aspectRatio: "3 / 2",
+          transformOrigin: "top left",
+          zIndex: slot.z,
+        }}
       >
-        <PlayableStamp
-          offset={offset}
-          onOffset={(next) =>
-            onOffset({
-              x: Math.max(-72, Math.min(72, next.x)),
-              y: Math.max(-40, Math.min(40, next.y)),
-            })
-          }
+        <span
+          className="block"
+          style={{ transform: `rotate(${slot.rotate}deg)` }}
         >
-          <PostStamp
-            decorative
-            href={item.href}
-            seed={item.seed}
-            sizes="96px"
-            src={item.src}
-            variant="album"
-          />
-        </PlayableStamp>
+          <PlayableStamp
+            offset={offset}
+            onOffset={(next) =>
+              onOffset({
+                x: Math.max(-72, Math.min(72, next.x)),
+                y: Math.max(-40, Math.min(40, next.y)),
+              })
+            }
+          >
+            <PostStamp
+              decorative
+              href={item.href}
+              seed={item.seed}
+              sizes="96px"
+              src={item.src}
+              variant="album"
+            />
+          </PlayableStamp>
+        </span>
       </span>
-    </span>
+    </SharedTransition>
   );
 }
 
