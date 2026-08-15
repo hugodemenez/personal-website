@@ -26,10 +26,13 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
     if (!node) return;
 
     const paths = [...node.querySelectorAll("path")];
-    const hide = () => {
-      for (const path of paths) {
+    // The first stroke is the earliest run. Keep it painted so a path is
+    // visible before the later loops start drawing.
+    const animated = paths.slice(1);
+    const reset = () => {
+      for (const [index, path] of paths.entries()) {
         path.style.strokeDasharray = "1";
-        path.style.strokeDashoffset = "1";
+        path.style.strokeDashoffset = index === 0 ? "0" : "1";
       }
     };
     const reveal = () => {
@@ -38,7 +41,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
       }
     };
 
-    hide();
+    reset();
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       reveal();
@@ -48,9 +51,11 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
 
     const play = () => {
       cancelAnimationFrame(frameRef.current);
-      hide();
+      reset();
 
-      const durations = drawDurations(paths.length, DRAW_BUDGET_MS);
+      if (!animated.length) return;
+
+      const durations = drawDurations(animated.length, DRAW_BUDGET_MS);
       const starts: number[] = [];
       let mark = 0;
       for (const duration of durations) {
@@ -62,7 +67,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
       const tick = (now: number) => {
         const elapsed = now - begin;
 
-        paths.forEach((path, index) => {
+        animated.forEach((path, index) => {
           const duration = durations[index] ?? 1;
           const local = (elapsed - (starts[index] ?? 0)) / duration;
           const progress = Math.min(1, Math.max(0, local));
@@ -98,7 +103,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
       ([entry]) => {
         if (entry.isIntersecting) return;
         cancelAnimationFrame(frameRef.current);
-        hide();
+        reset();
       },
       { threshold: 0 }
     );
@@ -126,7 +131,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
       shapeRendering="geometricPrecision"
       viewBox={`0 0 ${sketch.width} ${sketch.height}`}
     >
-      {sketch.traces.map((trace) => (
+      {sketch.traces.map((trace, index) => (
         <path
           d={trace}
           key={trace}
@@ -134,7 +139,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
           pathLength="1"
           stroke="currentColor"
           strokeDasharray="1"
-          strokeDashoffset="1"
+          strokeDashoffset={index === 0 ? "0" : "1"}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth="1.2"
@@ -146,7 +151,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
         pathLength="1"
         stroke="currentColor"
         strokeDasharray="1"
-        strokeDashoffset="1"
+        strokeDashoffset={sketch.traces.length === 0 ? "0" : "1"}
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="1.7"

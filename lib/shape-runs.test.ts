@@ -251,6 +251,32 @@ test("sketchRoutes draws the latest loop and faint traces of the others", () => 
   assert.equal(sketch?.traces.length, 1);
 });
 
+test("sketchRoutes lists faint traces oldest first", () => {
+  const latest: Array<[number, number]> = [
+    [38.553, -9.018],
+    [38.554, -9.016],
+    [38.552, -9.015],
+  ];
+  const middle: Array<[number, number]> = [
+    [38.553, -9.018],
+    [38.554, -9.017],
+    [38.551, -9.016],
+  ];
+  const oldest: Array<[number, number]> = [
+    [38.553, -9.018],
+    [38.552, -9.016],
+    [38.551, -9.017],
+  ];
+
+  const all = sketchRoutes([latest, middle, oldest]);
+  const withoutMiddle = sketchRoutes([latest, oldest]);
+  const withoutOldest = sketchRoutes([latest, middle]);
+
+  assert.equal(all?.traces.length, 2);
+  assert.equal(all?.traces[0], withoutMiddle?.traces[0]);
+  assert.equal(all?.traces[1], withoutOldest?.traces[0]);
+});
+
 test("sketchRoutes keeps every drawn route inside the viewBox", () => {
   const short: Array<[number, number]> = [
     [50.665, 3.166],

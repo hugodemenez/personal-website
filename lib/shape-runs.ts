@@ -285,7 +285,10 @@ export function sketchRoutes(
         SKETCH_PADDING
       )
     )
-    .filter((trace): trace is string => Boolean(trace));
+    .filter((trace): trace is string => Boolean(trace))
+    // Oldest first so the earliest loop sits under later traces and can
+    // be painted immediately while the rest still draw in sequence.
+    .reverse();
 
   return { width, height, path, traces };
 }
