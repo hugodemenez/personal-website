@@ -5,6 +5,7 @@ import path from "node:path";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { mdxComponents } from "@/app/_components/mdx-components-list";
 import { cacheLife } from "next/cache";
+import { PostBodyReveal } from "@/app/_components/post-body-reveal";
 import { ImageGallery } from "./_components/image-gallery";
 import { PostHeader } from "./_components/post-header";
 import Link from "next/link";
@@ -53,18 +54,20 @@ export default async function Page({ params }: PageProps) {
           exist in the first paint. Shared-element morphs only pair when the
           destination nodes land in the same commit as the navigation. */}
       <PostHeader post={post} />
-      <Suspense
-        fallback={<div className="text-muted animate-pulse">Loading...</div>}
-      >
-        <CachedPostBody slug={slug} />
-      </Suspense>
-      <Link
-        href={`https://hugodemenez.substack.com/p/${slug}`}
-        className="text-muted hover:text-accent transition-colors flex items-center gap-2 text-sm cursor-pointer underline underline-offset-2"
-      >
-        View on Substack
-      </Link>
-      <ImageGallery />
+      <PostBodyReveal>
+        <Suspense
+          fallback={<div className="text-muted animate-pulse">Loading...</div>}
+        >
+          <CachedPostBody slug={slug} />
+        </Suspense>
+        <Link
+          href={`https://hugodemenez.substack.com/p/${slug}`}
+          className="text-muted hover:text-accent transition-colors flex items-center gap-2 text-sm cursor-pointer underline underline-offset-2"
+        >
+          View on Substack
+        </Link>
+        <ImageGallery />
+      </PostBodyReveal>
     </article>
   );
 }

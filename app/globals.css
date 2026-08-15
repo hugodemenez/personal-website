@@ -401,6 +401,23 @@ a.stamp-shadow:focus-visible {
   animation: stampFadeIn 180ms ease;
 }
 
+/* Article waits for the excerpt dust to start falling, then settles. */
+.post-body-pending {
+  filter: blur(8px);
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.post-body-resolve {
+  filter: blur(0);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    filter 720ms var(--ease-spring),
+    opacity 640ms ease,
+    transform 720ms var(--ease-spring);
+}
+
 @keyframes stampFadeIn {
   from {
     opacity: 0;
@@ -445,5 +462,13 @@ a.stamp-shadow:focus-visible {
   .artwork-destack-reveal,
   .stamp-fade-in {
     animation: none;
+  }
+
+  .post-body-pending,
+  .post-body-resolve {
+    filter: none;
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

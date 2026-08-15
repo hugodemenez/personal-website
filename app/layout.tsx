@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Header } from "./_components/app-header";
+import { DescriptionDissolveHost } from "./_components/description-dissolve";
 import { PinnedShell } from "./_components/pinned-shell";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -83,6 +84,16 @@ export default function RootLayout({
 ::view-transition-new(site-header) {
   animation: none;
 }
+::view-transition-group(description-dissolve) {
+  animation: none;
+  z-index: 80;
+}
+::view-transition-old(description-dissolve) {
+  display: none;
+}
+::view-transition-new(description-dissolve) {
+  animation: none;
+}
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(*),
   ::view-transition-new(*),
@@ -114,6 +125,7 @@ export default function RootLayout({
           </div>
         </PinnedShell>
         {children}
+        <DescriptionDissolveHost />
       </body>
     </html>
   );
