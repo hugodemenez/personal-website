@@ -68,7 +68,7 @@ export function ReplayButton({ label }: { label: string }) {
   return (
     <button
       aria-label={label}
-      className="relative grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-muted/40 transition-[background-color,color,transform] duration-150 hover:bg-surface hover:text-foreground focus-visible:text-foreground active:scale-[0.94] motion-reduce:hidden after:absolute after:-inset-2 after:content-['']"
+      className="relative grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-muted/55 transition-[background-color,color,transform] duration-150 hover:bg-surface hover:text-foreground focus-visible:text-foreground active:scale-[0.94] motion-reduce:hidden after:absolute after:-inset-2 after:content-['']"
       onClick={replay}
       title={label}
       type="button"

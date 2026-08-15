@@ -97,15 +97,11 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
     if (replayToken === 0) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    // Hide first, then draw after a paint so the dashoffset transition can run
+    // from 1 rather than continuing from wherever the last stroke left off.
     setDrawn(false);
-    let second = 0;
-    const first = requestAnimationFrame(() => {
-      second = requestAnimationFrame(() => setDrawn(true));
-    });
-    return () => {
-      cancelAnimationFrame(first);
-      cancelAnimationFrame(second);
-    };
+    const id = window.setTimeout(() => setDrawn(true), 40);
+    return () => window.clearTimeout(id);
   }, [replayToken]);
 
   function activateClosest(event: PointerEvent<Element>, sticky: boolean) {
