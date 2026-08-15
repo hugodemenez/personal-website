@@ -13,15 +13,6 @@ export const metadata: Metadata = {
     template: "%s | Hugo Demenez",
   },
   description: "Developer, trader, and entrepreneur.",
-  // iPad/iOS Safari ignores a lone /favicon.ico (especially a 256px PNG-in-ICO)
-  // unless a PNG icon and apple-touch-icon are linked at stable public URLs.
-  icons: {
-    icon: [
-      { url: "/icon.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
-  },
 };
 
 export const viewport: Viewport = {
