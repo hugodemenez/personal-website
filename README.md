@@ -136,7 +136,9 @@ in the same area. Each card is a smooth polyline of the latest loop
 with faint traces of the other runs there. The grid is captioned
 “Areas where I usually run.” Shape has no city field, so a card
 shows a place name only when the cluster sits near one of the few
-stays in `current_location`. Otherwise the name is omitted. Cards
+stays in `current_location` (within 15 km, wide enough for a Lille
+stay to cover runs in Croix). Route clustering itself stays at 8 km
+so distinct loops do not merge. Otherwise the name is omitted. Cards
 also show run count and day span. If the Shape key is missing, Shape
 is unreachable, or the live payload is empty, the page uses a
 checked-in snapshot of mapped runs (the same idea as the Lisbon home

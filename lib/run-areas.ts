@@ -1,18 +1,19 @@
-import {
-  CLUSTER_RADIUS_KM,
-  distanceKm,
-  type DistinctPath,
-} from "./shape-runs";
+import { distanceKm, type DistinctPath } from "./shape-runs";
 
 export interface RunArea {
   name: string;
   center: [number, number];
 }
 
+// Route clustering stays tight so two nearby loops become one card.
+// Naming is looser: a stay in Lille should still label runs in Croix
+// (~9 km), without reaching from Azeitão to Lisbon (~25 km).
+export const STAY_MATCH_RADIUS_KM = 15;
+
 export function matchRunArea(
   center: [number, number],
   areas: readonly RunArea[],
-  radiusKm = CLUSTER_RADIUS_KM
+  radiusKm = STAY_MATCH_RADIUS_KM
 ): RunArea | null {
   let nearest: RunArea | null = null;
   let nearestDistance = Infinity;
