@@ -410,6 +410,42 @@ a.stamp-shadow:focus-visible {
   }
 }
 
+/* Shared-element morph for the writing title and stamp. Inlined-looking
+   rules live here; if Lightning CSS ever drops the pseudos, move them into
+   the layout style tag the same way pinShell is inlined. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(.morph) {
+  animation-duration: 560ms;
+  animation-timing-function: var(--ease-spring);
+  z-index: 20;
+}
+
+::view-transition-image-pair(.morph) {
+  animation-name: via-blur;
+}
+
+@keyframes via-blur {
+  30% {
+    filter: blur(3px);
+  }
+}
+
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-header) {
+  display: none;
+}
+
+::view-transition-new(site-header) {
+  animation: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -445,5 +481,12 @@ a.stamp-shadow:focus-visible {
   .artwork-destack-reveal,
   .stamp-fade-in {
     animation: none;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 }

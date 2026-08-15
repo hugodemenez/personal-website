@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['localhost', '192.168.1.25', '192.168.0.140'],
   experimental: {
     mdxRs: true,
+    viewTransition: true,
   },
 };
 

@@ -1,6 +1,7 @@
 import { fetchSubstackPosts } from "@/server/substack-feed";
-import SubstackVisualizer from "./post-visualizer";
+import { cacheLife } from "next/cache";
 import { Suspense } from "react";
+import SubstackVisualizer from "./post-visualizer";
 
 export default function SubstackPosts() {
   return (
@@ -11,6 +12,9 @@ export default function SubstackPosts() {
 }
 
 async function SubstackPostsInner() {
+  "use cache";
+  cacheLife("max");
+
   try {
     const posts = await fetchSubstackPosts();
     if (!posts.length) {

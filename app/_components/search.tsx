@@ -165,6 +165,7 @@ export function Search({ posts }: SearchProps) {
                     key={post.slug+post.tags.join("-")+index}
                     href={`/posts/${post.slug}`}
                     onClick={handleClose}
+                    transitionTypes={["nav-forward"]}
                     className={`block px-4 py-3 text-sm hover:bg-surface transition-colors border-b border-border last:border-b-0 focus:outline-none focus:bg-surface ${post.available === false ? "opacity-60" : ""}`}
                   >
                     <div className="flex items-center justify-between">

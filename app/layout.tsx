@@ -68,7 +68,7 @@ export default function RootLayout({
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-full h-10 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
           />
-          <div className="relative">
+          <div className="relative" style={{ viewTransitionName: "site-header" }}>
             <Header />
           </div>
         </PinnedShell>

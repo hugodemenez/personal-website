@@ -31,6 +31,7 @@ export function HomeLink() {
       className="font-medium text-foreground transition-colors hover:text-accent"
       href="/"
       onClick={handleClick}
+      transitionTypes={pathname !== "/" ? ["nav-back"] : undefined}
     >
       Home
     </Link>
