@@ -115,6 +115,32 @@ function tokenize(html: string): Token[] {
 /**
  * Converts HTML tokens to Markdown string.
  */
+const HTML_ENTITIES: Record<string, string> = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+};
+
+function decodeHtmlEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, (match, entity) => {
+    if (entity[0] === "#") {
+      const codePoint =
+        entity[1] === "x" || entity[1] === "X"
+          ? parseInt(entity.slice(2), 16)
+          : parseInt(entity.slice(1), 10);
+      return Number.isNaN(codePoint) ? match : String.fromCodePoint(codePoint);
+    }
+    return HTML_ENTITIES[entity] ?? match;
+  });
+}
+
+function endsWithBlockPrefix(value: string): boolean {
+  return /(^|\n)(?:> |(?:-|\d+\.) )$/.test(value);
+}
+
 function tokensToMarkdown(tokens: Token[]): string {
   const output: string[] = [];
   let i = 0;
@@ -126,7 +152,7 @@ function tokensToMarkdown(tokens: Token[]): string {
     if (!last || typeof last !== "string") return;
     if (last.endsWith(" ") || last.endsWith("\n")) return;
     const lastChar = last[last.length - 1];
-    if (lastChar && /[a-zA-Z0-9]/.test(lastChar)) {
+    if (lastChar && /[a-zA-Z0-9.!?,:;]/.test(lastChar)) {
       output.push(" ");
     }
   }
@@ -205,7 +231,7 @@ function tokensToMarkdown(tokens: Token[]): string {
       if (!isInCodeBlock() && token.content) {
         // Normalize whitespace: collapse multiple spaces/tabs/newlines to single space
         // But preserve the text content
-        let text = token.content.replace(/[\s]+/g, " ");
+        let text = decodeHtmlEntities(token.content.replace(/[\s]+/g, " "));
         
         // Only process if there's actual content (not just whitespace)
         if (text.trim()) {
@@ -482,10 +508,18 @@ function tokensToMarkdown(tokens: Token[]): string {
         }
 
         case "p": {
+          // Substack wraps every list item and blockquote in <p>. Extra blank
+          // lines after "- " / "> " turn those markers into setext headings
+          // ("paragraph\\n-") or an empty quote line.
+          const last = output.length > 0 ? output[output.length - 1] : "";
+          if (typeof last === "string" && endsWithBlockPrefix(last)) {
+            stack.push(token);
+            break;
+          }
+
           // When opening a paragraph, ensure we have proper spacing
           // If previous output doesn't end with \n\n, add it
           if (output.length > 0) {
-            const last = output[output.length - 1];
             if (typeof last === "string") {
               if (!last.endsWith("\n\n")) {
                 // If it ends with \n, modify the last item to add one more \n (make it \n\n)
@@ -589,8 +623,15 @@ function tokensToMarkdown(tokens: Token[]): string {
 
         case "ul":
         case "ol": {
-          if (output.length > 0 && !output[output.length - 1]?.endsWith("\n")) {
-            output.push("\n");
+          if (output.length > 0) {
+            const last = output[output.length - 1];
+            if (typeof last === "string" && !last.endsWith("\n\n")) {
+              if (last.endsWith("\n")) {
+                output[output.length - 1] = last + "\n";
+              } else {
+                output.push("\n\n");
+              }
+            }
           }
           if (!selfClosing) stack.push(token);
           break;
@@ -722,7 +763,7 @@ export function htmlToMarkdown(html: string): string {
     .trim();
 
   const tokens = tokenize(cleaned);
-  return postProcessMarkdown(tokensToMarkdown(tokens));
+  return repairDetachedMarkdownMarkers(postProcessMarkdown(tokensToMarkdown(tokens)));
 }
 
 function postProcessMarkdown(markdown: string): string {
@@ -742,5 +783,16 @@ function postProcessMarkdown(markdown: string): string {
       .replace(/[ \t]{2,}/g, " ")
       .trim()
   );
+}
+
+/**
+ * Substack's HTML-to-Markdown sync used to emit list/quote markers on their
+ * own line. Markdown then treats "paragraph\\n-" as a setext heading.
+ */
+export function repairDetachedMarkdownMarkers(markdown: string): string {
+  return markdown
+    .replace(/(^|\n)-\n+/g, "$1- ")
+    .replace(/(^|\n)(\d+)\.\n+/g, "$1$2. ")
+    .replace(/(^|\n)>\n+(?:>[ \t]*)?/g, "$1> ");
 }
 
