@@ -79,22 +79,35 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
 
     playRef.current = play;
 
-    const observer = new IntersectionObserver(
+    // Two observers, far enough apart that a later pass can redraw without
+    // catching the paths erasing themselves on screen.
+    //
+    // Draw: wait until the map has reached the middle of the screen, so the
+    // stroke starts where the reader is looking rather than at the edge.
+    // The SVGs are short, so a threshold alone still fires at the bottom.
+    const drawObserver = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          play();
-          return;
-        }
+        if (entry.isIntersecting) play();
+      },
+      { rootMargin: "0px 0px -45% 0px", threshold: 0.35 }
+    );
 
+    // Reset only once fully off screen. A small scroll back into the lower
+    // half should not hide paths that are still in view.
+    const resetObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) return;
         cancelAnimationFrame(frameRef.current);
         hide();
       },
-      { threshold: 0.35 }
+      { threshold: 0 }
     );
 
-    observer.observe(node);
+    drawObserver.observe(node);
+    resetObserver.observe(node);
     return () => {
-      observer.disconnect();
+      drawObserver.disconnect();
+      resetObserver.disconnect();
       cancelAnimationFrame(frameRef.current);
     };
   }, [sketch.path, sketch.traces]);
