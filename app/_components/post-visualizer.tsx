@@ -16,7 +16,10 @@ import {
   isStampCollected,
   isTitleStampActive,
 } from "@/lib/stamp-visibility";
-import { postTitleTransitionName } from "@/lib/view-transitions";
+import {
+  postDateTransitionName,
+  postTitleTransitionName,
+} from "@/lib/view-transitions";
 import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
 import type { StampOffset } from "./playable-stamp";
@@ -501,13 +504,21 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     >
                       <span className="truncate">{post.title}</span>
                     </SharedTransition>
-                    <span
-                      className={`ml-2 shrink-0 whitespace-nowrap text-sm font-normal tracking-normal ${
-                        isSelected ? "text-muted/70" : "text-muted/45"
-                      }`}
+                    <SharedTransition
+                      name={
+                        post.slug && titleDepth === 0
+                          ? postDateTransitionName(post.slug)
+                          : undefined
+                      }
                     >
-                      • {formatPostDate(post.pubDate)}
-                    </span>
+                      <span
+                        className={`ml-2 shrink-0 whitespace-nowrap text-sm font-normal tracking-normal ${
+                          isSelected ? "text-muted/70" : "text-muted/45"
+                        }`}
+                      >
+                        • {formatPostDate(post.pubDate)}
+                      </span>
+                    </SharedTransition>
                   </span>
                 </Link>
                 </div>

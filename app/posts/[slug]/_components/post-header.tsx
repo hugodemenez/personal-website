@@ -3,6 +3,7 @@ import { PinnedShell } from "@/app/_components/pinned-shell";
 import { SharedTransition } from "@/app/_components/shared-transition";
 import { getAlbumPiece } from "@/lib/stamp-album";
 import {
+  postDateTransitionName,
   postStampTransitionName,
   postTitleTransitionName,
 } from "@/lib/view-transitions";
@@ -43,15 +44,17 @@ export function PostHeader({ post }: { post: SubstackPost }) {
               </h1>
             </SharedTransition>
             {post.pubDate ? (
-              <div className="mt-2 flex items-center gap-2">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                <time
-                  className="text-sm font-medium tracking-wide text-muted"
-                  dateTime={post.pubDate}
-                >
-                  {formatPostDate(post.pubDate)}
-                </time>
-              </div>
+              <SharedTransition name={postDateTransitionName(post.slug)}>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  <time
+                    className="text-sm font-medium tracking-wide text-muted"
+                    dateTime={post.pubDate}
+                  >
+                    {formatPostDate(post.pubDate)}
+                  </time>
+                </div>
+              </SharedTransition>
             ) : null}
           </div>
           {piece && post.image ? (

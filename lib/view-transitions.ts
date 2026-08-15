@@ -10,3 +10,7 @@ export function postTitleTransitionName(slug: string): string {
 export function postStampTransitionName(slug: string): string {
   return `post-stamp-${ident(slug)}`;
 }
+
+export function postDateTransitionName(slug: string): string {
+  return `post-date-${ident(slug)}`;
+}

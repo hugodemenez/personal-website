@@ -8,9 +8,10 @@ interface SharedTransitionProps {
 }
 
 /**
- * Named pair for a title or stamp that should morph across the home list and
- * the post page. `default="none"` keeps unrelated transitions from animating
- * every named node; `share="morph"` is required for the pair to still run.
+ * Named pair for a title, date, or stamp that should morph across the home
+ * list and the post page. `default="none"` keeps unrelated transitions from
+ * animating every named node; `share="morph"` is required for the pair to
+ * still run.
  */
 export function SharedTransition({ children, name }: SharedTransitionProps) {
   if (!name) return children;
