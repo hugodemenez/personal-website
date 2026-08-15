@@ -1,5 +1,6 @@
 "use client";
 
+import { useDrawReplayToken } from "./draw-replay";
 import { useEffect, useMemo, useState, type PointerEvent } from "react";
 import type { VisitedPlace } from "@/server/location-data";
 import {
@@ -46,6 +47,7 @@ function markClass(circle: ZoneCircle): string {
 export default function PlaceCircles({ places }: PlaceCirclesProps) {
   const [activeLabel, setActiveLabel] = useState<string | null>(null);
   const [drawn, setDrawn] = useState(false);
+  const replayToken = useDrawReplayToken();
   const circles = useMemo(
     () => drawOrder([...wantedCircles(), ...zoneCircles(places)]),
     [places]
@@ -90,6 +92,21 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
       armObserver.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (replayToken === 0) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    setDrawn(false);
+    let second = 0;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => setDrawn(true));
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      cancelAnimationFrame(second);
+    };
+  }, [replayToken]);
 
   function activateClosest(event: PointerEvent<Element>, sticky: boolean) {
     const point = eventToSvgPoint(event);
