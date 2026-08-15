@@ -1,4 +1,4 @@
-import {} from "react/canary";
+/// <reference types="react/canary" />
 import { ViewTransition, type ReactNode } from "react";
 
 interface SharedTransitionProps {
