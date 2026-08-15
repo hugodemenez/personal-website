@@ -63,7 +63,7 @@ export function PlacesMap() {
         className="mt-10"
         id="places-map"
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-baseline justify-between gap-4">
           <h2
             id="places-heading"
             className="font-serif text-3xl tracking-[-0.035em] text-foreground"
