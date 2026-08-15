@@ -20,7 +20,6 @@ import {
   postDateTransitionName,
   postTitleTransitionName,
 } from "@/lib/view-transitions";
-import { armDescriptionDissolve } from "./description-dissolve";
 import HighlighterText from "./highlighter-text";
 import { PinnedShell } from "./pinned-shell";
 import type { StampOffset } from "./playable-stamp";
@@ -410,13 +409,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
           const { post, postIndex } = entry;
           const isSelected = postIndex === selectedPostIndex;
           const seed = post.slug || post.link;
-          const armDissolve = (row: HTMLLIElement | null) => {
-            if (!post.slug || !row) return;
-            const description = row.querySelector("[data-post-description]");
-            armDescriptionDissolve(
-              description instanceof HTMLElement ? description : null
-            );
-          };
           const collected = isStampCollected(postIndex, selectedPostIndex);
           const showTitleStamp =
             Boolean(post.image) &&
@@ -439,11 +431,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
               }}
               className="relative grid grid-cols-[1.5rem_1fr] items-start gap-3 sm:grid-cols-[1.75rem_1fr] sm:gap-4"
               data-post-index={postIndex}
-              onClickCapture={(event) => {
-                if (!(event.target instanceof Element)) return;
-                if (!event.target.closest("a[href]")) return;
-                armDissolve(event.currentTarget);
-              }}
             >
               <span
                 aria-hidden="true"
@@ -572,7 +559,6 @@ export default function PostsVisualizer({ posts }: PostsVisualizerProps) {
                     className={`mb-8 block max-w-prose text-[0.9rem] leading-relaxed transition-colors duration-150 motion-reduce:transition-none ${
                       isSelected ? "text-muted/75" : "text-muted/45"
                     }`}
-                    data-post-description=""
                     href={getPostHref(post)}
                     rel={post.slug ? undefined : "noopener noreferrer"}
                     tabIndex={-1}
