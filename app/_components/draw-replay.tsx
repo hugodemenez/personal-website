@@ -68,12 +68,13 @@ export function ReplayButton({ label }: { label: string }) {
   return (
     <button
       aria-label={label}
-      className="relative grid size-7 shrink-0 cursor-pointer place-items-center rounded-full text-muted/55 transition-[background-color,color,transform] duration-150 hover:bg-surface hover:text-foreground focus-visible:text-foreground active:scale-[0.94] motion-reduce:hidden after:absolute after:-inset-2 after:content-['']"
+      className="relative inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full py-1 text-sm tracking-[-0.01em] text-muted/70 transition-[color,transform] duration-150 hover:text-foreground focus-visible:text-foreground active:scale-[0.98] motion-reduce:hidden after:absolute after:-inset-3 after:content-['']"
       onClick={replay}
       title={label}
       type="button"
     >
       <ReplayIcon />
+      <span>animation</span>
     </button>
   );
 }

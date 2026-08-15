@@ -17,7 +17,7 @@ export default function RecentRuns() {
   return (
     <DrawReplay>
       <section aria-labelledby="runs-heading" className="mt-10">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-baseline justify-between gap-4">
           <h2
             id="runs-heading"
             className="font-serif text-3xl tracking-[-0.035em] text-foreground"
