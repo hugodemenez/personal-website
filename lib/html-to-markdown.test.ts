@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { htmlToMarkdown } from "./html-to-markdown";
+import {
+  htmlToMarkdown,
+  repairDetachedMarkdownMarkers,
+} from "./html-to-markdown";
 
 test("keeps Substack list items on one line so they are not setext headings", () => {
   const markdown = htmlToMarkdown(
@@ -49,6 +52,29 @@ test("decodes HTML entities in body text", () => {
   );
 
   assert.equal(markdown, "Black & Scholes differential equations");
+});
+
+test("reattaches list markers already stored in synced markdown", () => {
+  const repaired = repairDetachedMarkdownMarkers(
+    [
+      "Why I value this experience so much?",
+      "-",
+      "",
+      "Now, I know more about vectorization",
+      "-",
+      "",
+      "I understand what people want",
+    ].join("\n")
+  );
+
+  assert.equal(
+    repaired,
+    [
+      "Why I value this experience so much?",
+      "- Now, I know more about vectorization",
+      "- I understand what people want",
+    ].join("\n")
+  );
 });
 
 test("leaves a space before bold that starts after a period", () => {

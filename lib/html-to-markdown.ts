@@ -763,7 +763,7 @@ export function htmlToMarkdown(html: string): string {
     .trim();
 
   const tokens = tokenize(cleaned);
-  return postProcessMarkdown(tokensToMarkdown(tokens));
+  return repairDetachedMarkdownMarkers(postProcessMarkdown(tokensToMarkdown(tokens)));
 }
 
 function postProcessMarkdown(markdown: string): string {
@@ -778,15 +778,22 @@ function postProcessMarkdown(markdown: string): string {
       // If a closing marker is immediately followed by a word char, add a space
       .replace(/(?<=\S)\*\*(?=[a-zA-Z0-9])/g, "** ")
       .replace(/(\))([a-zA-Z0-9])/g, "$1 $2")
-      // Lone list/quote markers on their own line become setext headings or
-      // empty quotes. Keep the marker attached to the following text.
-      .replace(/(^|\n)-\n+/g, "$1- ")
-      .replace(/(^|\n)(\d+)\.\n+/g, "$1$2. ")
-      .replace(/(^|\n)>\n+(?:>[ \t]*)?/g, "$1> ")
       .replace(/\n{3,}/g, "\n\n")
       .replace(/[ \t]+\n/g, "\n")
       .replace(/[ \t]{2,}/g, " ")
       .trim()
   );
+}
+
+/**
+ * Substack's HTML-to-Markdown sync used to emit list/quote markers on their
+ * own line. Markdown then treats "paragraph\\n-" as a setext heading. Reattach
+ * those markers at read time so already-synced .mdx files do not need edits.
+ */
+export function repairDetachedMarkdownMarkers(markdown: string): string {
+  return markdown
+    .replace(/(^|\n)-\n+/g, "$1- ")
+    .replace(/(^|\n)(\d+)\.\n+/g, "$1$2. ")
+    .replace(/(^|\n)>\n+(?:>[ \t]*)?/g, "$1> ");
 }
 
