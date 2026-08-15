@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { DrawReplay, ReplayButton } from "./draw-replay";
 import PlaceCircles from "./places-map";
 import { getLocationPageData } from "@/server/location";
 import {
@@ -56,110 +57,115 @@ export function PlacesMap() {
   const continents = continentPaths();
 
   return (
-    <section
-      aria-labelledby="places-heading"
-      className="mt-10"
-      id="places-map"
-    >
-      <h2
-        id="places-heading"
-        className="font-serif text-3xl tracking-[-0.035em] text-foreground"
+    <DrawReplay>
+      <section
+        aria-labelledby="places-heading"
+        className="mt-10"
+        id="places-map"
       >
-        Places
-      </h2>
-      <p className="mt-2 text-sm leading-relaxed text-muted">
-        A rough map of recent regions, and a couple still ahead.
-      </p>
+        <div className="flex items-center gap-1.5">
+          <h2
+            id="places-heading"
+            className="font-serif text-3xl tracking-[-0.035em] text-foreground"
+          >
+            Places
+          </h2>
+          <ReplayButton label="Replay map drawing" />
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-muted">
+          A rough map of recent regions, and a couple still ahead.
+        </p>
 
-      <div
-        className="mt-5 w-full text-muted"
-        style={{ aspectRatio: `${VIEW_WIDTH} / ${VIEW_HEIGHT}` }}
-      >
-        <svg
-          aria-hidden="true"
-          className="block size-full overflow-visible"
-          viewBox={`${-MAP_PADDING} ${-MAP_PADDING} ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
+        <div
+          className="mt-5 w-full text-muted"
+          style={{ aspectRatio: `${VIEW_WIDTH} / ${VIEW_HEIGHT}` }}
         >
-          <defs>
-            <filter
-              height="108%"
-              id="places-map-ink"
-              width="108%"
-              x="-4%"
-              y="-4%"
-            >
-              <feTurbulence
-                baseFrequency="0.012"
-                numOctaves="2"
-                result="noise"
-                seed="7"
-                type="fractalNoise"
-              />
-              <feDisplacementMap
-                in="SourceGraphic"
-                in2="noise"
-                scale="1.35"
-                xChannelSelector="R"
-                yChannelSelector="G"
-              />
-            </filter>
-            <filter
-              filterUnits="userSpaceOnUse"
-              height={MAP_HEIGHT + 48}
-              id="places-map-circles"
-              width={MAP_WIDTH + 48}
-              x={-24}
-              y={-24}
-            >
-              <feTurbulence
-                baseFrequency="0.04"
-                numOctaves={2}
-                result="grain"
-                seed={11}
-                type="fractalNoise"
-              />
-              <feDisplacementMap
-                in="SourceGraphic"
-                in2="grain"
-                scale={1.8}
-                xChannelSelector="R"
-                yChannelSelector="G"
-              />
-            </filter>
-          </defs>
+          <svg
+            aria-hidden="true"
+            className="block size-full overflow-visible"
+            viewBox={`${-MAP_PADDING} ${-MAP_PADDING} ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
+          >
+            <defs>
+              <filter
+                height="108%"
+                id="places-map-ink"
+                width="108%"
+                x="-4%"
+                y="-4%"
+              >
+                <feTurbulence
+                  baseFrequency="0.012"
+                  numOctaves="2"
+                  result="noise"
+                  seed="7"
+                  type="fractalNoise"
+                />
+                <feDisplacementMap
+                  in="SourceGraphic"
+                  in2="noise"
+                  scale="1.35"
+                  xChannelSelector="R"
+                  yChannelSelector="G"
+                />
+              </filter>
+              <filter
+                filterUnits="userSpaceOnUse"
+                height={MAP_HEIGHT + 48}
+                id="places-map-circles"
+                width={MAP_WIDTH + 48}
+                x={-24}
+                y={-24}
+              >
+                <feTurbulence
+                  baseFrequency="0.04"
+                  numOctaves={2}
+                  result="grain"
+                  seed={11}
+                  type="fractalNoise"
+                />
+                <feDisplacementMap
+                  in="SourceGraphic"
+                  in2="grain"
+                  scale={1.8}
+                  xChannelSelector="R"
+                  yChannelSelector="G"
+                />
+              </filter>
+            </defs>
 
-          <g filter="url(#places-map-ink)">
-            {continents.map((continent) => (
-              <path
-                className="fill-surface stroke-current"
-                d={continent.d}
-                key={continent.name}
-                strokeLinejoin="round"
-                strokeWidth="1.35"
-              />
-            ))}
-          </g>
+            <g filter="url(#places-map-ink)">
+              {continents.map((continent) => (
+                <path
+                  className="fill-surface stroke-current"
+                  d={continent.d}
+                  key={continent.name}
+                  strokeLinejoin="round"
+                  strokeWidth="1.35"
+                />
+              ))}
+            </g>
 
-          <Suspense fallback={null}>
-            <CachedVisitedCircles />
-          </Suspense>
-        </svg>
-      </div>
+            <Suspense fallback={null}>
+              <CachedVisitedCircles />
+            </Suspense>
+          </svg>
+        </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-muted">
-        <p className="inline-flex items-center gap-1.5">
-          <CircleSwatch kind="habitual" />
-          <span>Most of the time</span>
-        </p>
-        <p className="inline-flex items-center gap-1.5">
-          <CircleSwatch kind="casual" />
-          <span>Casual</span>
-        </p>
-        <p className="inline-flex items-center gap-1.5">
-          <CircleSwatch kind="wanted" />
-          <span>I&apos;d like to go</span>
-        </p>
-      </div>
-    </section>
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-muted">
+          <p className="inline-flex items-center gap-1.5">
+            <CircleSwatch kind="habitual" />
+            <span>Most of the time</span>
+          </p>
+          <p className="inline-flex items-center gap-1.5">
+            <CircleSwatch kind="casual" />
+            <span>Casual</span>
+          </p>
+          <p className="inline-flex items-center gap-1.5">
+            <CircleSwatch kind="wanted" />
+            <span>I&apos;d like to go</span>
+          </p>
+        </div>
+      </section>
+    </DrawReplay>
   );
 }

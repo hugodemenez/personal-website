@@ -1,5 +1,6 @@
 "use client";
 
+import { useDrawReplayToken } from "./draw-replay";
 import type { PathSketch } from "@/lib/shape-runs";
 import { useEffect, useRef } from "react";
 
@@ -17,6 +18,8 @@ function drawDurations(count: number, budget: number): number[] {
 export function PathMap({ sketch }: { sketch: PathSketch }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const frameRef = useRef(0);
+  const playRef = useRef<() => void>(() => {});
+  const replayToken = useDrawReplayToken();
 
   useEffect(() => {
     const node = svgRef.current;
@@ -39,6 +42,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       reveal();
+      playRef.current = reveal;
       return;
     }
 
@@ -73,6 +77,8 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
       frameRef.current = requestAnimationFrame(tick);
     };
 
+    playRef.current = play;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -92,6 +98,11 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
       cancelAnimationFrame(frameRef.current);
     };
   }, [sketch.path, sketch.traces]);
+
+  useEffect(() => {
+    if (replayToken === 0) return;
+    playRef.current();
+  }, [replayToken]);
 
   return (
     <svg
