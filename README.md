@@ -42,11 +42,12 @@ the whole world in view and circles regions by hand — most of the time,
 casual, and a couple still ahead — rather than pins or numbers. San
 Francisco and Canada sit on the map as places I'd like to go, in a
 complementary blue; they are not part of the location store.
-Location and the composed pill stay in the static shell: the last known city
-is served immediately, then refreshed in the background about once a minute.
-The cache is only discarded after a week without traffic, so the homepage
-does not fall back to a skeleton on ordinary visits. When the city or
-temperature actually changes, the pill crossfades from the previous value.
+Location and the composed pill stay in the static shell, the same way recent
+runs do: the last known city is prerendered into the page, then refreshed in
+the background about once a minute. The cache is only discarded after a week
+without traffic, so the homepage does not suspend into a skeleton. When the
+city or temperature actually changes, the pill crossfades from the previous
+value.
 Weather responses are cached separately by rounded coordinates for several
 minutes. A successful Shortcut ping also revalidates the location tag so the
 next visitor picks up the new city without waiting out that minute. If the

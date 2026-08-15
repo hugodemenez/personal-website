@@ -6,16 +6,6 @@ import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
 import { LOCATION_CACHE_TAG } from "@/server/location-data";
 import { cacheLife, cacheTag } from "next/cache";
-import { Suspense } from "react";
-
-function LocationPillSkeleton() {
-  return (
-    <span
-      aria-hidden="true"
-      className="inline-flex h-6 w-28 animate-pulse rounded-full bg-surface"
-    />
-  );
-}
 
 async function CurrentLocationPill() {
   "use cache";
@@ -194,9 +184,7 @@ export default async function Home() {
         <section className="space-y-4 text-muted">
           <div className="mb-7">
             <div className="mb-3 flex">
-              <Suspense fallback={<LocationPillSkeleton />}>
-                <CurrentLocationPill />
-              </Suspense>
+              <CurrentLocationPill />
             </div>
             <h1 className="font-serif text-5xl leading-[0.95] tracking-[-0.04em] text-foreground sm:text-6xl">
               Hugo Demenez
