@@ -401,7 +401,7 @@ a.stamp-shadow:focus-visible {
   animation: stampFadeIn 180ms ease;
 }
 
-/* Article waits for the excerpt dust to start falling, then settles. */
+/* Article arrives slightly blurred and low, then settles. */
 .post-body-pending {
   filter: blur(8px);
   opacity: 0;
