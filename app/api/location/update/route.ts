@@ -1,9 +1,11 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import {
   applyLocationVisit,
   createGlobalConfigReadRequest,
   createGlobalConfigWriteRequest,
   hasValidBearerToken,
+  LOCATION_CACHE_TAG,
   parseLocationUpdate,
   parseStoredLocationResponse,
 } from "@/server/location-data";
@@ -152,6 +154,11 @@ export async function POST(request: Request) {
   }
 
   const currentPlace = stored.places.find((place) => place.city === stored.city);
+  try {
+    revalidateTag(LOCATION_CACHE_TAG, "max");
+  } catch {
+    // Route unit tests call POST without a Next.js request store.
+  }
 
   console.info("Location update stored", {
     city: stored.city,

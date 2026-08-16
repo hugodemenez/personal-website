@@ -42,10 +42,15 @@ the whole world in view and circles regions by hand — most of the time,
 casual, and a couple still ahead — rather than pins or numbers. San
 Francisco and Canada sit on the map as places I'd like to go, in a
 complementary blue; they are not part of the location store.
-Location reads expire
-within 60 seconds; weather is cached separately by rounded coordinates for
-several minutes. If the store is unavailable or contains an invalid value,
-Lisbon is used as the home base.
+Location and the composed pill stay in the static shell, the same way recent
+runs do: the last known city is prerendered into the page, then refreshed in
+the background about once a minute. The cache is only discarded after a week
+without traffic, so the homepage does not suspend into a skeleton.
+Weather responses are cached separately by rounded coordinates for several
+minutes. A successful Shortcut ping also revalidates the location tag so the
+next visitor picks up the new city without waiting out that minute. If the
+store is unavailable or contains an invalid value, Lisbon is used as the
+home base.
 
 Create a Global Config store in Vercel, connect it to this project, and configure:
 

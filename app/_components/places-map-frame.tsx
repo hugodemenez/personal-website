@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { DrawReplay, ReplayButton } from "./draw-replay";
 import PlaceCircles from "./places-map";
 import { getLocationPageData } from "@/server/location";
+import { LOCATION_CACHE_TAG } from "@/server/location-data";
 import {
   MAP_HEIGHT,
   MAP_PADDING,
@@ -9,7 +10,7 @@ import {
   continentPaths,
   type PlaceMarkKind,
 } from "@/lib/world-map";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 
 const VIEW_WIDTH = MAP_WIDTH + MAP_PADDING * 2;
 const VIEW_HEIGHT = MAP_HEIGHT + MAP_PADDING * 2;
@@ -46,7 +47,8 @@ function CircleSwatch({ kind }: { kind: PlaceMarkKind }) {
 
 async function CachedVisitedCircles() {
   "use cache";
-  cacheLife("seconds");
+  cacheLife("location");
+  cacheTag(LOCATION_CACHE_TAG);
 
   const { places } = await getLocationPageData();
 

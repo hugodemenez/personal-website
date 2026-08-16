@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 
 export const CURRENT_LOCATION_KEY = "current_location";
+export const LOCATION_CACHE_TAG = "location";
 
 export interface LocationUpdate {
   version: 1;
