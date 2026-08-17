@@ -101,26 +101,26 @@ test("keeps nearby Europe stays as two open circles on the world plane", () => {
   assert.ok(Math.hypot(circles[0].x - circles[1].x, circles[0].y - circles[1].y) > 18);
 });
 
-test("circles the United States and Canada as places still ahead", () => {
+test("circles San Francisco and Canada as places still ahead", () => {
   const circles = wantedCircles();
   assert.deepEqual(
     circles.map((circle) => circle.label),
     WANTED_PLACES.map((place) => place.name)
   );
 
-  const unitedStates = circles.find((circle) => circle.label === "United States");
+  const sanFrancisco = circles.find((circle) => circle.label === "San Francisco");
   const canada = circles.find((circle) => circle.label === "Canada");
-  assert.ok(unitedStates);
+  assert.ok(sanFrancisco);
   assert.ok(canada);
-  assert.equal(unitedStates.kind, "wanted");
+  assert.equal(sanFrancisco.kind, "wanted");
   assert.equal(canada.kind, "wanted");
-  assert.ok(unitedStates.hitRadius >= 36);
+  assert.ok(sanFrancisco.hitRadius >= 36);
   assert.ok(canada.hitRadius >= 36);
-  assert.ok(unitedStates.x < canada.x);
-  assert.ok(unitedStates.y > canada.y);
+  assert.ok(sanFrancisco.x < canada.x);
+  assert.ok(sanFrancisco.y > canada.y);
   assert.ok(
-    Math.hypot(canada.x - unitedStates.x, canada.y - unitedStates.y) > 70,
-    "the United States and Canada should not read as one North American scribble"
+    Math.hypot(canada.x - sanFrancisco.x, canada.y - sanFrancisco.y) > 70,
+    "San Francisco and Canada should not read as one North American scribble"
   );
   assert.ok((canada.path.match(/Q /g) ?? []).length >= 12);
 });

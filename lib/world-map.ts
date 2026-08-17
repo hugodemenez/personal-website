@@ -319,15 +319,15 @@ export interface WantedPlace {
   name: string;
   latitude: number;
   longitude: number;
-  span: "local" | "region";
+  span: "city" | "region";
 }
 
 export const WANTED_PLACES: readonly WantedPlace[] = [
   {
-    name: "United States",
-    latitude: 39.8,
-    longitude: -110.8,
-    span: "region",
+    name: "San Francisco",
+    latitude: 37.77,
+    longitude: -122.42,
+    span: "city",
   },
   {
     name: "Canada",
