@@ -39,8 +39,8 @@ two earlier countries (three distinct stays). A fourth new country drops the
 least-used older stay; the next write also trims any oversized record
 already in the store. Day counts stay on those few entries; the map keeps
 the whole world in view and circles regions by hand — most of the time,
-casual, and a couple still ahead — rather than pins or numbers. The United
-States and Canada sit on the map as places I'd like to go, in a
+casual, and a couple still ahead — rather than pins or numbers. San
+Francisco and Canada sit on the map as places I'd like to go, in a
 complementary blue; they are not part of the location store.
 Location and the composed pill stay in the static shell, the same way recent
 runs do: the last known country is prerendered into the page, then refreshed in
