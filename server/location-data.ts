@@ -5,16 +5,14 @@ export const LOCATION_CACHE_TAG = "location";
 
 export interface LocationUpdate {
   version: 1;
-  city: string;
-  country?: string;
+  country: string;
   latitude: number;
   longitude: number;
   updatedAt: string;
 }
 
 export interface StoredPlace {
-  city: string;
-  country?: string;
+  country: string;
   latitude: number;
   longitude: number;
   days: number;
@@ -22,9 +20,8 @@ export interface StoredPlace {
 }
 
 export interface StoredLocation {
-  version: 2;
-  city: string;
-  country?: string;
+  version: 3;
+  country: string;
   latitude: number;
   longitude: number;
   updatedAt: string;
@@ -32,8 +29,7 @@ export interface StoredLocation {
 }
 
 export interface VisitedPlace {
-  city: string;
-  country: string | null;
+  country: string;
   latitude: number;
   longitude: number;
   days: number | null;
@@ -80,18 +76,15 @@ function roundedCoordinate(
   return Math.round((coordinate + Number.EPSILON) * 100) / 100;
 }
 
-function placeIdentity(city: string, country?: string): string {
-  return `${city.toLowerCase()}|${(country ?? "").toLowerCase()}`;
+function placeIdentity(country: string): string {
+  return country.toLowerCase();
 }
 
 export function samePlace(
-  left: { city: string; country?: string | null },
-  right: { city: string; country?: string | null }
+  left: { country: string },
+  right: { country: string }
 ): boolean {
-  return (
-    placeIdentity(left.city, left.country ?? undefined) ===
-    placeIdentity(right.city, right.country ?? undefined)
-  );
+  return placeIdentity(left.country) === placeIdentity(right.country);
 }
 
 export function sameUtcCalendarDay(left: string, right: string): boolean {
@@ -106,8 +99,7 @@ export function sameUtcCalendarDay(left: string, right: string): boolean {
 
 function placeFromCurrent(current: LocationUpdate, days: number): StoredPlace {
   return {
-    city: current.city,
-    ...(current.country ? { country: current.country } : {}),
+    country: current.country,
     latitude: current.latitude,
     longitude: current.longitude,
     days,
@@ -117,7 +109,7 @@ function placeFromCurrent(current: LocationUpdate, days: number): StoredPlace {
 
 function trimStoredPlaces(
   places: StoredPlace[],
-  current: { city: string; country?: string }
+  current: { country: string }
 ): StoredPlace[] {
   if (places.length === 0) return [];
 
@@ -135,9 +127,7 @@ function trimStoredPlaces(
 function parseStoredPlace(value: unknown): StoredPlace | null {
   if (!isRecord(value)) return null;
 
-  const city = normalizedText(value.city, 80);
-  const country =
-    value.country === undefined ? undefined : normalizedText(value.country, 80);
+  const country = normalizedText(value.country, 80);
   const latitude = roundedCoordinate(value.latitude, -90, 90);
   const longitude = roundedCoordinate(value.longitude, -180, 180);
   const days =
@@ -147,8 +137,7 @@ function parseStoredPlace(value: unknown): StoredPlace | null {
   const lastSeenAt = new Date(String(value.lastSeenAt));
 
   if (
-    !city ||
-    (value.country !== undefined && !country) ||
+    !country ||
     latitude === undefined ||
     longitude === undefined ||
     !Number.isInteger(days) ||
@@ -160,8 +149,7 @@ function parseStoredPlace(value: unknown): StoredPlace | null {
   }
 
   return {
-    city,
-    ...(country ? { country } : {}),
+    country,
     latitude,
     longitude,
     days,
@@ -182,7 +170,7 @@ function parseStoredPlaces(
     const place = parseStoredPlace(entry);
     if (!place) continue;
 
-    const identity = placeIdentity(place.city, place.country);
+    const identity = placeIdentity(place.country);
     if (seen.has(identity)) continue;
     seen.add(identity);
     places.push(place);
@@ -201,15 +189,12 @@ export function parseLocationUpdate(
 ): LocationUpdate | null {
   if (!isRecord(value)) return null;
 
-  const city = normalizedText(value.city, 80);
-  const country =
-    value.country === undefined ? undefined : normalizedText(value.country, 80);
+  const country = normalizedText(value.country, 80);
   const latitude = roundedCoordinate(value.latitude, -90, 90);
   const longitude = roundedCoordinate(value.longitude, -180, 180);
 
   if (
-    !city ||
-    (value.country !== undefined && !country) ||
+    !country ||
     latitude === undefined ||
     longitude === undefined ||
     Number.isNaN(now.getTime())
@@ -219,8 +204,7 @@ export function parseLocationUpdate(
 
   return {
     version: 1,
-    city,
-    ...(country ? { country } : {}),
+    country,
     latitude,
     longitude,
     updatedAt: now.toISOString(),
@@ -228,7 +212,10 @@ export function parseLocationUpdate(
 }
 
 export function parseStoredLocation(value: unknown): StoredLocation | null {
-  if (!isRecord(value) || (value.version !== 1 && value.version !== 2)) {
+  if (
+    !isRecord(value) ||
+    (value.version !== 1 && value.version !== 2 && value.version !== 3)
+  ) {
     return null;
   }
 
@@ -236,16 +223,15 @@ export function parseStoredLocation(value: unknown): StoredLocation | null {
   if (!current) return null;
 
   return {
-    version: 2,
-    city: current.city,
-    ...(current.country ? { country: current.country } : {}),
+    version: 3,
+    country: current.country,
     latitude: current.latitude,
     longitude: current.longitude,
     updatedAt: current.updatedAt,
     places:
-      value.version === 2
-        ? parseStoredPlaces(value.places, current)
-        : [placeFromCurrent(current, 1)],
+      value.version === 1
+        ? [placeFromCurrent(current, 1)]
+        : parseStoredPlaces(value.places, current),
   };
 }
 
@@ -255,7 +241,9 @@ export function parseStoredLocationResponse(
   if (
     isRecord(value) &&
     isRecord(value.value) &&
-    (value.value.version === 1 || value.value.version === 2)
+    (value.value.version === 1 ||
+      value.value.version === 2 ||
+      value.value.version === 3)
   ) {
     return parseStoredLocation(value.value);
   }
@@ -276,8 +264,7 @@ export function applyLocationVisit(
     const previous = places[index];
     const increment = !sameUtcCalendarDay(previous.lastSeenAt, update.updatedAt);
     places[index] = {
-      city: update.city,
-      ...(update.country ? { country: update.country } : {}),
+      country: update.country,
       latitude: update.latitude,
       longitude: update.longitude,
       days: Math.min(MAX_DAYS, previous.days + (increment ? 1 : 0)),
@@ -293,9 +280,8 @@ export function applyLocationVisit(
   });
 
   return {
-    version: 2,
-    city: update.city,
-    ...(update.country ? { country: update.country } : {}),
+    version: 3,
+    country: update.country,
     latitude: update.latitude,
     longitude: update.longitude,
     updatedAt: update.updatedAt,
@@ -306,21 +292,26 @@ export function applyLocationVisit(
 function regionalCoordinate(
   latitude: number,
   longitude: number,
-  city: string
+  country: string
 ): { latitude: number; longitude: number } {
-  const hash = [...city].reduce((total, character) => total + character.charCodeAt(0), 0);
+  const hash = [...country].reduce((total, character) => total + character.charCodeAt(0), 0);
   return {
     latitude: Math.round(latitude) + ((hash % 5) - 2) * 0.18,
     longitude: Math.round(longitude) + (((hash >> 3) % 5) - 2) * 0.18,
   };
 }
 
+const PORTUGAL_HOME_COORDINATE = { latitude: 38.72, longitude: -9.14 };
+
 export function toVisitedPlaces(saved: StoredLocation | null): VisitedPlace[] {
   if (!saved) {
-    const home = regionalCoordinate(38.72, -9.14, "Lisbon");
+    const home = regionalCoordinate(
+      PORTUGAL_HOME_COORDINATE.latitude,
+      PORTUGAL_HOME_COORDINATE.longitude,
+      "Portugal"
+    );
     return [
       {
-        city: "Lisbon",
         country: "Portugal",
         latitude: home.latitude,
         longitude: home.longitude,
@@ -333,10 +324,13 @@ export function toVisitedPlaces(saved: StoredLocation | null): VisitedPlace[] {
 
   return saved.places
     .map((place) => {
-      const region = regionalCoordinate(place.latitude, place.longitude, place.city);
+      const region = regionalCoordinate(
+        place.latitude,
+        place.longitude,
+        place.country
+      );
       return {
-        city: place.city,
-        country: place.country ?? null,
+        country: place.country,
         latitude: region.latitude,
         longitude: region.longitude,
         days: place.days,

@@ -3,7 +3,6 @@ import test from "node:test";
 import { POST } from "./route";
 
 const validPayload = {
-  city: "Paris",
   country: "France",
   latitude: 48.8566,
   longitude: 2.3522,
@@ -87,7 +86,7 @@ function mockConfigFetch(options: {
     calls,
     restore() {
       globalThis.fetch = originalFetch;
-    },
+    }
   };
 }
 
@@ -103,23 +102,21 @@ test("writes the rounded location and starts a one-day history", async () => {
     assert.equal(response.status, 200);
     const body = (await response.json()) as {
       ok: boolean;
-      location: { city: string; updatedAt: string };
+      location: { country: string; updatedAt: string };
     };
     assert.equal(body.ok, true);
-    assert.equal(body.location.city, "Paris");
+    assert.equal(body.location.country, "France");
     assert.ok(!Number.isNaN(Date.parse(body.location.updatedAt)));
     assert.deepEqual(
       (fetchMock.sentBody as { items: Array<{ value: unknown }> }).items[0].value,
       {
-        version: 2,
-        city: "Paris",
+        version: 3,
         country: "France",
         latitude: 48.86,
         longitude: 2.35,
         updatedAt: body.location.updatedAt,
         places: [
           {
-            city: "Paris",
             country: "France",
             latitude: 48.86,
             longitude: 2.35,
@@ -144,7 +141,6 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
   try {
     const response = await POST(
       request({
-        city: "Azeitão",
         country: "Portugal",
         latitude: "38,52",
         longitude: "-9.02",
@@ -155,15 +151,13 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
     assert.deepEqual(
       (fetchMock.sentBody as { items: Array<{ value: unknown }> }).items[0].value,
       {
-        version: 2,
-        city: "Azeitão",
+        version: 3,
         country: "Portugal",
         latitude: 38.52,
         longitude: -9.02,
         updatedAt: body.location.updatedAt,
         places: [
           {
-            city: "Azeitão",
             country: "Portugal",
             latitude: 38.52,
             longitude: -9.02,
@@ -178,22 +172,20 @@ test("accepts coordinates serialized as text by Apple Shortcuts", async () => {
   }
 });
 
-test("increments days for a returning place and keeps earlier stays", async () => {
+test("increments days for a returning country and keeps earlier stays", async () => {
   process.env.LOCATION_UPDATE_SECRET = "shortcut-secret";
   process.env.GLOBAL_CONFIG_ID = "ecfg_test";
   process.env.GLOBAL_CONFIG_WRITE_TOKEN = "write-token";
 
   const fetchMock = mockConfigFetch({
     existing: {
-      version: 2,
-      city: "Lisbon",
+      version: 3,
       country: "Portugal",
       latitude: 38.72,
       longitude: -9.14,
       updatedAt: "2026-07-20T08:00:00.000Z",
       places: [
         {
-          city: "Lisbon",
           country: "Portugal",
           latitude: 38.72,
           longitude: -9.14,
@@ -201,7 +193,6 @@ test("increments days for a returning place and keeps earlier stays", async () =
           lastSeenAt: "2026-07-20T08:00:00.000Z",
         },
         {
-          city: "Paris",
           country: "France",
           latitude: 48.86,
           longitude: 2.35,
@@ -219,17 +210,17 @@ test("increments days for a returning place and keeps earlier stays", async () =
       fetchMock.sentBody as {
         items: Array<{
           value: {
-            city: string;
-            places: Array<{ city: string; days: number }>;
+            country: string;
+            places: Array<{ country: string; days: number }>;
           };
         }>;
       }
     ).items[0].value;
-    assert.equal(stored.city, "Paris");
+    assert.equal(stored.country, "France");
     assert.equal(stored.places.length, 2);
-    assert.equal(stored.places[0].city, "Paris");
+    assert.equal(stored.places[0].country, "France");
     assert.equal(stored.places[0].days, 4);
-    assert.equal(stored.places[1].city, "Lisbon");
+    assert.equal(stored.places[1].country, "Portugal");
     assert.equal(stored.places[1].days, 9);
   } finally {
     fetchMock.restore();
@@ -263,7 +254,7 @@ test("rejects coordinates without decimal precision", async () => {
 
   try {
     const numericResponse = await POST(
-      request({ city: "Lisboa", latitude: 38, longitude: -9 })
+      request({ country: "Portugal", latitude: 38, longitude: -9 })
     );
     assert.equal(numericResponse.status, 400);
     assert.deepEqual(await numericResponse.json(), {
@@ -272,7 +263,7 @@ test("rejects coordinates without decimal precision", async () => {
     });
 
     const textResponse = await POST(
-      request({ city: "Lisboa", latitude: "38", longitude: "-9" })
+      request({ country: "Portugal", latitude: "38", longitude: "-9" })
     );
     assert.equal(textResponse.status, 400);
   } finally {

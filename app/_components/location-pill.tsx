@@ -89,7 +89,7 @@ export default function LocationPill({ weather }: LocationPillProps) {
         aria-label="Current location and weather"
         className="inline-flex h-6 items-center gap-1 rounded-full bg-surface pl-2.5 pr-0.5 text-[0.625rem] tracking-[-0.01em] text-muted"
       >
-        <span className="whitespace-nowrap">{weather?.location ?? "Lisbon"}</span>
+        <span className="whitespace-nowrap">{weather?.location ?? "Portugal"}</span>
         {weather?.temperature !== null ? (
           <>
             <span aria-hidden="true" className="text-foreground/25">
@@ -105,7 +105,7 @@ export default function LocationPill({ weather }: LocationPillProps) {
           aria-controls="location-details"
           aria-expanded={isOpen}
           aria-haspopup="dialog"
-          aria-label={`About the weather in ${weather?.location ?? "Lisbon"}`}
+          aria-label={`About the weather in ${weather?.location ?? "Portugal"}`}
           className="relative grid size-5 shrink-0 place-items-center rounded-full text-muted/55 transition-[background-color,color,transform] duration-150 hover:bg-background/70 hover:text-foreground active:scale-[0.94] motion-reduce:transition-none after:absolute after:-inset-3 after:content-['']"
           onClick={() => setIsOpen((open) => !open)}
           type="button"
@@ -116,7 +116,7 @@ export default function LocationPill({ weather }: LocationPillProps) {
 
       <span
         id="location-details"
-        aria-label={`${weather?.location ?? "Lisbon"} weather details`}
+        aria-label={`${weather?.location ?? "Portugal"} weather details`}
         aria-hidden={!isOpen}
         className={`absolute left-0 right-auto top-[calc(100%+0.5rem)] z-40 w-64 max-w-[calc(100vw-2rem)] origin-top-left rounded-xl border border-border bg-background px-3.5 py-3 text-left text-xs leading-relaxed text-muted shadow-lg transition-[opacity,transform] duration-150 [transition-timing-function:cubic-bezier(0.23,1,0.32,1)] motion-reduce:transition-none sm:left-auto sm:right-0 sm:origin-top-right ${
           isOpen
@@ -127,10 +127,10 @@ export default function LocationPill({ weather }: LocationPillProps) {
       >
         <span className="block text-foreground">
           {weather?.isHomeBase
-            ? "My home base is Lisbon."
+            ? "My home base is Portugal."
             : isStale
-              ? `My last known location is ${weather?.location ?? "Lisbon"}, updated ${updatedDate}.`
-              : `I’m currently in ${weather?.location ?? "Lisbon"}.`}{" "}
+              ? `My last known location is ${weather?.location ?? "Portugal"}, updated ${updatedDate}.`
+              : `I’m currently in ${weather?.location ?? "Portugal"}.`}{" "}
           {localTime && weatherDescription
             ? `Here, it’s ${localTime}, and the weather is ${weatherDescription}.`
             : localTime

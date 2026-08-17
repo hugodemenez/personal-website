@@ -19,7 +19,6 @@ test("validates, normalizes, and rounds a location update", () => {
   assert.deepEqual(
     parseLocationUpdate(
       {
-        city: "  New   York  ",
         country: " United States ",
         latitude: 40.7128,
         longitude: -74.006,
@@ -28,7 +27,6 @@ test("validates, normalizes, and rounds a location update", () => {
     ),
     {
       version: 1,
-      city: "New York",
       country: "United States",
       latitude: 40.71,
       longitude: -74.01,
@@ -37,11 +35,11 @@ test("validates, normalizes, and rounds a location update", () => {
   );
 });
 
-test("accepts decimal coordinates serialized as text by Apple Shortcuts", () => {
+test("ignores a locality field still sent by older Shortcuts", () => {
   assert.deepEqual(
     parseLocationUpdate(
       {
-        city: "Azeitão",
+        city: "Locality",
         country: "Portugal",
         latitude: "38,52",
         longitude: "-9.02",
@@ -50,7 +48,6 @@ test("accepts decimal coordinates serialized as text by Apple Shortcuts", () => 
     ),
     {
       version: 1,
-      city: "Azeitão",
       country: "Portugal",
       latitude: 38.52,
       longitude: -9.02,
@@ -63,34 +60,38 @@ test("rejects malformed locations and oversized names", () => {
   assert.equal(parseLocationUpdate(null, now), null);
   assert.equal(
     parseLocationUpdate(
-      { city: "x".repeat(81), latitude: 1, longitude: 2 },
+      { country: "x".repeat(81), latitude: 1, longitude: 2 },
       now
     ),
     null
   );
   assert.equal(
-    parseLocationUpdate({ city: "Lisbon", latitude: 91, longitude: 2 }, now),
+    parseLocationUpdate({ country: "Portugal", latitude: 91, longitude: 2 }, now),
     null
   );
   assert.equal(
-    parseLocationUpdate({ city: "Lisbon", latitude: 1, longitude: -181 }, now),
+    parseLocationUpdate({ country: "Portugal", latitude: 1, longitude: -181 }, now),
     null
   );
   assert.equal(
     parseLocationUpdate(
-      { city: "Lisbon", latitude: "38.72 north", longitude: "-9.14" },
+      { country: "Portugal", latitude: "38.72 north", longitude: "-9.14" },
       now
     ),
+    null
+  );
+  assert.equal(
+    parseLocationUpdate({ latitude: 38.72, longitude: -9.14 }, now),
     null
   );
 });
 
 test("rejects malformed stored records and upgrades version 1", () => {
-  assert.equal(parseStoredLocation({ version: 3 }), null);
+  assert.equal(parseStoredLocation({ version: 4 }), null);
   assert.equal(
     parseStoredLocation({
       version: 1,
-      city: "Paris",
+      country: "France",
       latitude: 48.86,
       longitude: 2.35,
       updatedAt: "not-a-date",
@@ -101,22 +102,19 @@ test("rejects malformed stored records and upgrades version 1", () => {
   assert.deepEqual(
     parseStoredLocation({
       version: 1,
-      city: "Paris",
       country: "France",
       latitude: 48.86,
       longitude: 2.35,
       updatedAt: now.toISOString(),
     }),
     {
-      version: 2,
-      city: "Paris",
+      version: 3,
       country: "France",
       latitude: 48.86,
       longitude: 2.35,
       updatedAt: now.toISOString(),
       places: [
         {
-          city: "Paris",
           country: "France",
           latitude: 48.86,
           longitude: 2.35,
@@ -128,17 +126,15 @@ test("rejects malformed stored records and upgrades version 1", () => {
   );
 });
 
-test("parses a version 2 record and unwraps a Global Config item response", () => {
+test("parses a version 3 record and unwraps a Global Config item response", () => {
   const stored = {
-    version: 2,
-    city: "Lisbon",
+    version: 3 as const,
     country: "Portugal",
     latitude: 38.72,
     longitude: -9.14,
     updatedAt: now.toISOString(),
     places: [
       {
-        city: "Lisbon",
         country: "Portugal",
         latitude: 38.72,
         longitude: -9.14,
@@ -146,7 +142,6 @@ test("parses a version 2 record and unwraps a Global Config item response", () =
         lastSeenAt: now.toISOString(),
       },
       {
-        city: "Paris",
         country: "France",
         latitude: 48.86,
         longitude: 2.35,
@@ -160,9 +155,71 @@ test("parses a version 2 record and unwraps a Global Config item response", () =
   assert.deepEqual(parseStoredLocationResponse({ value: stored }), stored);
 });
 
+test("drops locality names when reading an older stored record", () => {
+  assert.deepEqual(
+    parseStoredLocation({
+      version: 2,
+      city: "Locality",
+      country: "France",
+      latitude: 48.86,
+      longitude: 2.35,
+      updatedAt: now.toISOString(),
+      places: [
+        {
+          city: "Locality",
+          country: "France",
+          latitude: 48.86,
+          longitude: 2.35,
+          days: 3,
+          lastSeenAt: now.toISOString(),
+        },
+        {
+          city: "Other locality",
+          country: "France",
+          latitude: 50.63,
+          longitude: 3.06,
+          days: 2,
+          lastSeenAt: "2026-07-20T08:00:00.000Z",
+        },
+        {
+          city: "Home locality",
+          country: "Portugal",
+          latitude: 38.72,
+          longitude: -9.14,
+          days: 12,
+          lastSeenAt: "2026-07-01T08:00:00.000Z",
+        },
+      ],
+    }),
+    {
+      version: 3,
+      country: "France",
+      latitude: 48.86,
+      longitude: 2.35,
+      updatedAt: now.toISOString(),
+      places: [
+        {
+          country: "France",
+          latitude: 48.86,
+          longitude: 2.35,
+          days: 3,
+          lastSeenAt: now.toISOString(),
+        },
+        {
+          country: "Portugal",
+          latitude: 38.72,
+          longitude: -9.14,
+          days: 12,
+          lastSeenAt: "2026-07-01T08:00:00.000Z",
+        },
+      ],
+    }
+  );
+});
+
 test("starts a history from the first visit and increments once per UTC day", () => {
   const first = parseLocationUpdate(
-    { city: "Paris", country: "France", latitude: 48.8566, longitude: 2.3522 },
+    { country: "France", latitude: 48.8566, longitude: 2.3522 },
     now
   );
   assert.ok(first);
@@ -174,7 +231,7 @@ test("starts a history from the first visit and increments once per UTC day", ()
   const sameDay = applyLocationVisit(
     started,
     parseLocationUpdate(
-      { city: "Paris", country: "France", latitude: 48.86, longitude: 2.35 },
+      { country: "France", latitude: 48.86, longitude: 2.35 },
       new Date("2026-08-01T21:00:00.000Z")
     )!
   );
@@ -183,112 +240,126 @@ test("starts a history from the first visit and increments once per UTC day", ()
   const nextDay = applyLocationVisit(
     sameDay,
     parseLocationUpdate(
-      { city: "Paris", country: "France", latitude: 48.86, longitude: 2.35 },
+      { country: "France", latitude: 48.86, longitude: 2.35 },
       new Date("2026-08-02T08:00:00.000Z")
     )!
   );
   assert.equal(nextDay.places[0].days, 2);
-  assert.equal(nextDay.city, "Paris");
+  assert.equal(nextDay.country, "France");
 });
 
-test("adds a new place without dropping earlier stays", () => {
-  const paris = applyLocationVisit(
+test("adds a new country without dropping earlier stays", () => {
+  const france = applyLocationVisit(
     null,
     parseLocationUpdate(
-      { city: "Paris", country: "France", latitude: 48.86, longitude: 2.35 },
+      { country: "France", latitude: 48.86, longitude: 2.35 },
       now
     )!
   );
-  const lisbon = applyLocationVisit(
-    paris,
+  const portugal = applyLocationVisit(
+    france,
     parseLocationUpdate(
-      { city: "Lisbon", country: "Portugal", latitude: 38.72, longitude: -9.14 },
+      { country: "Portugal", latitude: 38.72, longitude: -9.14 },
       new Date("2026-08-03T08:00:00.000Z")
     )!
   );
 
-  assert.equal(lisbon.city, "Lisbon");
-  assert.equal(lisbon.places.length, 2);
-  assert.equal(lisbon.places[0].city, "Lisbon");
-  assert.equal(lisbon.places[0].days, 1);
-  assert.equal(lisbon.places[1].city, "Paris");
-  assert.equal(lisbon.places[1].days, 1);
+  assert.equal(portugal.country, "Portugal");
+  assert.equal(portugal.places.length, 2);
+  assert.equal(portugal.places[0].country, "Portugal");
+  assert.equal(portugal.places[0].days, 1);
+  assert.equal(portugal.places[1].country, "France");
+  assert.equal(portugal.places[1].days, 1);
 });
 
-test("keeps at most three distinct places in Global Config", () => {
+test("merges later coordinates in the same country into one stay", () => {
   const first = applyLocationVisit(
     null,
     parseLocationUpdate(
-      { city: "Paris", country: "France", latitude: 48.86, longitude: 2.35 },
+      { country: "France", latitude: 48.86, longitude: 2.35 },
+      now
+    )!
+  );
+  const sameCountry = applyLocationVisit(
+    first,
+    parseLocationUpdate(
+      { country: "France", latitude: 50.63, longitude: 3.06 },
+      new Date("2026-08-04T08:00:00.000Z")
+    )!
+  );
+
+  assert.equal(sameCountry.places.length, 1);
+  assert.equal(sameCountry.country, "France");
+  assert.equal(sameCountry.latitude, 50.63);
+  assert.equal(sameCountry.places[0].days, 2);
+});
+
+test("keeps at most three distinct countries in Global Config", () => {
+  const first = applyLocationVisit(
+    null,
+    parseLocationUpdate(
+      { country: "France", latitude: 48.86, longitude: 2.35 },
       now
     )!
   );
   const second = applyLocationVisit(
     first,
     parseLocationUpdate(
-      { city: "Lisbon", country: "Portugal", latitude: 38.72, longitude: -9.14 },
+      { country: "Portugal", latitude: 38.72, longitude: -9.14 },
       new Date("2026-08-03T08:00:00.000Z")
     )!
   );
   const third = applyLocationVisit(
     second,
     parseLocationUpdate(
-      { city: "Lille", country: "France", latitude: 50.63, longitude: 3.06 },
+      { country: "Spain", latitude: 40.42, longitude: -3.7 },
       new Date("2026-08-04T08:00:00.000Z")
     )!
   );
   const fourth = applyLocationVisit(
     third,
     parseLocationUpdate(
-      { city: "Lyon", country: "France", latitude: 45.76, longitude: 4.84 },
+      { country: "Germany", latitude: 52.52, longitude: 13.4 },
       new Date("2026-08-05T08:00:00.000Z")
     )!
   );
 
-  assert.equal(fourth.city, "Lyon");
+  assert.equal(fourth.country, "Germany");
   assert.equal(fourth.places.length, 3);
   assert.deepEqual(
-    fourth.places.map((place) => place.city),
-    ["Lyon", "Lille", "Lisbon"]
+    fourth.places.map((place) => place.country),
+    ["Germany", "Spain", "Portugal"]
   );
 });
 
-test("matches places by normalized city and country", () => {
+test("matches places by normalized country", () => {
   assert.equal(
-    samePlace(
-      { city: "New York", country: "United States" },
-      { city: "new york", country: "united states" }
-    ),
+    samePlace({ country: "United States" }, { country: "united states" }),
     true
   );
   assert.equal(
-    samePlace(
-      { city: "Paris", country: "France" },
-      { city: "Paris", country: "United States" }
-    ),
+    samePlace({ country: "France" }, { country: "United States" }),
     false
   );
   assert.equal(sameUtcCalendarDay("2026-08-01T08:00:00.000Z", "2026-08-01T23:00:00.000Z"), true);
   assert.equal(sameUtcCalendarDay("2026-08-01T08:00:00.000Z", "2026-08-02T00:00:00.000Z"), false);
 });
 
-test("exposes regional public places and a Lisbon home-base fallback", () => {
+test("exposes regional public places and a Portugal home-base fallback", () => {
   const home = toVisitedPlaces(null);
   assert.equal(home.length, 1);
-  assert.equal(home[0].city, "Lisbon");
+  assert.equal(home[0].country, "Portugal");
   assert.equal(home[0].days, null);
   assert.equal(home[0].isHomeBase, true);
 
   const visited = toVisitedPlaces({
-    version: 2,
-    city: "Paris",
+    version: 3,
     country: "France",
     latitude: 48.86,
     longitude: 2.35,
     updatedAt: now.toISOString(),
     places: [
       {
-        city: "Paris",
         country: "France",
         latitude: 48.86,
         longitude: 2.35,
@@ -296,7 +367,6 @@ test("exposes regional public places and a Lisbon home-base fallback", () => {
         lastSeenAt: now.toISOString(),
       },
       {
-        city: "Lisbon",
         country: "Portugal",
         latitude: 38.72,
         longitude: -9.14,
@@ -306,9 +376,9 @@ test("exposes regional public places and a Lisbon home-base fallback", () => {
     ],
   });
 
-  assert.equal(visited[0].city, "Paris");
+  assert.equal(visited[0].country, "France");
   assert.equal(visited[0].isCurrent, true);
-  assert.equal(visited[1].city, "Lisbon");
+  assert.equal(visited[1].country, "Portugal");
   assert.equal(visited[1].days, 12);
   assert.ok(Math.abs(visited[0].latitude - 49) < 1);
   assert.ok(Math.abs(visited[0].longitude - 2) < 1);
@@ -322,7 +392,7 @@ test("checks bearer tokens and produces authenticated read and write requests", 
   const location = applyLocationVisit(
     null,
     parseLocationUpdate(
-      { city: "Paris", latitude: 48.8566, longitude: 2.3522 },
+      { country: "France", latitude: 48.8566, longitude: 2.3522 },
       now
     )!
   );
