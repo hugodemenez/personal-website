@@ -46,30 +46,30 @@ test("matches a cluster only when it sits on a known stay", () => {
   assert.equal(matchRunArea([48.8566, 2.3522], areas), null);
 });
 
-test("names Croix runs from a Lille stay just beyond the cluster radius", () => {
-  const croixCluster: [number, number] = [50.669, 3.173];
-  const lilleStay = { name: "France", center: [50.63, 3.06] as [number, number] };
-  const azeitaoStay = {
+test("names a nearby loop from a stay just beyond the cluster radius", () => {
+  const nearbyCluster: [number, number] = [50.669, 3.173];
+  const franceStay = { name: "France", center: [50.63, 3.06] as [number, number] };
+  const portugalStay = {
     name: "Portugal",
     center: [38.52, -9.02] as [number, number],
   };
 
   assert.ok(STAY_MATCH_RADIUS_KM > CLUSTER_RADIUS_KM);
-  assert.equal(matchRunArea(croixCluster, [lilleStay], CLUSTER_RADIUS_KM), null);
-  assert.equal(matchRunArea(croixCluster, [lilleStay])?.name, "France");
-  assert.equal(matchRunArea(croixCluster, [azeitaoStay]), null);
+  assert.equal(matchRunArea(nearbyCluster, [franceStay], CLUSTER_RADIUS_KM), null);
+  assert.equal(matchRunArea(nearbyCluster, [franceStay])?.name, "France");
+  assert.equal(matchRunArea(nearbyCluster, [portugalStay]), null);
 });
 
-test("prefers the nearer stay when Croix and Lille both match", () => {
-  assert.equal(
+test("prefers the nearer stay when two stays both match", () => {
+  assert.deepEqual(
     matchRunArea(
       [50.669, 3.173],
       [
-        { name: "Lille", center: [50.63, 3.06] },
-        { name: "Croix", center: [50.68, 3.15] },
+        { name: "France", center: [50.63, 3.06] },
+        { name: "France", center: [50.68, 3.15] },
       ]
-    )?.name,
-    "Croix"
+    )?.center,
+    [50.68, 3.15]
   );
 });
 
@@ -97,20 +97,15 @@ test("names cards from recent stays and leaves the rest blank", () => {
   assert.equal(named[2].placeName, null);
 });
 
-test("labels stays with the country and falls back to the city", () => {
+test("labels stays with the country", () => {
   assert.deepEqual(
     stayAreasFromPlaces([
       {
-        city: "Azeitão",
         country: "Portugal",
         latitude: 38.52,
         longitude: -9.02,
       },
-      { city: "Lille", latitude: 50.63, longitude: 3.06 },
     ]),
-    [
-      { name: "Portugal", center: [38.52, -9.02] },
-      { name: "Lille", center: [50.63, 3.06] },
-    ]
+    [{ name: "Portugal", center: [38.52, -9.02] }]
   );
 });

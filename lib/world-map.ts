@@ -319,15 +319,15 @@ export interface WantedPlace {
   name: string;
   latitude: number;
   longitude: number;
-  span: "city" | "region";
+  span: "local" | "region";
 }
 
 export const WANTED_PLACES: readonly WantedPlace[] = [
   {
-    name: "San Francisco",
-    latitude: 37.77,
-    longitude: -122.42,
-    span: "city",
+    name: "United States",
+    latitude: 39.8,
+    longitude: -110.8,
+    span: "region",
   },
   {
     name: "Canada",
@@ -464,7 +464,7 @@ export function zoneCircles(places: readonly VisitedPlace[]): ZoneCircle[] {
   return places.map((place) => {
     const kind = stayKind(place, places);
     const origin = zoneCenter(place);
-    const random = createRandom(`${place.city}|${place.country ?? ""}`);
+    const random = createRandom(place.country);
     const radius = kind === "habitual" ? 30 : 20;
     const stretch = 0.78 + random() * 0.16;
     // Habitual: almost two loops, the way a hand circles twice to mark a place.
@@ -474,7 +474,7 @@ export function zoneCircles(places: readonly VisitedPlace[]): ZoneCircle[] {
     return {
       hitRadius: Math.max(radius * 1.35, 36),
       kind,
-      label: place.city,
+      label: place.country,
       path: buildCirclePath(origin, radius, radius * stretch, random, turns),
       width: kind === "habitual" ? 2.7 : 1.85,
       x: origin.x,

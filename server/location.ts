@@ -9,8 +9,7 @@ import {
   type VisitedPlace,
 } from "@/server/location-data";
 
-const LISBON_HOME = {
-  city: "Lisbon",
+const PORTUGAL_HOME = {
   country: "Portugal",
   latitude: 38.72,
   longitude: -9.14,
@@ -32,7 +31,7 @@ interface CurrentWeather {
 
 export interface LocationWeather {
   location: string;
-  country: string | null;
+  country: string;
   timeZone: string | null;
   temperature: number | null;
   condition: string | null;
@@ -44,11 +43,11 @@ export function composeLocationWeather(
   savedLocation: StoredLocation | null,
   weather: CurrentWeather | null
 ): LocationWeather {
-  const location = savedLocation ?? LISBON_HOME;
+  const location = savedLocation ?? PORTUGAL_HOME;
 
   return {
-    location: location.city,
-    country: location.country ?? null,
+    location: location.country,
+    country: location.country,
     timeZone: weather?.timeZone ?? (!savedLocation ? "Europe/Lisbon" : null),
     temperature: weather?.temperature ?? null,
     condition: weather?.condition ?? null,
@@ -140,7 +139,7 @@ export async function getLocationPageData(): Promise<LocationPageData> {
   cacheTag(LOCATION_CACHE_TAG);
 
   const savedLocation = await readCurrentLocation();
-  const location = savedLocation ?? LISBON_HOME;
+  const location = savedLocation ?? PORTUGAL_HOME;
   const weather = await getWeatherForCoordinates(
     location.latitude,
     location.longitude
@@ -158,8 +157,7 @@ export async function getCurrentLocationWeather(): Promise<LocationWeather> {
 
 export async function getStayRunAreas(): Promise<
   Array<{
-    city: string;
-    country?: string;
+    country: string;
     latitude: number;
     longitude: number;
   }>
@@ -167,8 +165,7 @@ export async function getStayRunAreas(): Promise<
   const saved = await readCurrentLocation();
   if (!saved) return [];
   return saved.places.map((place) => ({
-    city: place.city,
-    ...(place.country ? { country: place.country } : {}),
+    country: place.country,
     latitude: place.latitude,
     longitude: place.longitude,
   }));

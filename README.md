@@ -34,22 +34,22 @@ Deployed on [Vercel](https://vercel.com).
 The location pill reads a `current_location` record from Vercel Global Config
 (formerly Edge Config) and combines it with current conditions from Open-Meteo.
 The homepage also draws a rough world map from the same record. Global
-Config must stay small, so the store keeps the current place plus at most
-two earlier stays (three distinct places). A fourth new city drops the
+Config must stay small, so the store keeps the current country plus at most
+two earlier countries (three distinct stays). A fourth new country drops the
 least-used older stay; the next write also trims any oversized record
 already in the store. Day counts stay on those few entries; the map keeps
 the whole world in view and circles regions by hand — most of the time,
-casual, and a couple still ahead — rather than pins or numbers. San
-Francisco and Canada sit on the map as places I'd like to go, in a
+casual, and a couple still ahead — rather than pins or numbers. The United
+States and Canada sit on the map as places I'd like to go, in a
 complementary blue; they are not part of the location store.
 Location and the composed pill stay in the static shell, the same way recent
-runs do: the last known city is prerendered into the page, then refreshed in
+runs do: the last known country is prerendered into the page, then refreshed in
 the background about once a minute. The cache is only discarded after a week
 without traffic, so the homepage does not suspend into a skeleton.
 Weather responses are cached separately by rounded coordinates for several
 minutes. A successful Shortcut ping also revalidates the location tag so the
-next visitor picks up the new city without waiting out that minute. If the
-store is unavailable or contains an invalid value, Lisbon is used as the
+next visitor picks up the new country without waiting out that minute. If the
+store is unavailable or contains an invalid value, Portugal is used as the
 home base.
 
 Create a Global Config store in Vercel, connect it to this project, and configure:
@@ -63,20 +63,19 @@ Create a Global Config store in Vercel, connect it to this project, and configur
 | `LOCATION_UPDATE_SECRET` | A separate, random secret known by the iPhone Shortcut |
 
 The initial store item is optional. When present, its key is
-`current_location`. Version 1 records (current place only) are still readable
-and are upgraded on the next successful update. The stored shape is:
+`current_location`. Version 1 and 2 records are still readable and are
+upgraded to version 3 (country only, no locality names) on the next
+successful update. The stored shape is:
 
 ```json
 {
-  "version": 2,
-  "city": "Lisbon",
+  "version": 3,
   "country": "Portugal",
   "latitude": 38.72,
   "longitude": -9.14,
   "updatedAt": "2026-08-01T08:00:00.000Z",
   "places": [
     {
-      "city": "Lisbon",
       "country": "Portugal",
       "latitude": 38.72,
       "longitude": -9.14,
@@ -88,12 +87,13 @@ and are upgraded on the next successful update. The stored shape is:
 ```
 
 The protected endpoint accepts `POST /api/location/update` with a bearer token.
-The request body is unchanged: `city`, `country`, `latitude`, and `longitude`.
-It validates city and country names, accepts the numeric or plain-text decimal
-coordinates produced by Apple Shortcuts, and rounds them to two decimals. Each
-accepted ping updates the current place, increments that place's day count
-once per UTC calendar day, and keeps at most three distinct places, so a
-retried Shortcut run does not double-count or grow the store.
+The request body is `country`, `latitude`, and `longitude`. Extra fields are
+ignored. It validates the country name, accepts the numeric or plain-text
+decimal coordinates produced by Apple Shortcuts, and rounds them to two
+decimals. Each accepted ping updates the current country, increments that
+country's day count once per UTC calendar day, and keeps at most three
+distinct countries, so a retried Shortcut run does not double-count or grow
+the store.
 It rejects whole-degree coordinates instead of guessing or substituting a place.
 Never expose `GLOBAL_CONFIG_WRITE_TOKEN` to the Shortcut. Give the token access
 only to this project, set an expiration, and record its rotation date in Vercel.
@@ -103,16 +103,14 @@ only to this project, set an expiration, and record its rotation date in Vercel.
 Create a Shortcut named **Update website location**:
 
 1. Add **Get Current Location**.
-2. Read **City**, **Country**, **Latitude**, and **Longitude** from that location.
-   The weather service uses latitude and longitude directly, so small localities
-   such as Azeitão do not need to be replaced with a nearby large city.
-   Pass the four magic variables directly into the JSON body. Do not add a
+2. Read **Country**, **Latitude**, and **Longitude** from that location.
+   Pass the three magic variables directly into the JSON body. Do not add a
    **Number** or **Format Number** action, because it can strip coordinate
    precision under locale-specific formatting.
 3. Add **Get Contents of URL** using
    `https://www.hugodemenez.fr/api/location/update`.
-4. Choose `POST`, set the request body to JSON, and add the four fields as
-   `city`, `country`, `latitude`, and `longitude`.
+4. Choose `POST`, set the request body to JSON, and add the three fields as
+   `country`, `latitude`, and `longitude`.
 5. Add an `Authorization` header whose value is
    `Bearer <LOCATION_UPDATE_SECRET>`.
 6. If the response's `ok` value is not true, show a failure notification.
@@ -120,7 +118,7 @@ Create a Shortcut named **Update website location**:
 In the Shortcuts **Automation** tab, create a daily 8:00 AM automation, select
 this Shortcut, enable **Run Immediately**, and disable success notifications.
 Run it manually once before enabling the schedule and confirm the endpoint
-returns `200` with the city and `updatedAt` fields.
+returns `200` with the country and `updatedAt` fields.
 
 ### Recent runs
 
@@ -139,15 +137,14 @@ in the background. The server loads the last 180 days, drops walks
 and HealthKit/Strava duplicates, then groups mapped routes that start
 in the same area. Each card is a smooth polyline of the latest loop
 with faint traces of the other runs there. The grid is captioned
-“Areas where I usually run.” Shape has no city field, so a card
-shows a place name only when the cluster sits near one of the few
-stays in `current_location` (within 15 km, wide enough for a Lille
-stay to cover runs in Croix). Route clustering itself stays at 8 km
-so distinct loops do not merge. Otherwise the name is omitted. Cards
-also show run count and day span. If the Shape key is missing, Shape
-is unreachable, or the live payload is empty, the page uses a
-checked-in snapshot of mapped runs (the same idea as the Lisbon home
-base and the Edith Piaf track).
+“Areas where I usually run.” Shape has no country field, so a card
+shows a country only when the cluster sits near one of the few
+stays in `current_location` (within 15 km). Route clustering itself
+stays at 8 km so distinct loops do not merge. Otherwise the name is
+omitted. Cards also show run count and day span. If the Shape key is
+missing, Shape is unreachable, or the live payload is empty, the page
+uses a checked-in snapshot of mapped runs (the same idea as the
+Portugal home base and the Edith Piaf track).
 
 ### Spotify authorization
 

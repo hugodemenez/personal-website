@@ -48,14 +48,14 @@ function encodePolyline(points: Array<[number, number]>): string {
   return result;
 }
 
-const LISBON_LOOP: Array<[number, number]> = [
+const PORTUGAL_LOOP: Array<[number, number]> = [
   [38.553, -9.018],
   [38.554, -9.016],
   [38.552, -9.015],
   [38.551, -9.017],
   [38.553, -9.018],
 ];
-const LILLE_LOOP: Array<[number, number]> = [
+const FRANCE_LOOP: Array<[number, number]> = [
   [50.665, 3.166],
   [50.667, 3.168],
   [50.666, 3.17],
@@ -161,7 +161,7 @@ test("turns a polyline into an SVG path", () => {
 });
 
 test("keeps nearby routes together and drops a distant one", () => {
-  const lisbonLoop: Array<[number, number]> = [
+  const nearbyLoop: Array<[number, number]> = [
     [38.553, -9.018],
     [38.554, -9.016],
     [38.552, -9.015],
@@ -171,30 +171,30 @@ test("keeps nearby routes together and drops a distant one", () => {
     [38.5542, -9.0162],
     [38.5521, -9.0151],
   ];
-  const lille: Array<[number, number]> = [
+  const distantLoop: Array<[number, number]> = [
     [50.665, 3.166],
     [50.667, 3.168],
   ];
 
-  const cluster = selectPrimaryRouteCluster([lisbonLoop, sameLoop, lille]);
+  const cluster = selectPrimaryRouteCluster([nearbyLoop, sameLoop, distantLoop]);
   assert.equal(cluster.length, 2);
 });
 
 test("pathContainment is high when a short loop sits on a longer one", () => {
-  const short = LISBON_LOOP.slice(0, 3);
-  assert.ok(pathContainment(short, LISBON_LOOP) > 0.7);
-  assert.ok(pathContainment(LISBON_LOOP, LILLE_LOOP) < 0.2);
+  const short = PORTUGAL_LOOP.slice(0, 3);
+  assert.ok(pathContainment(short, PORTUGAL_LOOP) > 0.7);
+  assert.ok(pathContainment(PORTUGAL_LOOP, FRANCE_LOOP) < 0.2);
 });
 
 test("selectDistinctPaths keeps one card per similar route", () => {
-  const lisbonA = activity({
-    id: "lisbon-a",
+  const portugalA = activity({
+    id: "portugal-a",
     date: "2026-08-14T07:00:00Z",
     title: "Tempo 2km",
-    map: encodePolyline(LISBON_LOOP),
+    map: encodePolyline(PORTUGAL_LOOP),
   });
-  const lisbonB = activity({
-    id: "lisbon-b",
+  const portugalB = activity({
+    id: "portugal-b",
     date: "2026-08-10T07:00:00Z",
     title: "Tempo 5km",
     distance: 5200,
@@ -206,15 +206,15 @@ test("selectDistinctPaths keeps one card per similar route", () => {
       [38.553, -9.018],
     ]),
   });
-  const lille = activity({
-    id: "lille-1",
+  const france = activity({
+    id: "france-1",
     date: "2026-06-30T17:00:00Z",
     title: "Afternoon Run",
     distance: 8000,
-    map: encodePolyline(LILLE_LOOP),
+    map: encodePolyline(FRANCE_LOOP),
   });
 
-  const paths = selectDistinctPaths([lisbonA, lisbonB, lille]);
+  const paths = selectDistinctPaths([portugalA, portugalB, france]);
 
   assert.equal(paths.length, 2);
   assert.equal(paths[0].run.title, "Tempo 2km");
@@ -243,7 +243,7 @@ test("selectDistinctPaths keeps one card per similar route", () => {
 });
 
 test("sketchRoutes draws the latest loop and faint traces of the others", () => {
-  const sketch = sketchRoutes([LISBON_LOOP, LILLE_LOOP]);
+  const sketch = sketchRoutes([PORTUGAL_LOOP, FRANCE_LOOP]);
   assert.ok(sketch);
   assert.equal(sketch?.width, 240);
   assert.equal(sketch?.height, 80);

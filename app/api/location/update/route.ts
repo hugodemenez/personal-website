@@ -35,7 +35,6 @@ function loggedPayload(payload: unknown) {
   if (!isRecord(payload)) return { payloadType: typeof payload };
 
   return {
-    city: payload.city,
     country: payload.country,
     latitude: payload.latitude,
     longitude: payload.longitude,
@@ -153,7 +152,9 @@ export async function POST(request: Request) {
     return json({ ok: false, error: "Location storage unavailable" }, 503);
   }
 
-  const currentPlace = stored.places.find((place) => place.city === stored.city);
+  const currentPlace = stored.places.find((place) =>
+    place.country === stored.country
+  );
   try {
     revalidateTag(LOCATION_CACHE_TAG, "max");
   } catch {
@@ -161,7 +162,6 @@ export async function POST(request: Request) {
   }
 
   console.info("Location update stored", {
-    city: stored.city,
     country: stored.country,
     latitude: stored.latitude,
     longitude: stored.longitude,
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
   return json(
     {
       ok: true,
-      location: { city: stored.city, updatedAt: stored.updatedAt },
+      location: { country: stored.country, updatedAt: stored.updatedAt },
     },
     200
   );

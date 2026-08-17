@@ -3,16 +3,14 @@ import test from "node:test";
 import { composeLocationWeather } from "./location";
 import type { StoredLocation } from "./location-data";
 
-const paris: StoredLocation = {
-  version: 2,
-  city: "Paris",
+const france: StoredLocation = {
+  version: 3,
   country: "France",
   latitude: 48.86,
   longitude: 2.35,
   updatedAt: "2026-08-01T08:00:00.000Z",
   places: [
     {
-      city: "Paris",
       country: "France",
       latitude: 48.86,
       longitude: 2.35,
@@ -22,9 +20,9 @@ const paris: StoredLocation = {
   ],
 };
 
-test("uses Lisbon as the home base when Global Config has no valid record", () => {
+test("uses Portugal as the home base when Global Config has no valid record", () => {
   assert.deepEqual(composeLocationWeather(null, null), {
-    location: "Lisbon",
+    location: "Portugal",
     country: "Portugal",
     timeZone: "Europe/Lisbon",
     temperature: null,
@@ -35,31 +33,31 @@ test("uses Lisbon as the home base when Global Config has no valid record", () =
 });
 
 test("preserves a saved location during an independent weather outage", () => {
-  assert.deepEqual(composeLocationWeather(paris, null), {
-    location: "Paris",
+  assert.deepEqual(composeLocationWeather(france, null), {
+    location: "France",
     country: "France",
     timeZone: null,
     temperature: null,
     condition: null,
-    updatedAt: paris.updatedAt,
+    updatedAt: france.updatedAt,
     isHomeBase: false,
   });
 });
 
 test("combines the saved location with timezone-aware current weather", () => {
   assert.deepEqual(
-    composeLocationWeather(paris, {
+    composeLocationWeather(france, {
       timeZone: "Europe/Paris",
       temperature: 26,
       condition: "Clear",
     }),
     {
-      location: "Paris",
+      location: "France",
       country: "France",
       timeZone: "Europe/Paris",
       temperature: 26,
       condition: "Clear",
-      updatedAt: paris.updatedAt,
+      updatedAt: france.updatedAt,
       isHomeBase: false,
     }
   );
