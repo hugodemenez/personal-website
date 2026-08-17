@@ -157,12 +157,18 @@ export async function getCurrentLocationWeather(): Promise<LocationWeather> {
 }
 
 export async function getStayRunAreas(): Promise<
-  Array<{ city: string; latitude: number; longitude: number }>
+  Array<{
+    city: string;
+    country?: string;
+    latitude: number;
+    longitude: number;
+  }>
 > {
   const saved = await readCurrentLocation();
   if (!saved) return [];
   return saved.places.map((place) => ({
     city: place.city,
+    ...(place.country ? { country: place.country } : {}),
     latitude: place.latitude,
     longitude: place.longitude,
   }));

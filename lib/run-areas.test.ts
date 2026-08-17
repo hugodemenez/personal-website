@@ -37,26 +37,26 @@ function path(overrides: Partial<DistinctPath> = {}): DistinctPath {
 
 test("matches a cluster only when it sits on a known stay", () => {
   const areas = [
-    { name: "Azeitão", center: [38.553, -9.018] as [number, number] },
-    { name: "Lille", center: [50.63, 3.06] as [number, number] },
+    { name: "Portugal", center: [38.553, -9.018] as [number, number] },
+    { name: "France", center: [50.63, 3.06] as [number, number] },
   ];
 
-  assert.equal(matchRunArea([38.553, -9.018], areas)?.name, "Azeitão");
-  assert.equal(matchRunArea([50.63, 3.06], areas)?.name, "Lille");
+  assert.equal(matchRunArea([38.553, -9.018], areas)?.name, "Portugal");
+  assert.equal(matchRunArea([50.63, 3.06], areas)?.name, "France");
   assert.equal(matchRunArea([48.8566, 2.3522], areas), null);
 });
 
 test("names Croix runs from a Lille stay just beyond the cluster radius", () => {
   const croixCluster: [number, number] = [50.669, 3.173];
-  const lilleStay = { name: "Lille", center: [50.63, 3.06] as [number, number] };
+  const lilleStay = { name: "France", center: [50.63, 3.06] as [number, number] };
   const azeitaoStay = {
-    name: "Azeitão",
+    name: "Portugal",
     center: [38.52, -9.02] as [number, number],
   };
 
   assert.ok(STAY_MATCH_RADIUS_KM > CLUSTER_RADIUS_KM);
   assert.equal(matchRunArea(croixCluster, [lilleStay], CLUSTER_RADIUS_KM), null);
-  assert.equal(matchRunArea(croixCluster, [lilleStay])?.name, "Lille");
+  assert.equal(matchRunArea(croixCluster, [lilleStay])?.name, "France");
   assert.equal(matchRunArea(croixCluster, [azeitaoStay]), null);
 });
 
@@ -87,19 +87,30 @@ test("names cards from recent stays and leaves the rest blank", () => {
       }),
     ],
     [
-      { name: "Azeitão", center: [38.52, -9.02] },
-      { name: "Lille", center: [50.63, 3.06] },
+      { name: "Portugal", center: [38.52, -9.02] },
+      { name: "France", center: [50.63, 3.06] },
     ]
   );
 
-  assert.equal(named[0].placeName, "Azeitão");
-  assert.equal(named[1].placeName, "Lille");
+  assert.equal(named[0].placeName, "Portugal");
+  assert.equal(named[1].placeName, "France");
   assert.equal(named[2].placeName, null);
 });
 
-test("reads stay cities as name sources", () => {
+test("labels stays with the country and falls back to the city", () => {
   assert.deepEqual(
-    stayAreasFromPlaces([{ city: "Azeitão", latitude: 38.52, longitude: -9.02 }]),
-    [{ name: "Azeitão", center: [38.52, -9.02] }]
+    stayAreasFromPlaces([
+      {
+        city: "Azeitão",
+        country: "Portugal",
+        latitude: 38.52,
+        longitude: -9.02,
+      },
+      { city: "Lille", latitude: 50.63, longitude: 3.06 },
+    ]),
+    [
+      { name: "Portugal", center: [38.52, -9.02] },
+      { name: "Lille", center: [50.63, 3.06] },
+    ]
   );
 });

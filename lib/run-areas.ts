@@ -6,8 +6,8 @@ export interface RunArea {
 }
 
 // Route clustering stays tight so two nearby loops become one card.
-// Naming is looser: a stay in Lille should still label runs in Croix
-// (~9 km), without reaching from Azeitão to Lisbon (~25 km).
+// Naming is looser: a stay in Lille should still label nearby Croix
+// runs (~9 km) as France, without reaching from Azeitão to Lisbon (~25 km).
 export const STAY_MATCH_RADIUS_KM = 15;
 
 export function matchRunArea(
@@ -43,12 +43,13 @@ export function applyRunAreaNames(
 export function stayAreasFromPlaces(
   places: ReadonlyArray<{
     city: string;
+    country?: string | null;
     latitude: number;
     longitude: number;
   }>
 ): RunArea[] {
   return places.map((place) => ({
-    name: place.city,
+    name: place.country?.trim() || place.city,
     center: [place.latitude, place.longitude],
   }));
 }
