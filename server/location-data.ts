@@ -37,7 +37,7 @@ export interface VisitedPlace {
   isHomeBase: boolean;
 }
 
-interface GlobalConfigWriteEnvironment {
+export interface GlobalConfigWriteEnvironment {
   GLOBAL_CONFIG_ID?: string;
   GLOBAL_CONFIG_WRITE_TOKEN?: string;
   GLOBAL_CONFIG_TEAM_ID?: string;
@@ -369,6 +369,37 @@ function globalConfigUrl(
     url.searchParams.set("teamId", environment.GLOBAL_CONFIG_TEAM_ID);
   }
   return url;
+}
+
+export function resolveGlobalConfigConnection(
+  env: NodeJS.ProcessEnv = process.env
+): string | undefined {
+  const connection = env.GLOBAL_CONFIG?.trim() || env.EDGE_CONFIG?.trim();
+  return connection || undefined;
+}
+
+export function globalConfigApiEnvironment(
+  env: NodeJS.ProcessEnv = process.env
+): GlobalConfigWriteEnvironment {
+  return {
+    GLOBAL_CONFIG_ID: env.GLOBAL_CONFIG_ID,
+    GLOBAL_CONFIG_WRITE_TOKEN: env.GLOBAL_CONFIG_WRITE_TOKEN,
+    GLOBAL_CONFIG_TEAM_ID: env.GLOBAL_CONFIG_TEAM_ID,
+  };
+}
+
+export async function readStoredLocationViaApi(
+  environment: GlobalConfigWriteEnvironment
+): Promise<StoredLocation | null> {
+  const readRequest = createGlobalConfigReadRequest(environment);
+  if (!readRequest) return null;
+
+  const response = await fetch(readRequest.url, readRequest.init);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Global Config read failed");
+
+  const body: unknown = await response.json();
+  return parseStoredLocationResponse(body);
 }
 
 export function createGlobalConfigReadRequest(
