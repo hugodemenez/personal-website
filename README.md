@@ -56,9 +56,9 @@ Create a Global Config store in Vercel, connect it to this project, and configur
 
 | Variable | Purpose |
 | --- | --- |
-| `GLOBAL_CONFIG` | Read connection string injected by the Global Config connection |
-| `GLOBAL_CONFIG_ID` | Store ID used by the update route |
-| `GLOBAL_CONFIG_WRITE_TOKEN` | Sensitive, project-scoped Vercel access token used only by the server-side write route |
+| `GLOBAL_CONFIG` | Read connection string injected by the Global Config connection. A leftover `EDGE_CONFIG` connection string is still accepted |
+| `GLOBAL_CONFIG_ID` | Store ID used by the update route, and by the homepage when the connection string is missing |
+| `GLOBAL_CONFIG_WRITE_TOKEN` | Sensitive, project-scoped Vercel access token used only by the server-side write and fallback read routes |
 | `GLOBAL_CONFIG_TEAM_ID` | Optional team ID for a team-owned store |
 | `LOCATION_UPDATE_SECRET` | A separate, random secret known by the iPhone Shortcut |
 
