@@ -50,7 +50,9 @@ Weather responses are cached separately by rounded coordinates for several
 minutes. A successful Shortcut ping also revalidates the location tag so the
 next visitor picks up the new country without waiting out that minute. If the
 store is unavailable or contains an invalid value, Portugal is used as the
-home base.
+home base. The homepage first reads through the SDK connection string
+(`GLOBAL_CONFIG`, or a leftover `EDGE_CONFIG`), then the same REST credentials
+the Shortcut write route already uses.
 
 Create a Global Config store in Vercel, connect it to this project, and configure:
 
