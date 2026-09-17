@@ -5,16 +5,19 @@ import {
   MAP_HEIGHT,
   MAP_WIDTH,
   WANTED_PLACES,
+  applyResumeToStayCircles,
   closestPlaceCircle,
   continentPaths,
   continentRing,
   drawOrder,
   projectLocation,
+  resumeCircles,
   stayKind,
   wantedCircles,
   zoneCenter,
   zoneCircles,
 } from "./world-map";
+import { RESUME_PLACES } from "./resume-places";
 
 const portugal: VisitedPlace = {
   country: "Portugal",
@@ -148,4 +151,33 @@ test("draws circles west to east so they appear one by one", () => {
   for (let index = 1; index < ordered.length; index += 1) {
     assert.ok(ordered[index].x >= ordered[index - 1].x);
   }
+});
+
+test("hides CV beats on the map and folds them into matching stays", () => {
+  const labels = resumeCircles().map((circle) => circle.label);
+  assert.deepEqual(
+    labels.sort(),
+    ["Foundever", "France", "Harvard", "Portugal"].sort()
+  );
+  assert.ok(resumeCircles().every((circle) => circle.kind === "resume" && circle.detail));
+
+  const harvard = resumeCircles().find((circle) => circle.label === "Harvard");
+  const foundever = resumeCircles().find((circle) => circle.label === "Foundever");
+  const sanFrancisco = wantedCircles().find((circle) => circle.label === "San Francisco");
+  assert.ok(harvard);
+  assert.ok(foundever);
+  assert.ok(sanFrancisco);
+  assert.ok(harvard.x > sanFrancisco.x);
+  assert.ok(foundever.hitRadius >= 36);
+
+  const merged = applyResumeToStayCircles(zoneCircles([portugal, france]));
+  const portugalMark = merged.find((circle) => circle.label === "Portugal");
+  const franceMark = merged.find((circle) => circle.label === "France");
+  assert.equal(portugalMark?.kind, "habitual");
+  assert.equal(portugalMark?.detail, RESUME_PLACES.find((place) => place.country === "Portugal")?.detail);
+  assert.equal(franceMark?.kind, "casual");
+  assert.equal(franceMark?.detail, RESUME_PLACES.find((place) => place.country === "France")?.detail);
+  assert.equal(merged.filter((circle) => circle.label === "Portugal").length, 1);
+  assert.ok(merged.some((circle) => circle.label === "Harvard"));
+  assert.ok(merged.some((circle) => circle.label === "Foundever"));
 });
