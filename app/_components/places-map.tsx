@@ -9,6 +9,7 @@ import {
   MAP_HEIGHT,
   MAP_PADDING,
   MAP_WIDTH,
+  applyResumeToStayCircles,
   closestPlaceCircle,
   drawOrder,
   wantedCircles,
@@ -49,7 +50,11 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
   const [drawn, setDrawn] = useState(false);
   const replayToken = useDrawReplayToken();
   const circles = useMemo(
-    () => drawOrder([...wantedCircles(), ...zoneCircles(places)]),
+    () =>
+      drawOrder([
+        ...wantedCircles(),
+        ...applyResumeToStayCircles(zoneCircles(places)),
+      ]),
     [places]
   );
   const active = circles.find((circle) => circle.label === activeLabel) ?? null;
@@ -158,7 +163,11 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
             strokeDashoffset={drawn ? 0 : 1}
             strokeLinecap="round"
             strokeOpacity={
-              isActive ? 0.95 : circle.kind === "casual" ? 0.62 : 0.88
+              isActive
+                ? 0.95
+                : circle.kind === "casual" || circle.kind === "resume"
+                  ? 0.62
+                  : 0.88
             }
             strokeWidth={circle.width}
             style={{
@@ -179,9 +188,19 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
           pointerEvents="none"
           textAnchor={active.x > MAP_WIDTH * 0.62 ? "end" : "start"}
           x={active.x + (active.x > MAP_WIDTH * 0.62 ? -22 : 22)}
-          y={active.y - 26}
+          y={active.y - (active.detail ? 40 : 26)}
         >
           {active.label}
+          {active.detail ? (
+            <tspan
+              className="fill-muted"
+              dy="1.35em"
+              fontSize="11"
+              x={active.x + (active.x > MAP_WIDTH * 0.62 ? -22 : 22)}
+            >
+              {active.detail}
+            </tspan>
+          ) : null}
         </text>
       ) : null}
     </g>
