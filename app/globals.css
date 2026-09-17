@@ -69,9 +69,8 @@ body {
   max-width: 36rem;
   margin: 0 auto;
   overflow-x: hidden;
-  /* The header is in normal flow (pinned by transform), so no extra top space
-     is needed for it. env() on the bottom is a no-op without viewport-fit=cover
-     but is kept so the padding stays correct if cover is ever re-enabled. */
+  /* env() on the bottom is a no-op without viewport-fit=cover but is kept
+     so the padding stays correct if cover is ever re-enabled. */
   padding: 2rem 1rem calc(4rem + env(safe-area-inset-bottom));
 }
 
