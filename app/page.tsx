@@ -1,7 +1,6 @@
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
 import RecentRuns from "./_components/recent-runs";
-import SubstackPosts from "./_components/substack-posts";
 import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
 import { LOCATION_CACHE_TAG } from "@/server/location-data";
@@ -264,7 +263,6 @@ export default async function Home() {
         <PlacesMap />
       </main>
       <RecentRuns />
-      <SubstackPosts />
     </>
   );
 }
