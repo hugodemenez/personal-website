@@ -193,9 +193,10 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
           {active.label}
           {active.detail ? (
             <tspan
-              className="fill-muted"
-              dy="1.35em"
-              fontSize="11"
+              className="fill-foreground"
+              dy="1.4em"
+              fillOpacity="0.62"
+              fontSize="12"
               x={active.x + (active.x > MAP_WIDTH * 0.62 ? -22 : 22)}
             >
               {active.detail}
