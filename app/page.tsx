@@ -216,13 +216,13 @@ export default async function Home() {
           <p className="leading-relaxed">
             I don’t spend much time on social networks, only scouting{" "}
             <a
-              className="inline-flex items-center align-baseline text-foreground transition-colors hover:text-accent"
+              className={socialLinkClass}
               href="https://x.com/hugodemenez"
               rel="noopener noreferrer"
               target="_blank"
-              aria-label="X"
             >
               <XIcon />
+              @hugodemenez
             </a>{" "}
             from time to time to keep an eye on the latest developments around
             AI or design inspirations.
