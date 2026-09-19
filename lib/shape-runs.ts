@@ -51,19 +51,15 @@ export interface PathSketch {
 
 export interface DistinctPath {
   run: RecentRun;
-  count: number;
-  spanDays: number;
   sketch: PathSketch | null;
   center: [number, number];
   placeName: string | null;
-  averageDistanceLabel: string | null;
-  averageDurationLabel: string | null;
-  averagePaceLabel: string | null;
-  totalDistanceLabel: string | null;
 }
 
 export const RECENT_RUN_LIMIT = 6;
-export const DISTINCT_PATH_LIMIT = 8;
+// Homepage grid is two columns. Six individual runs is three rows —
+// enough recent activity without packing nearby loops into one card.
+export const DISTINCT_PATH_LIMIT = 6;
 export const PATH_OVERLAP = 0.4;
 export const WALKING_PACE_SEC_PER_KM = 9 * 60;
 export const MAP_WIDTH = 120;
@@ -550,41 +546,6 @@ export function buildRouteHeatmap(
   return buildRouteHeatmapFromRoutes(routes);
 }
 
-export function averageClusterStats(activities: ShapeActivity[]): {
-  averageDistanceLabel: string | null;
-  averageDurationLabel: string | null;
-  averagePaceLabel: string | null;
-  totalDistanceLabel: string | null;
-} {
-  const distances = activities.flatMap((activity) =>
-    typeof activity.distance === "number" ? [activity.distance] : []
-  );
-  const durations = activities.flatMap((activity) =>
-    typeof activity.duration === "number" ? [activity.duration] : []
-  );
-  const totalDistance =
-    distances.length > 0
-      ? distances.reduce((sum, value) => sum + value, 0)
-      : null;
-  const distance =
-    totalDistance !== null ? totalDistance / distances.length : null;
-  const duration =
-    durations.length > 0
-      ? durations.reduce((sum, value) => sum + value, 0) / durations.length
-      : null;
-
-  return {
-    averageDistanceLabel: distance !== null ? formatDistance(distance) : null,
-    averageDurationLabel: duration !== null ? formatDuration(duration) : null,
-    averagePaceLabel:
-      distance !== null && duration !== null
-        ? formatPace(distance, duration)
-        : null,
-    totalDistanceLabel:
-      totalDistance !== null ? formatDistance(totalDistance) : null,
-  };
-}
-
 export function selectDistinctPaths(
   activities: ShapeActivity[],
   limit = DISTINCT_PATH_LIMIT
@@ -592,59 +553,23 @@ export function selectDistinctPaths(
   const mapped = selectRecentRuns(activities, Number.POSITIVE_INFINITY).filter(
     (activity) => activity.map
   );
-  const clusters: Array<{
-    activities: ShapeActivity[];
-    routes: Array<Array<[number, number]>>;
-    center: [number, number];
-  }> = [];
+  const paths: DistinctPath[] = [];
 
   for (const activity of mapped) {
+    if (paths.length >= limit) break;
+
     const points = decodePolyline(activity.map as string);
     if (points.length < 2) continue;
 
-    const routeCenter = centroid(points);
-    let nearest: (typeof clusters)[number] | null = null;
-    let nearestDistance = Infinity;
-
-    for (const cluster of clusters) {
-      const distance = distanceKm(routeCenter, cluster.center);
-      if (distance < nearestDistance) {
-        nearest = cluster;
-        nearestDistance = distance;
-      }
-    }
-
-    if (nearest && nearestDistance <= CLUSTER_RADIUS_KM) {
-      nearest.activities.push(activity);
-      nearest.routes.push(points);
-      const n = nearest.routes.length;
-      nearest.center = [
-        (nearest.center[0] * (n - 1) + routeCenter[0]) / n,
-        (nearest.center[1] * (n - 1) + routeCenter[1]) / n,
-      ];
-    } else {
-      clusters.push({
-        activities: [activity],
-        routes: [points],
-        center: routeCenter,
-      });
-    }
+    paths.push({
+      run: toRecentRun(activity),
+      sketch: sketchRoutes([points]),
+      center: centroid(points),
+      placeName: null,
+    });
   }
 
-  return clusters.slice(0, limit).map((cluster) => {
-    const newest = cluster.activities[0];
-    const oldest = cluster.activities[cluster.activities.length - 1];
-
-    return {
-      run: toRecentRun(newest),
-      count: cluster.activities.length,
-      spanDays: spanDays(oldest.date, newest.date),
-      sketch: sketchRoutes(cluster.routes),
-      center: cluster.center,
-      placeName: null,
-      ...averageClusterStats(cluster.activities),
-    };
-  });
+  return paths;
 }
 
 function activityScore(activity: ShapeActivity): number {

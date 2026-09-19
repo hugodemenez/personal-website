@@ -1,30 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { FALLBACK_SHAPE_ACTIVITIES } from "../lib/shape-runs-fallback";
+import { DISTINCT_PATH_LIMIT } from "../lib/shape-runs";
 import { resolveRunningPaths } from "./shape";
 
-test("the checked-in snapshot still draws the two place cards", () => {
+test("the checked-in snapshot still draws one card per recent run", () => {
   const paths = resolveRunningPaths(FALLBACK_SHAPE_ACTIVITIES);
 
-  assert.equal(paths.length, 2);
-  assert.equal(paths[0].placeName, null);
-  assert.equal(paths[1].placeName, null);
-  assert.ok(paths[0].center[0] > 38 && paths[0].center[0] < 39);
-  assert.ok(paths[1].center[0] > 50 && paths[1].center[0] < 51);
-  assert.equal(paths[0].count, 14);
-  assert.equal(paths[0].spanDays, 36);
-  assert.equal(paths[0].totalDistanceLabel, "88.4 km");
-  assert.equal(paths[1].count, 17);
-  assert.equal(paths[1].spanDays, 129);
-  assert.equal(paths[1].totalDistanceLabel, "82.2 km");
-  assert.ok(paths[0].sketch?.path);
-  assert.ok(paths[1].sketch?.path);
+  assert.equal(paths.length, DISTINCT_PATH_LIMIT);
+  assert.equal(new Set(paths.map((path) => path.run.id)).size, paths.length);
+  assert.equal(paths[0].run.title, "Tempo 2km");
+  assert.equal(paths[1].run.title, "Mile Repeats");
+  for (const path of paths) {
+    assert.equal(path.placeName, null);
+    assert.ok(path.sketch?.path);
+    assert.equal(path.sketch?.traces.length, 0);
+  }
 });
 
 test("empty or failed Shape payloads fall back to the snapshot", () => {
   const paths = resolveRunningPaths([]);
 
-  assert.equal(paths.length, 2);
+  assert.equal(paths.length, DISTINCT_PATH_LIMIT);
   assert.equal(paths[0].run.title, "Tempo 2km");
-  assert.equal(paths[1].run.title, "Afternoon Run");
+  assert.equal(paths[1].run.title, "Mile Repeats");
 });
