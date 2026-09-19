@@ -3,8 +3,8 @@
 import { useDrawReplayToken } from "./draw-replay";
 import {
   DRAW_MS,
-  INSTANT_VISIBLE_RATIO,
-  shouldRevealImmediately,
+  DRAW_VISIBLE_RATIO,
+  shouldStartDraw,
 } from "@/lib/path-draw";
 import type { PathSketch } from "@/lib/shape-runs";
 import { useEffect, useRef } from "react";
@@ -64,31 +64,20 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
 
     playRef.current = play;
 
-    let firstObservation = true;
     let drawn = false;
 
-    // Draw as soon as the map is in view. If it is already at least
-    // one-third visible on first observe (page load, no scroll), skip
-    // the animation and paint the stroke immediately.
+    // Begin the 1s stroke as soon as about one-third of the map is
+    // visible — including on first observe. Do not wait for mid-screen
+    // and do not skip the animation just because it is already on screen.
     const drawObserver = new IntersectionObserver(
       ([entry]) => {
-        if (!entry) return;
-
-        if (firstObservation) {
-          firstObservation = false;
-          if (shouldRevealImmediately(entry.intersectionRatio)) {
-            reveal();
-            drawn = true;
-            return;
-          }
-        }
-
-        if (entry.isIntersecting && !drawn) {
+        if (!entry || drawn) return;
+        if (shouldStartDraw(entry.intersectionRatio)) {
           play();
           drawn = true;
         }
       },
-      { threshold: [0, INSTANT_VISIBLE_RATIO] }
+      { threshold: DRAW_VISIBLE_RATIO }
     );
 
     // Reset only once fully off screen so a small scroll back does not
