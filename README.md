@@ -129,22 +129,21 @@ The homepage Running section reads completed `run` activities from
 | --- | --- |
 | `SHAPE_API_KEY` | Bearer token from Shape Settings → API access (`shape_…`) |
 
-The heading and why-I-run note are static. The route cards are a
+The heading and why-I-run note are static. The run list is a
 cached component (`use cache`, `cacheLife("hours")`) rendered in the
-static tree, so Next prerenders them during `next build` and the first
+static tree, so Next prerenders it during `next build` and the first
 Shape fetch happens there. Later requests reuse that HTML and refresh
 in the background. The server loads the last 180 days, drops walks
-and HealthKit/Strava duplicates, then groups mapped routes that start
-in the same area. Each card is a smooth polyline of the latest loop
-with faint traces of the other runs there. The grid is captioned
-“Areas where I usually run.” Shape has no country field, so a card
-shows a country only when the cluster sits near one of the few
-stays in `current_location` (within 15 km). Route clustering itself
-stays at 8 km so distinct loops do not merge. Otherwise the name is
-omitted. Cards also show run count and day span. If the Shape key is
-missing, Shape is unreachable, or the live payload is empty, the page
-uses a checked-in snapshot of mapped runs (the same idea as the
-Portugal home base and the Edith Piaf track).
+and HealthKit/Strava duplicates, then shows each mapped run as its
+own row (capped at six). Each row is a smooth polyline of that run
+beside the activity title and compact stats. The list is captioned
+“Recent mapped runs.” Shape has no country field, so a row shows a
+country only when the run sits near one of the few stays in
+`current_location` (within 15 km). Otherwise the name is omitted.
+Rows also show the date, distance, duration, and pace. If the Shape
+key is missing, Shape is unreachable, or the live payload is empty,
+the page uses a checked-in snapshot of mapped runs (the same idea as
+the Portugal home base and the Edith Piaf track).
 
 ### Spotify authorization
 

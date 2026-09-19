@@ -1,48 +1,34 @@
 import { PathMap } from "./path-map";
 import type { DistinctPath } from "@/lib/shape-runs";
 
-function PathCard({ path }: { path: DistinctPath }) {
-  const averages = [
-    path.averageDistanceLabel,
-    path.averageDurationLabel,
-    path.averagePaceLabel,
+function PathRow({ path }: { path: DistinctPath }) {
+  const description = path.run.title;
+  const stats = [
+    path.run.dateLabel,
+    path.run.distanceLabel,
+    path.run.durationLabel,
+    path.run.paceLabel,
   ].filter(Boolean);
-  const spanDays = path.spanDays ?? 1;
-  const runLabel = path.count === 1 ? "1 run" : `${path.count} runs`;
-  const spanLabel = spanDays === 1 ? "1 day" : `${spanDays} days`;
-  const heading = `${runLabel} over ${spanLabel}`;
-  const total = path.totalDistanceLabel
-    ? `${path.totalDistanceLabel} total`
-    : null;
-  const average = averages.length ? `Average ${averages.join(" · ")}` : null;
-  const ariaLabel = [path.placeName, heading, total, average]
+  const ariaLabel = [description, path.placeName, stats.join(" · ")]
     .filter(Boolean)
     .join(". ");
 
   return (
-    <div className="text-center" aria-label={ariaLabel}>
+    <div className="flex items-center gap-4 sm:gap-5" aria-label={ariaLabel}>
       {path.sketch ? <PathMap sketch={path.sketch} /> : null}
-      {path.placeName ? (
-        <>
-          <h3 className="mt-3 text-base leading-snug tracking-[-0.015em] text-foreground sm:text-[1.05rem]">
-            {path.placeName}
-          </h3>
-          <p className="mt-1 text-sm text-muted/70">{heading}</p>
-        </>
-      ) : (
-        <h3 className="mt-3 text-base leading-snug tracking-[-0.015em] text-foreground sm:text-[1.05rem]">
-          {heading}
+      <div className="min-w-0">
+        <h3 className="text-base leading-snug tracking-[-0.015em] text-foreground sm:text-[1.05rem]">
+          {description}
         </h3>
-      )}
-      {total ? (
-        <p className="mt-1 text-sm tabular-nums text-muted/70">{total}</p>
-      ) : null}
-      {averages.length ? (
-        <p className="mt-1 text-sm text-muted/70">
-          <span className="block">Average</span>
-          <span className="tabular-nums">{averages.join(" · ")}</span>
-        </p>
-      ) : null}
+        {path.placeName ? (
+          <p className="mt-0.5 text-sm text-muted/70">{path.placeName}</p>
+        ) : null}
+        {stats.length ? (
+          <p className="mt-0.5 text-sm tabular-nums text-muted/70">
+            {stats.join(" · ")}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -50,11 +36,14 @@ function PathCard({ path }: { path: DistinctPath }) {
 export function RunPaths({ paths }: { paths: DistinctPath[] }) {
   return (
     <div className="mt-8">
-      <p className="text-sm text-muted">Areas where I usually run.</p>
-      <ul className="mt-4 grid grid-cols-2 justify-items-center gap-x-4 gap-y-8 sm:gap-x-6">
+      <p className="text-sm text-muted">Recent mapped runs.</p>
+      <ul className="mt-4">
         {paths.map((path) => (
-          <li key={path.run.id} className="w-full max-w-[15rem]">
-            <PathCard path={path} />
+          <li
+            key={path.run.id}
+            className="border-t border-border/70 py-4 first:border-t-0 first:pt-0 last:pb-0"
+          >
+            <PathRow path={path} />
           </li>
         ))}
       </ul>

@@ -36,8 +36,8 @@ export function PostHeader({ post }: { post: SubstackPost }) {
       <div className="relative">
         <div className="mt-4 flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            {/* Same serif treatment as "Hugo Demenez" and the Writing heading —
-                one step down in scale because this one is pinned. */}
+            {/* Same serif treatment as "Hugo Demenez" — one step down in
+                scale because this one is pinned. */}
             <SharedTransition name={postTitleTransitionName(post.slug)}>
               <h1 className="mb-0 font-serif text-3xl leading-[1.05] tracking-[-0.035em] text-foreground sm:text-4xl">
                 {post.title}
