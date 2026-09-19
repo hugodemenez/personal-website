@@ -17,6 +17,8 @@ import {
   pathContainment,
   selectDistinctPaths,
   sketchRoutes,
+  DISTINCT_PATH_LIMIT,
+  RECENT_RUN_LIMIT,
   type ShapeActivity,
 } from "./shape-runs";
 
@@ -186,7 +188,7 @@ test("pathContainment is high when a short loop sits on a longer one", () => {
   assert.ok(pathContainment(PORTUGAL_LOOP, FRANCE_LOOP) < 0.2);
 });
 
-test("selectDistinctPaths keeps one card per similar route", () => {
+test("selectDistinctPaths keeps one card per mapped run", () => {
   const portugalA = activity({
     id: "portugal-a",
     date: "2026-08-14T07:00:00Z",
@@ -216,30 +218,49 @@ test("selectDistinctPaths keeps one card per similar route", () => {
 
   const paths = selectDistinctPaths([portugalA, portugalB, france]);
 
-  assert.equal(paths.length, 2);
+  assert.equal(paths.length, 3);
+  assert.deepEqual(
+    paths.map((path) => path.run.id),
+    ["portugal-a", "portugal-b", "france-1"]
+  );
   assert.equal(paths[0].run.title, "Tempo 2km");
   assert.equal(paths[0].placeName, null);
   assert.deepEqual(
     paths[0].center.map((value) => Number(value.toFixed(3))),
-    [38.553, -9.016]
+    [38.553, -9.017]
   );
-  assert.equal(paths[0].count, 2);
-  assert.equal(paths[0].spanDays, 5);
-  assert.equal(paths[0].averageDistanceLabel, "4.9 km");
-  assert.equal(paths[0].averageDurationLabel, "26:44");
-  assert.equal(paths[0].averagePaceLabel, "5:26/km");
-  assert.equal(paths[0].totalDistanceLabel, "9.8 km");
-  assert.equal(paths[1].run.title, "Afternoon Run");
-  assert.equal(paths[1].placeName, null);
-  assert.equal(paths[1].count, 1);
-  assert.equal(paths[1].spanDays, 1);
-  assert.equal(paths[1].averageDistanceLabel, "8.0 km");
-  assert.equal(paths[1].averageDurationLabel, "25:28");
-  assert.equal(paths[1].averagePaceLabel, "3:11/km");
-  assert.equal(paths[1].totalDistanceLabel, "8.0 km");
+  assert.equal(paths[0].run.distanceLabel, "4.6 km");
+  assert.equal(paths[0].run.durationLabel, "25:28");
+  assert.equal(paths[0].run.paceLabel, "5:29/km");
+  assert.equal(paths[1].run.title, "Tempo 5km");
+  assert.equal(paths[1].run.distanceLabel, "5.2 km");
+  assert.equal(paths[2].run.title, "Afternoon Run");
+  assert.equal(paths[2].placeName, null);
   assert.ok(paths[0].sketch?.path);
   assert.match(paths[0].sketch?.path ?? "", /^M[\d.]+ [\d.]+(?: L[\d.]+ [\d.]+)+$/);
-  assert.equal(paths[0].sketch?.traces.length, 1);
+  assert.equal(paths[0].sketch?.traces.length, 0);
+  assert.equal(paths[1].sketch?.traces.length, 0);
+  assert.equal(paths[2].sketch?.traces.length, 0);
+});
+
+test("selectDistinctPaths caps the homepage grid", () => {
+  const many = Array.from({ length: DISTINCT_PATH_LIMIT + 3 }, (_, index) =>
+    activity({
+      id: `run-${index}`,
+      date: `2026-08-${String(14 - index).padStart(2, "0")}T07:00:00Z`,
+      title: `Run ${index}`,
+      map: encodePolyline(PORTUGAL_LOOP),
+    })
+  );
+
+  const paths = selectDistinctPaths(many);
+
+  assert.equal(paths.length, DISTINCT_PATH_LIMIT);
+  assert.equal(DISTINCT_PATH_LIMIT, RECENT_RUN_LIMIT);
+  assert.deepEqual(
+    paths.map((path) => path.run.id),
+    many.slice(0, DISTINCT_PATH_LIMIT).map((run) => run.id)
+  );
 });
 
 test("sketchRoutes draws the latest loop and faint traces of the others", () => {
