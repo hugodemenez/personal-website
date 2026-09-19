@@ -57,8 +57,8 @@ export interface DistinctPath {
 }
 
 export const RECENT_RUN_LIMIT = 6;
-// Homepage grid is two columns. Six individual runs is three rows —
-// enough recent activity without packing nearby loops into one card.
+// Homepage list is one row per run. Six recent mapped runs is enough
+// without packing nearby loops into one card.
 export const DISTINCT_PATH_LIMIT = 6;
 export const PATH_OVERLAP = 0.4;
 export const WALKING_PACE_SEC_PER_KM = 9 * 60;
