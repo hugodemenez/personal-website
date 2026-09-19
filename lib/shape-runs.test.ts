@@ -243,7 +243,7 @@ test("selectDistinctPaths keeps one card per mapped run", () => {
   assert.equal(paths[2].sketch?.traces.length, 0);
 });
 
-test("selectDistinctPaths caps the homepage grid", () => {
+test("selectDistinctPaths caps the homepage list", () => {
   const many = Array.from({ length: DISTINCT_PATH_LIMIT + 3 }, (_, index) =>
     activity({
       id: `run-${index}`,
