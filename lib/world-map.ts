@@ -545,9 +545,10 @@ export function applyResumeToStayCircles(
   const extras: ZoneCircle[] = [];
 
   for (const place of places) {
-    const match = place.country
+    const country = place.country;
+    const match = country
       ? stays.find(
-          (circle) => circle.label.toLowerCase() === place.country.toLowerCase()
+          (circle) => circle.label.toLowerCase() === country.toLowerCase()
         )
       : undefined;
 
