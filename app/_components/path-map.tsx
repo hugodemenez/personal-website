@@ -66,7 +66,7 @@ export function PathMap({ sketch }: { sketch: PathSketch }) {
 
     let drawn = false;
 
-    // Begin the 1s stroke as soon as about one-third of the map is
+    // Begin the 2.5s stroke as soon as about one-third of the map is
     // visible — including on first observe. Do not wait for mid-screen
     // and do not skip the animation just because it is already on screen.
     const drawObserver = new IntersectionObserver(
