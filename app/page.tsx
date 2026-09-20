@@ -190,11 +190,9 @@ export default async function Home() {
             </h1>
           </div>
           <p className="leading-relaxed">
-            I build products and stay avidly curious, always scouting for new
-            advances in AI. Discretionary trading
+            I have been trading
             <TradingCandlestickIcon />
-            is part of that work: turning rough ideas into systems people can
-            actually use. I build{" "}
+            for almost a decade. What I learned there led me to build{" "}
             <a
               className={socialLinkClass}
               href="https://deltalytix.app"
@@ -223,7 +221,8 @@ export default async function Home() {
               <GitHubIcon />
               GitHub
             </a>
-            .
+            : a tool to track my daily progress, and to turn that data into a
+            systematic process.
           </p>
           {track ? (
             <p className="leading-relaxed">
