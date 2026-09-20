@@ -262,10 +262,10 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
             <li key={item.key} ref={setItemRef(item.key)}>
               <button
                 aria-pressed={selected}
-                className={`block w-full rounded-sm py-0.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+                className={`-ml-2 block w-full rounded-sm border-l-2 py-0.5 pl-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
                   selected
-                    ? "text-foreground"
-                    : "text-muted hover:text-foreground"
+                    ? "border-accent text-foreground"
+                    : "border-transparent text-muted hover:text-foreground"
                 }`}
                 onClick={() => toggleSelected(item.key)}
                 onFocus={() => setHoveredLabel(item.key)}
@@ -276,8 +276,8 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
                 }}
                 type="button"
               >
-                <span className="font-medium text-foreground">{item.title}</span>
-                <span className={selected ? "text-foreground/75" : "text-muted"}>
+                <span className="font-medium">{item.title}</span>
+                <span className={selected ? "text-foreground/70" : ""}>
                   {" — "}
                   {item.detail}
                 </span>
