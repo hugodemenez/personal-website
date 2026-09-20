@@ -1,7 +1,15 @@
 "use client";
 
 import { useDrawReplayToken } from "./draw-replay";
-import { useEffect, useMemo, useState, type PointerEvent } from "react";
+import { PlacesMapSvg } from "./places-map-svg";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
 import type { VisitedPlace } from "@/server/location-data";
 import {
   CIRCLE_DRAW_MS,
@@ -17,11 +25,12 @@ import {
   type ProjectedPoint,
   type ZoneCircle,
 } from "@/lib/world-map";
+import { orderResumeList, resumeListItems } from "@/lib/resume-list";
 
 const VIEW_WIDTH = MAP_WIDTH + MAP_PADDING * 2;
 const VIEW_HEIGHT = MAP_HEIGHT + MAP_PADDING * 2;
 
-interface PlaceCirclesProps {
+interface PlacesBlockProps {
   places: VisitedPlace[];
 }
 
@@ -45,8 +54,46 @@ function markClass(circle: ZoneCircle): string {
   return "text-muted/70";
 }
 
-export default function PlaceCircles({ places }: PlaceCirclesProps) {
-  const [activeLabel, setActiveLabel] = useState<string | null>(null);
+function useFlipList(orderKey: string) {
+  const itemRefs = useRef(new Map<string, HTMLElement>());
+  const previousTops = useRef(new Map<string, number>());
+
+  useLayoutEffect(() => {
+    const nextTops = new Map<string, number>();
+    for (const [key, node] of itemRefs.current) {
+      nextTops.set(key, node.getBoundingClientRect().top);
+    }
+
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!reduce) {
+      for (const [key, node] of itemRefs.current) {
+        const previous = previousTops.current.get(key);
+        const next = nextTops.get(key);
+        if (previous == null || next == null) continue;
+        const dy = previous - next;
+        if (Math.abs(dy) < 0.5) continue;
+        node.animate(
+          [{ transform: `translateY(${dy}px)` }, { transform: "none" }],
+          { duration: 320, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
+        );
+      }
+    }
+
+    previousTops.current = nextTops;
+  }, [orderKey]);
+
+  return (key: string) => (node: HTMLElement | null) => {
+    if (node) itemRefs.current.set(key, node);
+    else itemRefs.current.delete(key);
+  };
+}
+
+export default function PlacesBlock({ places }: PlacesBlockProps) {
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const [drawn, setDrawn] = useState(false);
   const replayToken = useDrawReplayToken();
   const circles = useMemo(
@@ -57,7 +104,13 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
       ]),
     [places]
   );
-  const active = circles.find((circle) => circle.label === activeLabel) ?? null;
+  const resumeItems = useMemo(() => resumeListItems(), []);
+  const orderedItems = useMemo(
+    () => orderResumeList(resumeItems, selectedLabel),
+    [resumeItems, selectedLabel]
+  );
+  const setItemRef = useFlipList(orderedItems.map((item) => item.key).join("\0"));
+  const emphasizedLabel = hoveredLabel ?? selectedLabel;
 
   useEffect(() => {
     const section = document.getElementById("places-map");
@@ -109,101 +162,130 @@ export default function PlaceCircles({ places }: PlaceCirclesProps) {
     return () => window.clearTimeout(id);
   }, [replayToken]);
 
-  function activateClosest(event: PointerEvent<Element>, sticky: boolean) {
+  function toggleSelected(label: string | null) {
+    setSelectedLabel((current) => (current === label ? null : label));
+  }
+
+  function activateClosest(
+    event: PointerEvent<Element>,
+    mode: "hover" | "select"
+  ) {
     const point = eventToSvgPoint(event);
     if (!point) return;
 
-    const hit = closestPlaceCircle(point, circles);
+    const hit = closestPlaceCircle(point, circles, {
+      globalFallback: mode === "select",
+    });
+
+    if (mode === "hover") {
+      setHoveredLabel(hit?.label ?? null);
+      return;
+    }
+
     if (!hit) {
-      setActiveLabel(null);
+      setSelectedLabel(null);
       return;
     }
 
-    if (sticky) {
-      setActiveLabel((current) => (current === hit.label ? null : hit.label));
-      return;
-    }
-
-    setActiveLabel(hit.label);
+    toggleSelected(hit.label);
   }
 
   return (
-    <g filter="url(#places-map-circles)">
-      <rect
-        fill="transparent"
-        height={VIEW_HEIGHT}
-        onPointerDown={(event) => {
-          if (event.pointerType === "mouse") return;
-          activateClosest(event, true);
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType === "mouse") setActiveLabel(null);
-        }}
-        onPointerMove={(event) => {
-          if (event.pointerType !== "mouse") return;
-          activateClosest(event, false);
-        }}
-        width={VIEW_WIDTH}
-        x={-MAP_PADDING}
-        y={-MAP_PADDING}
-      />
-
-      {circles.map((circle, index) => {
-        const isActive = active?.label === circle.label;
-        return (
-          <path
-            className={markClass(circle)}
-            d={circle.path}
-            fill="none"
-            key={`${circle.label}-${circle.kind}`}
-            pathLength={1}
-            pointerEvents="none"
-            stroke="currentColor"
-            strokeDasharray="1 1"
-            strokeDashoffset={drawn ? 0 : 1}
-            strokeLinecap="round"
-            strokeOpacity={
-              isActive
-                ? 0.95
-                : circle.kind === "casual" || circle.kind === "resume"
-                  ? 0.62
-                  : 0.88
-            }
-            strokeWidth={circle.width}
-            style={{
-              transition: drawn
-                ? `stroke-dashoffset ${CIRCLE_DRAW_MS}ms cubic-bezier(0.3,0.7,0.4,1) ${
-                    index * CIRCLE_STAGGER_MS
-                  }ms`
-                : "none",
+    <>
+      <PlacesMapSvg>
+        <g filter="url(#places-map-circles)">
+          <rect
+            fill="transparent"
+            height={VIEW_HEIGHT}
+            onPointerDown={(event) => {
+              activateClosest(event, "select");
             }}
+            onPointerLeave={() => {
+              setHoveredLabel(null);
+            }}
+            onPointerMove={(event) => {
+              if (event.pointerType !== "mouse") return;
+              activateClosest(event, "hover");
+            }}
+            width={VIEW_WIDTH}
+            x={-MAP_PADDING}
+            y={-MAP_PADDING}
           />
-        );
-      })}
 
-      {active ? (
-        <text
-          className="fill-foreground"
-          fontSize="14"
-          pointerEvents="none"
-          textAnchor={active.x > MAP_WIDTH * 0.62 ? "end" : "start"}
-          x={active.x + (active.x > MAP_WIDTH * 0.62 ? -22 : 22)}
-          y={active.y - (active.detail ? 40 : 26)}
-        >
-          {active.label}
-          {active.detail ? (
-            <tspan
-              className="fill-foreground"
-              dy="1.4em"
-              fillOpacity="0.62"
-              fontSize="12"
-              x={active.x + (active.x > MAP_WIDTH * 0.62 ? -22 : 22)}
-            >
-              {active.detail}
-            </tspan>
-          ) : null}
-        </text>
-      ) : null}
-    </g>
+          {circles.map((circle, index) => {
+            const isSelected = selectedLabel === circle.label;
+            const isEmphasized = emphasizedLabel === circle.label;
+            return (
+              <path
+                className={markClass(circle)}
+                d={circle.path}
+                fill="none"
+                key={`${circle.label}-${circle.kind}`}
+                pathLength={1}
+                pointerEvents="none"
+                stroke="currentColor"
+                strokeDasharray="1 1"
+                strokeDashoffset={drawn ? 0 : 1}
+                strokeLinecap="round"
+                strokeOpacity={
+                  isSelected
+                    ? 1
+                    : isEmphasized
+                      ? 0.95
+                      : circle.kind === "casual" || circle.kind === "resume"
+                        ? 0.62
+                        : 0.88
+                }
+                strokeWidth={
+                  isSelected || isEmphasized ? circle.width + 0.45 : circle.width
+                }
+                style={{
+                  transition: drawn
+                    ? `stroke-dashoffset ${CIRCLE_DRAW_MS}ms cubic-bezier(0.3,0.7,0.4,1) ${
+                        index * CIRCLE_STAGGER_MS
+                      }ms`
+                    : "none",
+                }}
+              />
+            );
+          })}
+        </g>
+      </PlacesMapSvg>
+
+      <ul
+        aria-label="Resume places"
+        className="mt-5 space-y-1.5 text-sm leading-snug"
+      >
+        {orderedItems.map((item) => {
+          const selected = selectedLabel === item.key;
+          return (
+            <li key={item.key} ref={setItemRef(item.key)}>
+              <button
+                aria-pressed={selected}
+                className={`block w-full rounded-sm py-0.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+                  selected
+                    ? "text-foreground"
+                    : "text-muted hover:text-foreground"
+                }`}
+                onClick={() => toggleSelected(item.key)}
+                onFocus={() => setHoveredLabel(item.key)}
+                onBlur={() => {
+                  setHoveredLabel((current) =>
+                    current === item.key ? null : current
+                  );
+                }}
+                type="button"
+              >
+                <span className="font-medium text-foreground">{item.title}</span>
+                <span className={selected ? "text-foreground/75" : "text-muted"}>
+                  {" — "}
+                  {item.detail}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </>
   );
 }
