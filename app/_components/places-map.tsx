@@ -2,14 +2,7 @@
 
 import { useDrawReplayToken } from "./draw-replay";
 import { PlacesMapSvg } from "./places-map-svg";
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent,
-} from "react";
+import { useEffect, useMemo, useState, type PointerEvent } from "react";
 import type { VisitedPlace } from "@/server/location-data";
 import {
   CIRCLE_DRAW_MS,
@@ -25,7 +18,13 @@ import {
   type ProjectedPoint,
   type ZoneCircle,
 } from "@/lib/world-map";
-import { orderResumeList, resumeListItems } from "@/lib/resume-list";
+import {
+  isResumeLoopKey,
+  nextResumeIndex,
+  resumeListItems,
+  resumeLoopKeys,
+  resumeLoopStepMs,
+} from "@/lib/resume-list";
 
 const VIEW_WIDTH = MAP_WIDTH + MAP_PADDING * 2;
 const VIEW_HEIGHT = MAP_HEIGHT + MAP_PADDING * 2;
@@ -54,48 +53,25 @@ function markClass(circle: ZoneCircle): string {
   return "text-muted/70";
 }
 
-function useFlipList(orderKey: string) {
-  const itemRefs = useRef(new Map<string, HTMLElement>());
-  const previousTops = useRef(new Map<string, number>());
-
-  useLayoutEffect(() => {
-    const nextTops = new Map<string, number>();
-    for (const [key, node] of itemRefs.current) {
-      nextTops.set(key, node.getBoundingClientRect().top);
-    }
-
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (!reduce) {
-      for (const [key, node] of itemRefs.current) {
-        const previous = previousTops.current.get(key);
-        const next = nextTops.get(key);
-        if (previous == null || next == null) continue;
-        const dy = previous - next;
-        if (Math.abs(dy) < 0.5) continue;
-        node.animate(
-          [{ transform: `translateY(${dy}px)` }, { transform: "none" }],
-          { duration: 320, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
-        );
-      }
-    }
-
-    previousTops.current = nextTops;
-  }, [orderKey]);
-
-  return (key: string) => (node: HTMLElement | null) => {
-    if (node) itemRefs.current.set(key, node);
-    else itemRefs.current.delete(key);
-  };
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
 export default function PlacesBlock({ places }: PlacesBlockProps) {
-  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [staysDrawn, setStaysDrawn] = useState(false);
+  const [showAllResume, setShowAllResume] = useState(false);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [resumeTick, setResumeTick] = useState(0);
+  const [resumeDrawn, setResumeDrawn] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
-  const [drawn, setDrawn] = useState(false);
   const replayToken = useDrawReplayToken();
+  const resumeItems = useMemo(() => resumeListItems(), []);
+  const loopKeys = useMemo(() => resumeLoopKeys(), []);
   const circles = useMemo(
     () =>
       drawOrder([
@@ -104,26 +80,33 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
       ]),
     [places]
   );
-  const resumeItems = useMemo(() => resumeListItems(), []);
-  const orderedItems = useMemo(
-    () => orderResumeList(resumeItems, selectedLabel),
-    [resumeItems, selectedLabel]
+  const stayCircles = useMemo(
+    () => circles.filter((circle) => !isResumeLoopKey(circle.label, loopKeys)),
+    [circles, loopKeys]
   );
-  const setItemRef = useFlipList(orderedItems.map((item) => item.key).join("\0"));
-  const emphasizedLabel = hoveredLabel ?? selectedLabel;
+
+  function playResume(key: string, pause: boolean) {
+    setActiveKey(key);
+    setResumeTick((tick) => tick + 1);
+    if (pause) setPaused(true);
+  }
 
   useEffect(() => {
     const section = document.getElementById("places-map");
     if (!section) {
-      setDrawn(true);
+      setVisible(true);
+      setStaysDrawn(true);
       return;
     }
 
     if (
       typeof IntersectionObserver === "undefined" ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      prefersReducedMotion()
     ) {
-      setDrawn(true);
+      setVisible(true);
+      setStaysDrawn(true);
+      setShowAllResume(true);
+      setResumeDrawn(true);
       return;
     }
 
@@ -131,14 +114,23 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
     // catching the loops erasing themselves on screen.
     const drawObserver = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) setDrawn(true);
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisible(true);
+          setStaysDrawn(true);
+        }
       },
       { rootMargin: "0px 0px -15% 0px", threshold: 0.35 }
     );
 
     const armObserver = new IntersectionObserver(
       (entries) => {
-        if (entries.every((entry) => !entry.isIntersecting)) setDrawn(false);
+        if (entries.every((entry) => !entry.isIntersecting)) {
+          setVisible(false);
+          setStaysDrawn(false);
+          setPaused(false);
+          setActiveKey(null);
+          setResumeDrawn(false);
+        }
       },
       { threshold: 0 }
     );
@@ -153,18 +145,52 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
 
   useEffect(() => {
     if (replayToken === 0) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
 
-    // Hide first, then draw after a paint so the dashoffset transition can run
-    // from 1 rather than continuing from wherever the last stroke left off.
-    setDrawn(false);
-    const id = window.setTimeout(() => setDrawn(true), 40);
+    setPaused(false);
+    setActiveKey(null);
+    setResumeDrawn(false);
+    setResumeTick((tick) => tick + 1);
+    setStaysDrawn(false);
+    const id = window.setTimeout(() => setStaysDrawn(true), 40);
     return () => window.clearTimeout(id);
   }, [replayToken]);
 
-  function toggleSelected(label: string | null) {
-    setSelectedLabel((current) => (current === label ? null : label));
-  }
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setResumeDrawn(true);
+      return;
+    }
+    if (!activeKey) {
+      setResumeDrawn(false);
+      return;
+    }
+
+    setResumeDrawn(false);
+    const id = window.setTimeout(() => setResumeDrawn(true), 40);
+    return () => window.clearTimeout(id);
+  }, [activeKey, resumeTick]);
+
+  useEffect(() => {
+    if (!visible) return;
+    if (prefersReducedMotion()) return;
+    if (paused) return;
+    if (resumeItems.length === 0) return;
+
+    const currentIndex = resumeItems.findIndex((item) => item.key === activeKey);
+    const delay =
+      currentIndex < 0 ? 80 : resumeLoopStepMs(CIRCLE_DRAW_MS);
+
+    const id = window.setTimeout(() => {
+      const nextIndex = nextResumeIndex(resumeItems.length, currentIndex);
+      const next = resumeItems[nextIndex];
+      if (!next) return;
+      setActiveKey(next.key);
+      setResumeTick((tick) => tick + 1);
+    }, delay);
+
+    return () => window.clearTimeout(id);
+  }, [visible, paused, activeKey, resumeTick, resumeItems]);
 
   function activateClosest(
     event: PointerEvent<Element>,
@@ -182,12 +208,8 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
       return;
     }
 
-    if (!hit) {
-      setSelectedLabel(null);
-      return;
-    }
-
-    toggleSelected(hit.label);
+    if (!hit || !isResumeLoopKey(hit.label, loopKeys)) return;
+    playResume(hit.label, true);
   }
 
   return (
@@ -212,9 +234,19 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
             y={-MAP_PADDING}
           />
 
-          {circles.map((circle, index) => {
-            const isSelected = selectedLabel === circle.label;
-            const isEmphasized = emphasizedLabel === circle.label;
+          {circles.map((circle) => {
+            const resumeBeat = isResumeLoopKey(circle.label, loopKeys);
+            const isActiveResume = resumeBeat && activeKey === circle.label;
+            const show = resumeBeat
+              ? showAllResume || (isActiveResume && resumeDrawn)
+              : staysDrawn;
+            const stayIndex = stayCircles.findIndex(
+              (entry) =>
+                entry.label === circle.label && entry.kind === circle.kind
+            );
+            const isEmphasized =
+              isActiveResume ||
+              (hoveredLabel === circle.label && show);
             return (
               <path
                 className={markClass(circle)}
@@ -225,24 +257,22 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
                 pointerEvents="none"
                 stroke="currentColor"
                 strokeDasharray="1 1"
-                strokeDashoffset={drawn ? 0 : 1}
+                strokeDashoffset={show ? 0 : 1}
                 strokeLinecap="round"
                 strokeOpacity={
-                  isSelected
+                  isEmphasized
                     ? 1
-                    : isEmphasized
-                      ? 0.95
-                      : circle.kind === "casual" || circle.kind === "resume"
-                        ? 0.62
-                        : 0.88
+                    : circle.kind === "casual" || circle.kind === "resume"
+                      ? 0.62
+                      : 0.88
                 }
-                strokeWidth={
-                  isSelected || isEmphasized ? circle.width + 0.45 : circle.width
-                }
+                strokeWidth={isEmphasized ? circle.width + 0.45 : circle.width}
                 style={{
-                  transition: drawn
+                  transition: show
                     ? `stroke-dashoffset ${CIRCLE_DRAW_MS}ms cubic-bezier(0.3,0.7,0.4,1) ${
-                        index * CIRCLE_STAGGER_MS
+                        resumeBeat
+                          ? 0
+                          : Math.max(stayIndex, 0) * CIRCLE_STAGGER_MS
                       }ms`
                     : "none",
                 }}
@@ -256,28 +286,22 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
         aria-label="Resume places"
         className="mt-5 space-y-1.5 text-sm leading-snug"
       >
-        {orderedItems.map((item) => {
-          const selected = selectedLabel === item.key;
+        {resumeItems.map((item) => {
+          const active = activeKey === item.key;
           return (
-            <li key={item.key} ref={setItemRef(item.key)}>
+            <li key={item.key}>
               <button
-                aria-pressed={selected}
+                aria-current={active ? "true" : undefined}
                 className={`-ml-2 block w-full rounded-sm border-l-2 py-0.5 pl-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
-                  selected
+                  active
                     ? "border-accent text-foreground"
                     : "border-transparent text-muted hover:text-foreground"
                 }`}
-                onClick={() => toggleSelected(item.key)}
-                onFocus={() => setHoveredLabel(item.key)}
-                onBlur={() => {
-                  setHoveredLabel((current) =>
-                    current === item.key ? null : current
-                  );
-                }}
+                onClick={() => playResume(item.key, true)}
                 type="button"
               >
                 <span className="font-medium">{item.title}</span>
-                <span className={selected ? "text-foreground/70" : ""}>
+                <span className={active ? "text-foreground/70" : ""}>
                   {" — "}
                   {item.detail}
                 </span>

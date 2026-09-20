@@ -6,6 +6,11 @@ export interface ResumeListItem {
   title: string;
 }
 
+/** Pause after a resume stroke finishes so the row can be read before the next. */
+export const RESUME_HOLD_MS = 1100;
+/** Hide the previous stroke before the next dashoffset transition can run. */
+export const RESUME_RESTART_MS = 40;
+
 export function resumeListItems(
   places: readonly ResumePlace[] = RESUME_PLACES
 ): ResumeListItem[] {
@@ -18,19 +23,29 @@ export function resumeListItems(
     }));
 }
 
-export function orderResumeList<T extends { key: string }>(
-  items: readonly T[],
-  selectedKey: string | null
-): T[] {
-  if (!selectedKey) return [...items];
+export function resumeLoopKeys(
+  places: readonly ResumePlace[] = RESUME_PLACES
+): string[] {
+  return resumeListItems(places).map((item) => item.key);
+}
 
-  const selected: T[] = [];
-  const rest: T[] = [];
+export function isResumeLoopKey(
+  label: string,
+  keys: readonly string[] = resumeLoopKeys()
+): boolean {
+  return keys.includes(label);
+}
 
-  for (const item of items) {
-    if (item.key === selectedKey) selected.push(item);
-    else rest.push(item);
-  }
+/**
+ * Advance through a stable resume list. `index` of `-1` (nothing playing)
+ * starts at the first item; the last item wraps to the first.
+ */
+export function nextResumeIndex(count: number, index: number): number {
+  if (count <= 0) return 0;
+  if (!Number.isFinite(index) || index < 0) return 0;
+  return (index + 1) % count;
+}
 
-  return [...selected, ...rest];
+export function resumeLoopStepMs(drawMs: number): number {
+  return RESUME_RESTART_MS + drawMs + RESUME_HOLD_MS;
 }
