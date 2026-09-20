@@ -6,8 +6,8 @@ import {
   shouldStartDraw,
 } from "./path-draw";
 
-test("path maps start the 1s draw once one-third is in view", () => {
-  assert.equal(DRAW_MS, 1000);
+test("path maps start the 2.5s draw once one-third is in view", () => {
+  assert.equal(DRAW_MS, 2500);
   assert.equal(DRAW_VISIBLE_RATIO, 1 / 3);
   assert.equal(shouldStartDraw(0), false);
   assert.equal(shouldStartDraw(0.32), false);
