@@ -1,7 +1,6 @@
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
 import RecentRuns from "./_components/recent-runs";
-import SubstackPosts from "./_components/substack-posts";
 import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
 import { LOCATION_CACHE_TAG } from "@/server/location-data";
@@ -189,47 +188,11 @@ export default async function Home() {
             <h1 className="font-serif text-5xl leading-[0.95] tracking-[-0.04em] text-foreground sm:text-6xl">
               Hugo Demenez
             </h1>
-            <p className="mt-2 font-serif text-xl tracking-[-0.02em] text-muted">
-              Software writer
-            </p>
           </div>
           <p className="leading-relaxed">
-            I write about the work as I go: building products, staying focused,
-            discretionary trading
+            I have been trading
             <TradingCandlestickIcon />
-            and turning rough ideas into useful systems.
-          </p>
-          {track ? (
-            <p className="leading-relaxed">
-              Most days have a soundtrack; this week it has been{" "}
-              <a
-                className={musicLinkClass}
-                href={track.url}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <SpotifyIcon />
-                {track.name} by {track.artist}
-              </a>
-              .
-            </p>
-          ) : null}
-          <p className="leading-relaxed">
-            I don’t spend much time on social networks, only scouting{" "}
-            <a
-              className="inline-flex items-center align-baseline text-foreground transition-colors hover:text-accent"
-              href="https://x.com/hugodemenez"
-              rel="noopener noreferrer"
-              target="_blank"
-              aria-label="X"
-            >
-              <XIcon />
-            </a>{" "}
-            from time to time to keep an eye on the latest developments around
-            AI or design inspirations.
-          </p>
-          <p className="leading-relaxed">
-            The work itself is less private: I build{" "}
+            for almost a decade. What I learned there led me to build{" "}
             <a
               className={socialLinkClass}
               href="https://deltalytix.app"
@@ -258,13 +221,41 @@ export default async function Home() {
               <GitHubIcon />
               GitHub
             </a>
-            .
+            : a tool to track my daily progress, and to turn that data into a
+            systematic process.
+          </p>
+          {track ? (
+            <p className="leading-relaxed">
+              Most days have a soundtrack; this week it has been{" "}
+              <a
+                className={musicLinkClass}
+                href={track.url}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <SpotifyIcon />
+                {track.name} by {track.artist}
+              </a>
+              .
+            </p>
+          ) : null}
+          <p className="leading-relaxed">
+            I don’t spend much time on social networks; when I scout, it’s{" "}
+            <a
+              className={socialLinkClass}
+              href="https://x.com/hugodemenez"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <XIcon />
+              @hugodemenez
+            </a>{" "}
+            for the latest in AI and design.
           </p>
         </section>
         <PlacesMap />
       </main>
       <RecentRuns />
-      <SubstackPosts />
     </>
   );
 }

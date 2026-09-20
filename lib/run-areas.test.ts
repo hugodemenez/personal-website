@@ -22,15 +22,9 @@ function path(overrides: Partial<DistinctPath> = {}): DistinctPath {
       mapPath: null,
       href: null,
     },
-    count: 1,
-    spanDays: 1,
     sketch: null,
     center: [38.553, -9.018],
     placeName: null,
-    averageDistanceLabel: "4.6 km",
-    averageDurationLabel: "25:28",
-    averagePaceLabel: "5:29/km",
-    totalDistanceLabel: "4.6 km",
     ...overrides,
   };
 }

@@ -1,4 +1,5 @@
 import type { VisitedPlace } from "@/server/location-data";
+import { RESUME_PLACES, type ResumePlace } from "@/lib/resume-places";
 
 export const MAP_WIDTH = 900;
 export const MAP_HEIGHT = 450;
@@ -313,7 +314,7 @@ export function continentPaths(): ContinentPath[] {
 }
 
 export type StayKind = "habitual" | "casual";
-export type PlaceMarkKind = StayKind | "wanted";
+export type PlaceMarkKind = StayKind | "wanted" | "resume";
 
 export interface WantedPlace {
   name: string;
@@ -383,25 +384,35 @@ function toSmoothPath(points: ProjectedPoint[]): string {
   return `${path} L ${last.x.toFixed(2)} ${last.y.toFixed(2)}`;
 }
 
+interface CircleScribble {
+  drift?: number;
+  scribble?: number;
+  spiral?: number;
+  steps?: number;
+}
+
 function buildCirclePath(
   origin: ProjectedPoint,
   radiusX: number,
   radiusY: number,
   random: () => number,
-  turns: number
+  turns: number,
+  scribble: CircleScribble = {}
 ): string {
   const start = random() * Math.PI * 2;
-  const steps = 24;
+  const steps = scribble.steps ?? 24;
   const points: ProjectedPoint[] = [];
   // A hand rarely stays on one radius — the loop opens or tightens as it goes.
-  const spiral = (random() - 0.4) * 0.22;
-  const driftX = (random() - 0.5) * 3.2;
-  const driftY = (random() - 0.5) * 3.2;
+  const spiral = (random() - 0.4) * (scribble.spiral ?? 0.22);
+  const drift = scribble.drift ?? 3.2;
+  const driftX = (random() - 0.5) * drift;
+  const driftY = (random() - 0.5) * drift;
+  const wobbleAmount = scribble.scribble ?? 0.26;
 
   for (let index = 0; index <= steps; index += 1) {
     const progress = index / steps;
     const angle = start + progress * turns * Math.PI * 2;
-    const wobble = 1 + (random() - 0.5) * 0.26;
+    const wobble = 1 + (random() - 0.5) * wobbleAmount;
     const grow = 1 + spiral * progress;
     points.push({
       x: origin.x + driftX + Math.cos(angle) * radiusX * wobble * grow,
@@ -413,39 +424,101 @@ function buildCirclePath(
 }
 
 export interface ZoneCircle {
+  detail?: string;
+  global?: boolean;
   hitRadius: number;
   kind: PlaceMarkKind;
   label: string;
   path: string;
+  radiusX?: number;
+  radiusY?: number;
   width: number;
   x: number;
   y: number;
 }
 
+export const GLOBAL_MARK = {
+  x: MAP_WIDTH / 2,
+  y: MAP_HEIGHT / 2,
+  radiusX: MAP_WIDTH / 2 - 16,
+  radiusY: MAP_HEIGHT / 2 - 14,
+} as const;
+
 export const CIRCLE_DRAW_MS = 640;
 export const CIRCLE_STAGGER_MS = 580;
+
+export interface ClosestPlaceOptions {
+  extra?: number;
+  /**
+   * When true (default), a global mark wins any tap that missed a local
+   * circle — empty ocean and the big ring both select Foundever.
+   * When false, only the ring annulus itself is hittable, so hover does
+   * not pin the global mark across the whole map.
+   */
+  globalFallback?: boolean;
+}
+
+function nearGlobalRing(point: ProjectedPoint, circle: ZoneCircle, extra: number) {
+  const radiusX = circle.radiusX ?? circle.hitRadius;
+  const radiusY = circle.radiusY ?? circle.hitRadius;
+  const norm = Math.hypot(
+    (point.x - circle.x) / radiusX,
+    (point.y - circle.y) / radiusY
+  );
+  const band = 0.16 + extra / Math.max(radiusX, radiusY);
+  return Math.abs(norm - 1) <= band;
+}
 
 export function closestPlaceCircle(
   point: ProjectedPoint,
   circles: readonly ZoneCircle[],
-  extra = 0
+  extraOrOptions: number | ClosestPlaceOptions = 0
 ): ZoneCircle | null {
-  let best: ZoneCircle | null = null;
-  let bestDistance = Infinity;
+  const extra =
+    typeof extraOrOptions === "number"
+      ? extraOrOptions
+      : (extraOrOptions.extra ?? 0);
+  const globalFallback =
+    typeof extraOrOptions === "number"
+      ? true
+      : (extraOrOptions.globalFallback ?? true);
+
+  let localBest: ZoneCircle | null = null;
+  let localDistance = Infinity;
+  let ringBest: ZoneCircle | null = null;
+  let globalCircle: ZoneCircle | null = null;
 
   for (const circle of circles) {
+    if (circle.global) {
+      globalCircle = circle;
+      if (nearGlobalRing(point, circle, extra)) ringBest = circle;
+      continue;
+    }
+
     const distance = Math.hypot(circle.x - point.x, circle.y - point.y);
-    if (distance <= circle.hitRadius + extra && distance < bestDistance) {
-      best = circle;
-      bestDistance = distance;
+    if (distance <= circle.hitRadius + extra && distance < localDistance) {
+      localBest = circle;
+      localDistance = distance;
     }
   }
 
-  return best;
+  if (localBest) return localBest;
+  if (globalFallback && globalCircle) {
+    const distance = Math.hypot(
+      globalCircle.x - point.x,
+      globalCircle.y - point.y
+    );
+    if (distance <= globalCircle.hitRadius + extra) return globalCircle;
+  }
+  return ringBest;
 }
 
 export function drawOrder(circles: readonly ZoneCircle[]): ZoneCircle[] {
-  return [...circles].sort((left, right) => left.x - right.x || left.y - right.y);
+  const global = circles.filter((circle) => circle.global);
+  const rest = circles
+    .filter((circle) => !circle.global)
+    .sort((left, right) => left.x - right.x || left.y - right.y);
+  return [...global, ...rest];
 }
 
 const ZONE_STEP_DEGREES = 8;
@@ -504,4 +577,85 @@ export function wantedCircles(
       y: origin.y,
     };
   });
+}
+
+export function resumeRadius(span: ResumePlace["span"]): number {
+  if (span === "global") return GLOBAL_MARK.radiusX;
+  if (span === "region") return 28;
+  return 22;
+}
+
+export function resumeCircles(
+  places: readonly ResumePlace[] = RESUME_PLACES
+): ZoneCircle[] {
+  return places.map((place) => {
+    const random = createRandom(`resume|${place.label}`);
+    const turns = 1.1 + random() * 0.14;
+
+    if (place.span === "global") {
+      const origin = { x: GLOBAL_MARK.x, y: GLOBAL_MARK.y };
+      return {
+        detail: place.detail,
+        global: true,
+        hitRadius: Math.hypot(MAP_WIDTH / 2, MAP_HEIGHT / 2),
+        kind: "resume" as const,
+        label: place.label,
+        path: buildCirclePath(
+          origin,
+          GLOBAL_MARK.radiusX,
+          GLOBAL_MARK.radiusY,
+          random,
+          turns,
+          { drift: 8, scribble: 0.055, spiral: 0.05, steps: 36 }
+        ),
+        radiusX: GLOBAL_MARK.radiusX,
+        radiusY: GLOBAL_MARK.radiusY,
+        width: 2.05,
+        x: origin.x,
+        y: origin.y,
+      };
+    }
+
+    const origin = zoneCenter(place);
+    const radius = resumeRadius(place.span);
+    const stretch = 0.74 + random() * 0.18;
+
+    return {
+      detail: place.detail,
+      hitRadius: Math.max(radius * 1.35, 36),
+      kind: "resume" as const,
+      label: place.label,
+      path: buildCirclePath(origin, radius, radius * stretch, random, turns),
+      width: 1.85,
+      x: origin.x,
+      y: origin.y,
+    };
+  });
+}
+
+export function applyResumeToStayCircles(
+  stayCircles: readonly ZoneCircle[],
+  places: readonly ResumePlace[] = RESUME_PLACES
+): ZoneCircle[] {
+  const stays = stayCircles.map((circle) => ({ ...circle }));
+  const extras: ZoneCircle[] = [];
+
+  for (const place of places) {
+    const country = place.country;
+    const match = country
+      ? stays.find(
+          (circle) => circle.label.toLowerCase() === country.toLowerCase()
+        )
+      : undefined;
+
+    if (match) {
+      match.detail = place.detail;
+      continue;
+    }
+
+    const [circle] = resumeCircles([place]);
+    if (circle) extras.push(circle);
+  }
+
+  return [...stays, ...extras];
 }

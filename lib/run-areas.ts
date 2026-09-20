@@ -5,9 +5,8 @@ export interface RunArea {
   center: [number, number];
 }
 
-// Route clustering stays tight so two nearby loops become one card.
-// Naming is looser: a stay still labels nearby loops (~15 km) with its
-// country, without attaching a distant cluster in the same country.
+// A stay labels a nearby run (~15 km) with its country, without
+// attaching a distant loop in the same country.
 export const STAY_MATCH_RADIUS_KM = 15;
 
 export function matchRunArea(
