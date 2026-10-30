@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { PlaneOverlay } from "./_components/plane-overlay";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -81,7 +82,10 @@ export default function RootLayout({
 }`,
         }}
       />
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <PlaneOverlay />
+        {children}
+      </body>
     </html>
   );
 }
