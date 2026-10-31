@@ -1,24 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import {
-  follow,
-  useInView,
-  useLoop,
-  useStillness,
-} from "@/components/iso/react/live";
+import { useLoop, useStillness } from "@/components/iso/react/live";
 import {
   bladePath,
   hubPoint,
   STILL_BLADE_ANGLE,
 } from "@/components/figures/plane/motion";
 import type { Projection } from "@/components/iso/iso-kit";
+import {
+  clickKick,
+  collideBounds,
+  createBody,
+  impartScroll,
+  snap,
+  stepSpring,
+  type Bounds,
+} from "./physics";
 
 const LABEL =
   "A high-wing single-engine trainer in flight, registration F-HUGO";
-const CHASE_SECONDS = 0.22;
 const TAP_SLOP = 12;
 const EDGE = 8;
+const Y_SLACK = 72;
 
 function clamp(value: number, min: number, max: number) {
   if (max < min) return min;
@@ -60,9 +64,10 @@ export function PlaneLive({
     hubY: 0,
     overlayH: 0,
   });
-  const shown = useRef({ x: 0, y: 0 });
+  const body = useRef(createBody());
   const target = useRef({ x: 0, y: 0 });
   const park = useRef({ x: 0, y: 0 });
+  const lastScrollY = useRef(0);
   const touch = useRef<{
     id: number;
     x: number;
@@ -70,7 +75,6 @@ export function PlaneLive({
     dragging: boolean;
     inStrip: boolean;
   } | null>(null);
-  const inView = useInView(overlayRef);
   const still = useStillness();
   const hub = useMemo(() => hubPoint(projection), [projection]);
 
@@ -102,18 +106,29 @@ export function PlaneLive({
     stage.style.transform = prev;
   }, [hub]);
 
-  const pointToTranslate = useCallback((clientX: number, clientY: number, followY: boolean) => {
+  const flightBounds = useCallback((): Bounds => {
     const r = rest.current;
-    let dx = clientX - r.left - r.hubX;
-    let dy = followY ? clientY - r.top - r.hubY : shown.current.y;
-    const minDx = EDGE - r.left;
-    const maxDx = window.innerWidth - EDGE - r.left - r.width;
-    const maxDy = Math.max(0, r.overlayH - r.height);
+    const minX = EDGE - r.left;
+    const maxX = window.innerWidth - EDGE - r.left - r.width;
     return {
-      x: clamp(dx, minDx, maxDx),
-      y: clamp(dy, 0, maxDy),
+      minX,
+      maxX: Math.max(minX, maxX),
+      minY: -Y_SLACK,
+      maxY: Math.max(0, r.overlayH - r.height) + Y_SLACK,
     };
   }, []);
+
+  const pointToTranslate = useCallback((clientX: number, clientY: number, followY: boolean) => {
+    const r = rest.current;
+    const bounds = flightBounds();
+    const dx = clientX - r.left - r.hubX;
+    const dy = followY ? clientY - r.top - r.hubY : target.current.y;
+    const maxParkY = Math.max(0, r.overlayH - r.height);
+    return {
+      x: clamp(dx, bounds.minX, bounds.maxX),
+      y: clamp(dy, 0, maxParkY),
+    };
+  }, [flightBounds]);
 
   const applyStage = useCallback((x: number, y: number) => {
     stageRef.current?.style.setProperty(
@@ -128,13 +143,15 @@ export function PlaneLive({
   }, []);
 
   const relocate = useCallback(
-    (clientX: number, clientY: number, snap: boolean) => {
+    (clientX: number, clientY: number, snapTo: boolean) => {
       const next = pointToTranslate(clientX, clientY, inStrip(clientY));
       park.current = next;
       target.current = next;
-      if (snap) {
-        shown.current = next;
+      if (snapTo) {
+        snap(body.current, next);
         applyStage(next.x, next.y);
+      } else {
+        clickKick(body.current, next);
       }
     },
     [applyStage, inStrip, pointToTranslate],
@@ -143,17 +160,19 @@ export function PlaneLive({
   useLayoutEffect(() => {
     bind();
     measureRest();
-    applyStage(shown.current.x, shown.current.y);
+    lastScrollY.current = window.scrollY;
+    applyStage(body.current.pos.x, body.current.pos.y);
   }, [applyStage, bind, measureRest, svg]);
 
   useEffect(() => {
     const onResize = () => {
       measureRest();
+      const bounds = flightBounds();
       const next = {
-        x: clamp(shown.current.x, EDGE - rest.current.left, window.innerWidth - EDGE - rest.current.left - rest.current.width),
-        y: clamp(shown.current.y, 0, Math.max(0, rest.current.overlayH - rest.current.height)),
+        x: clamp(body.current.pos.x, bounds.minX, bounds.maxX),
+        y: clamp(target.current.y, 0, Math.max(0, rest.current.overlayH - rest.current.height)),
       };
-      shown.current = next;
+      snap(body.current, next);
       target.current = next;
       park.current = next;
       applyStage(next.x, next.y);
@@ -164,7 +183,7 @@ export function PlaneLive({
       window.removeEventListener("resize", onResize);
       window.visualViewport?.removeEventListener("resize", onResize);
     };
-  }, [applyStage, measureRest]);
+  }, [applyStage, flightBounds, measureRest]);
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -244,19 +263,34 @@ export function PlaneLive({
 
   useLoop((dt, calm) => {
     if (!planeRef.current || !bladesRef.current) bind();
-    shown.current.x = follow(shown.current.x, target.current.x, dt, CHASE_SECONDS, calm);
-    shown.current.y = follow(shown.current.y, target.current.y, dt, CHASE_SECONDS, calm);
-    applyStage(shown.current.x, shown.current.y);
+
+    const sy = window.scrollY;
+    const dsy = sy - lastScrollY.current;
+    lastScrollY.current = sy;
+
     if (calm) {
+      snap(body.current, target.current);
+      applyStage(body.current.pos.x, body.current.pos.y);
       poseStill();
-      return shown.current.x !== target.current.x || shown.current.y !== target.current.y;
+      return false;
     }
-    hover.current = follow(hover.current, hoverTarget.current, dt, 0.35, calm);
+
+    if (dsy !== 0) impartScroll(body.current, dsy);
+    stepSpring(body.current, target.current, dt);
+    collideBounds(body.current, flightBounds());
+    applyStage(body.current.pos.x, body.current.pos.y);
+
+    const vx = body.current.vel.x;
+    const vy = body.current.vel.y;
+    hover.current += (hoverTarget.current - hover.current) * (1 - Math.exp(-dt / 0.35));
     time.current += dt;
     const t = time.current;
     const bob = Math.sin(t * 0.9) * 3.2 + Math.sin(t * 0.37) * 1.6;
-    const pitch = Math.cos(t * 0.9) * 1.4 - hover.current * 2.5;
-    const drift = Math.sin(t * 0.21) * 6;
+    const pitch =
+      Math.cos(t * 0.9) * 1.4 -
+      hover.current * 2.5 +
+      clamp(vy * 0.018, -10, 10);
+    const drift = Math.sin(t * 0.21) * 6 + clamp(vx * 0.012, -10, 10);
     const rpm = 2400 - hover.current * 300;
     const turns = (t * rpm) / 60;
     const angle = ((turns * Math.PI * 2) / 37) % (Math.PI * 2);
@@ -266,7 +300,7 @@ export function PlaneLive({
     );
     bladesRef.current?.setAttribute("d", bladePath(angle, projection));
     return true;
-  }, inView && !still);
+  }, !still);
 
   useEffect(() => {
     if (still) poseStill();

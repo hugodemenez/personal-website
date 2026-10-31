@@ -9,6 +9,7 @@
   display: flex;
   justify-content: flex-end;
   padding: 12px 5vw 0 0;
+  overflow: visible;
 }
 
 .plane-overlay .iso-stage {
