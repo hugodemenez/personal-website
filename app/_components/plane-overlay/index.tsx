@@ -1,11 +1,13 @@
-import "@/components/iso/iso.css";
-import "./plane-overlay.css";
-import { planeFigureSvg, planeProjection } from "@/components/figures/plane/svg";
-import { PlaneLive } from "./live";
+"use client";
 
-const projection = planeProjection();
-const svg = planeFigureSvg(projection);
+import dynamic from "next/dynamic";
+import "./plane-overlay.css";
+
+const PlaneCanvas = dynamic(
+  () => import("./canvas").then((module) => module.PlaneCanvas),
+  { ssr: false },
+);
 
 export function PlaneOverlay() {
-  return <PlaneLive svg={svg} projection={projection} />;
+  return <PlaneCanvas />;
 }

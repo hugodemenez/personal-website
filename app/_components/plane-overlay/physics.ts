@@ -19,7 +19,7 @@ export type SpringOpts = {
   maxSpeed?: number;
 };
 
-/** Underdamped flight: mass + spring + drag. Critical damping at these
+/** Underdamped flight in viewport pixels. Critical damping at these
  *  stiffness/mass values is ~10.6; 5.4 leaves a visible overshoot. */
 export const FLIGHT = {
   mass: 1,
@@ -28,20 +28,17 @@ export const FLIGHT = {
   restitution: 0.38,
   maxSpeed: 2800,
   clickImpulse: 220,
-  scrollGain: 12,
 } as const;
 
 export type FlightMode = "flight" | "descent" | "landed";
 
-/** Page-scale altitude: idle sinks toward the document bottom; returning
- *  to the top of the page restarts flight from the sky. */
+/** Viewport altitude: idle sinks toward the bottom of the view; returning
+ *  to the top of the page can restart flight. Position is never tied to scroll. */
 export const ALTITUDE = {
   idleMs: 5000,
   sinkSeconds: 2.8,
   topPx: 56,
-  meaningfulScroll: 4,
-  pointerSlop: 6,
-  takeoffImpulse: 320,
+  takeoffImpulse: 260,
   gravity: 140,
   landEps: 28,
 } as const;
@@ -79,19 +76,13 @@ export function settled(
   );
 }
 
-/** Kick toward a new target so a click starts motion immediately. */
+/** Kick toward a new target so a grab starts motion immediately. */
 export function clickKick(body: Body, target: Vec2, impulse: number = FLIGHT.clickImpulse) {
   const dx = target.x - body.pos.x;
   const dy = target.y - body.pos.y;
   const len = Math.hypot(dx, dy);
   if (len < 1e-3 || impulse === 0) return;
   applyImpulse(body, { x: (dx / len) * impulse, y: (dy / len) * impulse });
-}
-
-/** Scroll delta (px this frame) becomes momentum, not a 1:1 offset. */
-export function impartScroll(body: Body, deltaY: number, gain: number = FLIGHT.scrollGain) {
-  if (deltaY === 0 || gain === 0) return;
-  applyImpulse(body, { x: 0, y: deltaY * gain });
 }
 
 export function stepSpring(
@@ -146,10 +137,6 @@ export function sinkAltitude(
 export function applyGravity(body: Body, dt: number, gravity: number = ALTITUDE.gravity) {
   if (!(dt > 0) || gravity === 0) return;
   body.vel.y += gravity * dt;
-}
-
-export function atPageTop(scrollY: number, topPx: number = ALTITUDE.topPx) {
-  return scrollY <= topPx;
 }
 
 export function crossedToTop(

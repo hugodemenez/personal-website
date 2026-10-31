@@ -9,7 +9,6 @@ import {
   createBody,
   crossedToTop,
   FLIGHT,
-  impartScroll,
   nextFlightMode,
   settled,
   sinkAltitude,
@@ -72,28 +71,9 @@ test("click kick aims at the new target", () => {
   assert.equal(body.pos.y, 0);
 });
 
-test("scroll imparts vertical velocity instead of a sticky offset", () => {
-  const body = createBody(0, 0);
-  impartScroll(body, 16, 10);
-  assert.equal(body.pos.y, 0);
-  assert.equal(body.vel.y, 160);
-  stepSpring(body, { x: 0, y: 0 }, DT);
-  assert.ok(body.pos.y > 0);
-  const yAfterFling = body.pos.y;
-  for (let i = 0; i < 8; i++) stepSpring(body, { x: 0, y: 0 }, DT);
-  assert.ok(body.pos.y !== 0);
-  assert.ok(yAfterFling !== 0);
-});
-
-test("a fling coasts after scroll deltas stop", () => {
-  const body = createBody(0, 0);
-  impartScroll(body, 24);
-  const vy = body.vel.y;
-  assert.ok(vy > 100);
-  stepSpring(body, { x: 0, y: 0 }, DT);
-  const y1 = body.pos.y;
-  stepSpring(body, { x: 0, y: 0 }, DT);
-  assert.ok(body.pos.y !== y1);
+test("scroll is not part of the flight constants", () => {
+  assert.equal("scrollGain" in FLIGHT, false);
+  assert.ok(FLIGHT.clickImpulse > 0);
 });
 
 test("snap clears velocity for reduced motion", () => {
@@ -123,8 +103,6 @@ test("settles near the target after a few seconds", () => {
 test("flight constants stay underdamped", () => {
   const critical = 2 * Math.sqrt(FLIGHT.stiffness * FLIGHT.mass);
   assert.ok(FLIGHT.damping < critical * 0.75);
-  assert.ok(FLIGHT.scrollGain > 1);
-  assert.ok(FLIGHT.clickImpulse > 0);
 });
 
 test("idle altitude sinks gradually toward the landing pad", () => {

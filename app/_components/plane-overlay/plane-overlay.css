@@ -2,67 +2,15 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.plane-overlay .iso-stage {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 110px;
-  width: auto;
-  /* Overlay stays inert: follow/click are document listeners so page
-     controls and scroll keep working. */
-  pointer-events: none;
-  background: none;
-  will-change: transform;
-}
-
-.plane-overlay .iso-stage,
-.plane-overlay .iso-svg {
-  background: none;
-}
-
-.plane-overlay .iso-svg {
-  height: 100%;
-  width: auto;
   display: block;
-  overflow: visible;
-  pointer-events: visiblePainted;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: transparent;
 }
 
-/* Site is light-first; iso.css defaults to dark. Keep the overlay in step
-   with prefers-color-scheme the same way :root does. */
-@media (prefers-color-scheme: dark) {
-  .plane-overlay.iso[data-theme="light"] {
-    --anatomy-page: #0b0b0b;
-    --anatomy-card: #131313;
-    --anatomy-text: #a3a3a3;
-    --anatomy-strong: #e6e6e6;
-    --anatomy-muted: #6e6e6e;
-    --anatomy-paper: #131313;
-    --anatomy-face: #1b1b1b;
-    --anatomy-top: #1c1c1c;
-    --anatomy-shade-0: #0f0f0f;
-    --anatomy-shade-1: #121212;
-    --anatomy-shade-2: #151515;
-    --anatomy-shade-3: #181818;
-    --anatomy-lit-top: #262626;
-    --anatomy-lit-shade: #1d1d1d;
-    --anatomy-hi: #d4d4d4;
-    --anatomy-mid: #6a6a6a;
-    --anatomy-lo: #3e3e3e;
-    --anatomy-faint: #2a2a2a;
-    --anatomy-lit: #ffffff;
-    --anatomy-halo: #050505;
-    --anatomy-halo-opacity: 0.9;
-    --anatomy-dot: #e6e6e6;
-  }
-}
-
-@media (max-width: 639px) {
-  .plane-overlay .iso-stage {
-    height: 90px;
-  }
+html.plane-dragging,
+html.plane-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
