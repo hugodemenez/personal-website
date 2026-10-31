@@ -31,6 +31,21 @@ export const FLIGHT = {
   scrollGain: 12,
 } as const;
 
+export type FlightMode = "flight" | "descent" | "landed";
+
+/** Page-scale altitude: idle sinks toward the document bottom; returning
+ *  to the top of the page restarts flight from the sky. */
+export const ALTITUDE = {
+  idleMs: 5000,
+  sinkSeconds: 2.8,
+  topPx: 56,
+  meaningfulScroll: 4,
+  pointerSlop: 6,
+  takeoffImpulse: 320,
+  gravity: 140,
+  landEps: 28,
+} as const;
+
 const SUBSTEP_HZ = 240;
 
 export function createBody(x = 0, y = 0): Body {
@@ -113,6 +128,52 @@ export function stepSpring(
     body.pos.x += body.vel.x * h;
     body.pos.y += body.vel.y * h;
   }
+}
+
+export function sinkAltitude(
+  current: number,
+  landY: number,
+  dt: number,
+  seconds: number = ALTITUDE.sinkSeconds,
+  fromY?: number,
+) {
+  if (!(dt > 0) || seconds <= 0) return landY;
+  const span = Math.max(1, landY - (fromY ?? current));
+  const next = current + (span / seconds) * dt;
+  return next >= landY ? landY : next;
+}
+
+export function applyGravity(body: Body, dt: number, gravity: number = ALTITUDE.gravity) {
+  if (!(dt > 0) || gravity === 0) return;
+  body.vel.y += gravity * dt;
+}
+
+export function atPageTop(scrollY: number, topPx: number = ALTITUDE.topPx) {
+  return scrollY <= topPx;
+}
+
+export function crossedToTop(
+  prevScrollY: number,
+  scrollY: number,
+  topPx: number = ALTITUDE.topPx,
+) {
+  return prevScrollY > topPx && scrollY <= topPx;
+}
+
+export function nextFlightMode(
+  mode: FlightMode,
+  opts: {
+    idleFor: number;
+    idleMs?: number;
+    atLanding: boolean;
+    interacting: boolean;
+    takeoff: boolean;
+  },
+): FlightMode {
+  if (opts.takeoff || opts.interacting) return "flight";
+  if (mode === "flight" && opts.idleFor >= (opts.idleMs ?? ALTITUDE.idleMs)) return "descent";
+  if (mode === "descent" && opts.atLanding) return "landed";
+  return mode;
 }
 
 export function collideBounds(

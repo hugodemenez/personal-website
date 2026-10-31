@@ -1,21 +1,18 @@
 .plane-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 128px;
+  inset: 0;
   z-index: 50;
   pointer-events: none;
-  display: flex;
-  justify-content: flex-end;
-  padding: 12px 5vw 0 0;
   overflow: visible;
 }
 
 .plane-overlay .iso-stage {
-  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 110px;
   width: auto;
-  /* Strip stays inert: follow/click are document listeners so page
+  /* Overlay stays inert: follow/click are document listeners so page
      controls and scroll keep working. */
   pointer-events: none;
   background: none;
@@ -65,7 +62,7 @@
 }
 
 @media (max-width: 639px) {
-  .plane-overlay {
+  .plane-overlay .iso-stage {
     height: 90px;
   }
 }

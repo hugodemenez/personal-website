@@ -9,20 +9,26 @@ import {
 } from "@/components/figures/plane/motion";
 import type { Projection } from "@/components/iso/iso-kit";
 import {
+  ALTITUDE,
+  applyGravity,
+  applyImpulse,
   clickKick,
   collideBounds,
   createBody,
+  crossedToTop,
   impartScroll,
+  nextFlightMode,
+  sinkAltitude,
   snap,
   stepSpring,
   type Bounds,
+  type FlightMode,
 } from "./physics";
 
 const LABEL =
   "A high-wing single-engine trainer in flight, registration F-HUGO";
 const TAP_SLOP = 12;
 const EDGE = 8;
-const Y_SLACK = 72;
 
 function clamp(value: number, min: number, max: number) {
   if (max < min) return min;
@@ -39,6 +45,14 @@ function hubOffset(svg: SVGSVGElement | null, hub: [number, number]) {
     x: ctm.a * hub[0] + ctm.c * hub[1] + ctm.e,
     y: ctm.b * hub[0] + ctm.d * hub[1] + ctm.f,
   };
+}
+
+function pageHeight() {
+  return Math.max(
+    document.documentElement.scrollHeight,
+    document.body.scrollHeight,
+    window.innerHeight,
+  );
 }
 
 export function PlaneLive({
@@ -62,18 +76,21 @@ export function PlaneLive({
     height: 0,
     hubX: 0,
     hubY: 0,
-    overlayH: 0,
   });
   const body = useRef(createBody());
   const target = useRef({ x: 0, y: 0 });
   const park = useRef({ x: 0, y: 0 });
   const lastScrollY = useRef(0);
+  const lastInputAt = useRef(0);
+  const lastPointer = useRef({ x: 0, y: 0 });
+  const mode = useRef<FlightMode>("flight");
+  const descentFrom = useRef(0);
+  const placed = useRef(false);
   const touch = useRef<{
     id: number;
     x: number;
     y: number;
     dragging: boolean;
-    inStrip: boolean;
   } | null>(null);
   const still = useStillness();
   const hub = useMemo(() => hubPoint(projection), [projection]);
@@ -87,12 +104,10 @@ export function PlaneLive({
 
   const measureRest = useCallback(() => {
     const stage = stageRef.current;
-    const overlay = overlayRef.current;
-    if (!stage || !overlay) return;
+    if (!stage) return;
     const prev = stage.style.transform;
     stage.style.transform = "";
     const box = stage.getBoundingClientRect();
-    const strip = overlay.getBoundingClientRect();
     const offset = hubOffset(stage.querySelector("svg"), hub);
     rest.current = {
       left: box.left,
@@ -101,7 +116,6 @@ export function PlaneLive({
       height: box.height,
       hubX: offset.x,
       hubY: offset.y,
-      overlayH: strip.height,
     };
     stage.style.transform = prev;
   }, [hub]);
@@ -110,43 +124,78 @@ export function PlaneLive({
     const r = rest.current;
     const minX = EDGE - r.left;
     const maxX = window.innerWidth - EDGE - r.left - r.width;
+    const minY = EDGE;
+    const maxY = pageHeight() - EDGE - r.height;
     return {
       minX,
       maxX: Math.max(minX, maxX),
-      minY: -Y_SLACK,
-      maxY: Math.max(0, r.overlayH - r.height) + Y_SLACK,
+      minY,
+      maxY: Math.max(minY, maxY),
     };
   }, []);
 
-  const pointToTranslate = useCallback((clientX: number, clientY: number, followY: boolean) => {
+  const skyPark = useCallback(() => {
     const r = rest.current;
     const bounds = flightBounds();
-    const dx = clientX - r.left - r.hubX;
-    const dy = followY ? clientY - r.top - r.hubY : target.current.y;
-    const maxParkY = Math.max(0, r.overlayH - r.height);
+    const right = window.innerWidth - r.width - window.innerWidth * 0.05 - r.left;
     return {
-      x: clamp(dx, bounds.minX, bounds.maxX),
-      y: clamp(dy, 0, maxParkY),
+      x: clamp(right, bounds.minX, bounds.maxX),
+      y: bounds.minY,
     };
   }, [flightBounds]);
 
-  const applyStage = useCallback((x: number, y: number) => {
+  const landPad = useCallback(() => {
+    const bounds = flightBounds();
+    return {
+      x: park.current.x,
+      y: bounds.maxY,
+    };
+  }, [flightBounds]);
+
+  const pointToTranslate = useCallback((clientX: number, clientY: number) => {
+    const r = rest.current;
+    const bounds = flightBounds();
+    return {
+      x: clamp(clientX - r.left - r.hubX, bounds.minX, bounds.maxX),
+      y: clamp(window.scrollY + clientY - r.top - r.hubY, bounds.minY, bounds.maxY),
+    };
+  }, [flightBounds]);
+
+  const applyStage = useCallback((docX: number, docY: number) => {
+    const viewY = docY - window.scrollY;
     stageRef.current?.style.setProperty(
       "transform",
-      `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`,
+      `translate(${docX.toFixed(1)}px, ${viewY.toFixed(1)}px)`,
     );
   }, []);
 
-  const inStrip = useCallback((clientY: number) => {
-    const strip = overlayRef.current?.getBoundingClientRect();
-    return strip ? clientY >= strip.top && clientY <= strip.bottom : clientY < 140;
+  const setMode = useCallback((next: FlightMode) => {
+    mode.current = next;
+    overlayRef.current?.setAttribute("data-flight", next);
   }, []);
+
+  const noteInput = useCallback(() => {
+    lastInputAt.current = performance.now();
+  }, []);
+
+  const takeoff = useCallback(() => {
+    const sky = skyPark();
+    park.current = sky;
+    target.current = sky;
+    snap(body.current, sky);
+    applyImpulse(body.current, { x: 0, y: -ALTITUDE.takeoffImpulse });
+    setMode("flight");
+    noteInput();
+    applyStage(sky.x, sky.y);
+  }, [applyStage, noteInput, setMode, skyPark]);
 
   const relocate = useCallback(
     (clientX: number, clientY: number, snapTo: boolean) => {
-      const next = pointToTranslate(clientX, clientY, inStrip(clientY));
+      const next = pointToTranslate(clientX, clientY);
       park.current = next;
       target.current = next;
+      noteInput();
+      setMode("flight");
       if (snapTo) {
         snap(body.current, next);
         applyStage(next.x, next.y);
@@ -154,15 +203,24 @@ export function PlaneLive({
         clickKick(body.current, next);
       }
     },
-    [applyStage, inStrip, pointToTranslate],
+    [applyStage, noteInput, pointToTranslate, setMode],
   );
 
   useLayoutEffect(() => {
     bind();
     measureRest();
     lastScrollY.current = window.scrollY;
+    lastInputAt.current = performance.now();
+    if (!placed.current) {
+      const sky = skyPark();
+      snap(body.current, sky);
+      park.current = sky;
+      target.current = sky;
+      placed.current = true;
+    }
+    setMode(mode.current);
     applyStage(body.current.pos.x, body.current.pos.y);
-  }, [applyStage, bind, measureRest, svg]);
+  }, [applyStage, bind, measureRest, setMode, skyPark, svg]);
 
   useEffect(() => {
     const onResize = () => {
@@ -170,7 +228,7 @@ export function PlaneLive({
       const bounds = flightBounds();
       const next = {
         x: clamp(body.current.pos.x, bounds.minX, bounds.maxX),
-        y: clamp(target.current.y, 0, Math.max(0, rest.current.overlayH - rest.current.height)),
+        y: clamp(body.current.pos.y, bounds.minY, bounds.maxY),
       };
       snap(body.current, next);
       target.current = next;
@@ -193,17 +251,23 @@ export function PlaneLive({
         x: event.clientX,
         y: event.clientY,
         dragging: false,
-        inStrip: inStrip(event.clientY),
       };
     };
 
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "mouse" || event.pointerType === "pen") {
-        hoverTarget.current = inStrip(event.clientY) ? 1 : 0;
+        const dx = event.clientX - lastPointer.current.x;
+        const dy = event.clientY - lastPointer.current.y;
+        lastPointer.current = { x: event.clientX, y: event.clientY };
+        hoverTarget.current = 1;
         if (still) return;
-        const next = pointToTranslate(event.clientX, event.clientY, inStrip(event.clientY));
+        if (Math.hypot(dx, dy) < ALTITUDE.pointerSlop) return;
+        noteInput();
+        if (mode.current === "landed") return;
+        const next = pointToTranslate(event.clientX, event.clientY);
         target.current = next;
         park.current = next;
+        if (mode.current === "descent") setMode("flight");
         return;
       }
 
@@ -213,7 +277,8 @@ export function PlaneLive({
       const dy = event.clientY - gesture.y;
       if (!gesture.dragging) {
         if (Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP) return;
-        if (gesture.inStrip && Math.abs(dx) >= Math.abs(dy)) {
+        // Horizontal nudges can steer; vertical motion is left to page scroll.
+        if (Math.abs(dx) >= Math.abs(dy)) {
           gesture.dragging = true;
         } else {
           touch.current = null;
@@ -221,7 +286,9 @@ export function PlaneLive({
         }
       }
       if (still) return;
-      const next = pointToTranslate(event.clientX, event.clientY, false);
+      noteInput();
+      setMode("flight");
+      const next = pointToTranslate(event.clientX, event.clientY);
       target.current = next;
       park.current = next;
     };
@@ -236,7 +303,7 @@ export function PlaneLive({
 
     const onMouseLeave = () => {
       hoverTarget.current = 0;
-      if (!still) target.current = park.current;
+      if (!still && mode.current === "flight") target.current = park.current;
     };
 
     const opts: AddEventListenerOptions = { passive: true };
@@ -254,7 +321,7 @@ export function PlaneLive({
       window.removeEventListener("click", onClick);
       document.documentElement.removeEventListener("mouseleave", onMouseLeave);
     };
-  }, [inStrip, pointToTranslate, relocate, still]);
+  }, [noteInput, pointToTranslate, relocate, setMode, still]);
 
   const poseStill = useCallback(() => {
     planeRef.current?.removeAttribute("transform");
@@ -265,20 +332,64 @@ export function PlaneLive({
     if (!planeRef.current || !bladesRef.current) bind();
 
     const sy = window.scrollY;
-    const dsy = sy - lastScrollY.current;
+    const prevSy = lastScrollY.current;
+    const dsy = sy - prevSy;
     lastScrollY.current = sy;
 
     if (calm) {
-      snap(body.current, target.current);
-      applyStage(body.current.pos.x, body.current.pos.y);
+      const sky = skyPark();
+      snap(body.current, sky);
+      applyStage(sky.x, sky.y);
       poseStill();
+      setMode("flight");
       return false;
     }
 
-    if (dsy !== 0) impartScroll(body.current, dsy);
+    const meaningfulScroll = Math.abs(dsy) >= ALTITUDE.meaningfulScroll;
+    if (meaningfulScroll) noteInput();
+    if (mode.current !== "flight" && crossedToTop(prevSy, sy)) {
+      takeoff();
+    }
+
+    const interacting = performance.now() - lastInputAt.current < 80;
+    const pad = landPad();
+    const atLanding =
+      body.current.pos.y >= pad.y - ALTITUDE.landEps &&
+      Math.abs(body.current.vel.y) < 40;
+    const next = nextFlightMode(mode.current, {
+      idleFor: performance.now() - lastInputAt.current,
+      atLanding,
+      interacting: interacting && mode.current !== "landed",
+      takeoff: false,
+    });
+    if (next !== mode.current) {
+      if (next === "descent") descentFrom.current = body.current.pos.y;
+      setMode(next);
+    }
+
+    if (mode.current === "descent") {
+      const sunk = sinkAltitude(
+        target.current.y,
+        pad.y,
+        dt,
+        ALTITUDE.sinkSeconds,
+        descentFrom.current,
+      );
+      target.current = { x: park.current.x, y: sunk };
+      applyGravity(body.current, dt);
+    } else if (mode.current === "landed") {
+      target.current = pad;
+    }
+
+    if (dsy !== 0 && mode.current === "flight") impartScroll(body.current, dsy);
     stepSpring(body.current, target.current, dt);
     collideBounds(body.current, flightBounds());
     applyStage(body.current.pos.x, body.current.pos.y);
+
+    if (mode.current === "landed") {
+      poseStill();
+      return true;
+    }
 
     const vx = body.current.vel.x;
     const vy = body.current.vel.y;
@@ -289,7 +400,7 @@ export function PlaneLive({
     const pitch =
       Math.cos(t * 0.9) * 1.4 -
       hover.current * 2.5 +
-      clamp(vy * 0.018, -10, 10);
+      clamp(vy * 0.012, -10, 10);
     const drift = Math.sin(t * 0.21) * 6 + clamp(vx * 0.012, -10, 10);
     const rpm = 2400 - hover.current * 300;
     const turns = (t * rpm) / 60;
@@ -307,7 +418,12 @@ export function PlaneLive({
   }, [still, poseStill]);
 
   return (
-    <div ref={overlayRef} className="iso plane-overlay" data-theme="light">
+    <div
+      ref={overlayRef}
+      className="iso plane-overlay"
+      data-theme="light"
+      data-flight="flight"
+    >
       <div
         ref={stageRef}
         className="iso-stage"

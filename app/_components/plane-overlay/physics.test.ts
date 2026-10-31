@@ -1,13 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  ALTITUDE,
+  applyGravity,
   applyImpulse,
   clickKick,
   collideBounds,
   createBody,
+  crossedToTop,
   FLIGHT,
   impartScroll,
+  nextFlightMode,
   settled,
+  sinkAltitude,
   snap,
   stepSpring,
 } from "./physics";
@@ -120,4 +125,67 @@ test("flight constants stay underdamped", () => {
   assert.ok(FLIGHT.damping < critical * 0.75);
   assert.ok(FLIGHT.scrollGain > 1);
   assert.ok(FLIGHT.clickImpulse > 0);
+});
+
+test("idle altitude sinks gradually toward the landing pad", () => {
+  let y = 40;
+  y = sinkAltitude(y, 800, DT, ALTITUDE.sinkSeconds, 40);
+  assert.ok(y > 40);
+  assert.ok(y < 80);
+  for (let i = 0; i < Math.round(ALTITUDE.sinkSeconds / DT) + 2; i++) {
+    y = sinkAltitude(y, 800, DT, ALTITUDE.sinkSeconds, 40);
+  }
+  assert.equal(y, 800);
+});
+
+test("gravity adds downward velocity without teleporting", () => {
+  const body = createBody(0, 10);
+  applyGravity(body, DT, 600);
+  assert.equal(body.pos.y, 10);
+  assert.ok(body.vel.y > 0);
+});
+
+test("crossing back to the top of the page is a rising edge", () => {
+  assert.equal(crossedToTop(200, 20), true);
+  assert.equal(crossedToTop(10, 8), false);
+  assert.equal(crossedToTop(20, 200), false);
+});
+
+test("flight mode sinks after idle and lands when settled", () => {
+  assert.equal(
+    nextFlightMode("flight", {
+      idleFor: ALTITUDE.idleMs,
+      atLanding: false,
+      interacting: false,
+      takeoff: false,
+    }),
+    "descent",
+  );
+  assert.equal(
+    nextFlightMode("descent", {
+      idleFor: 20_000,
+      atLanding: true,
+      interacting: false,
+      takeoff: false,
+    }),
+    "landed",
+  );
+  assert.equal(
+    nextFlightMode("landed", {
+      idleFor: 20_000,
+      atLanding: true,
+      interacting: false,
+      takeoff: true,
+    }),
+    "flight",
+  );
+  assert.equal(
+    nextFlightMode("descent", {
+      idleFor: 20_000,
+      atLanding: false,
+      interacting: true,
+      takeoff: false,
+    }),
+    "flight",
+  );
 });
