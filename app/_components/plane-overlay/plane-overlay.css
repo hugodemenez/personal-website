@@ -14,10 +14,11 @@
 .plane-overlay .iso-stage {
   height: 100%;
   width: auto;
-  /* Keep the strip itself inert so header controls stay clickable; the
-     painted plane (see svg below) is the hover target. */
+  /* Strip stays inert: follow/click are document listeners so page
+     controls and scroll keep working. */
   pointer-events: none;
   background: none;
+  will-change: transform;
 }
 
 .plane-overlay .iso-stage,
