@@ -22,3 +22,27 @@ html.plane-dragging * {
   -webkit-user-select: none !important;
   -webkit-touch-callout: none;
 }
+
+/* In-flow slot so the paper plane and its dock word stay one unit. */
+.plane-dock {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  gap: 0.35em;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.plane-dock-slot {
+  display: inline-block;
+  flex: none;
+  width: 74px;
+  height: 48px;
+}
+
+@media (min-width: 640px) {
+  .plane-dock-slot {
+    width: 98px;
+    height: 64px;
+  }
+}

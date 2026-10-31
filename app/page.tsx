@@ -225,11 +225,15 @@ export default async function Home() {
             systematic process.
           </p>
           <p className="leading-relaxed">
-            I keep a passion for engineering and{" "}
-            <span data-plane-dock="" className="whitespace-nowrap">
-              planes
-            </span>
-            .
+            <span data-plane-dock="" className="plane-dock">
+              <span data-plane-slot="" className="plane-dock-slot" aria-hidden="true" />
+              Planes
+            </span>{" "}
+            keep a passion for engineering close: understanding how things work,
+            tinkering all the time — programmatic and mechanical. I like
+            practical engineering, the multipurpose things optimized to do their
+            job to perfection. The volano (flywheel) from a Berkel ham slicer is
+            a mechanism in that spirit.
           </p>
           {track ? (
             <p className="leading-relaxed">

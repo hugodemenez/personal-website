@@ -48,27 +48,16 @@ test("on-screen plane span is half the previous framing", () => {
   assert.equal(spanPxFor(1280), 98);
 });
 
-test("dock park sits just after the marker, and falls back to the top-right", () => {
+test("dock park centers on the reserved slot, and falls back to the top-right", () => {
   const docked = dockPark(
-    { left: 120, top: 210, right: 168, width: 48, height: 20 },
-    { width: 1280, height: 900 },
-    98,
-    72,
-  );
-  assert.ok(docked.x > 168);
-  assert.equal(docked.y, 220);
-  const fallback = dockPark(null, { width: 1280, height: 900 }, 98, 72);
-  assert.equal(fallback.x, 1280 - 72 - 20);
-  assert.equal(fallback.y, 80);
-});
-
-test("a narrow viewport wraps the dock below the marker instead of covering it", () => {
-  const parked = dockPark(
-    { left: 297, top: 290, right: 345, width: 48, height: 20 },
+    { left: 16, top: 240, width: 74, height: 48 },
     { width: 390, height: 844 },
     74,
     72,
   );
-  assert.ok(parked.y > 310);
-  assert.ok(parked.x >= 72);
+  assert.equal(docked.x, 53);
+  assert.equal(docked.y, 264);
+  const fallback = dockPark(null, { width: 1280, height: 900 }, 98, 72);
+  assert.equal(fallback.x, 1280 - 72 - 20);
+  assert.equal(fallback.y, 80);
 });

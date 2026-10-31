@@ -1,15 +1,9 @@
 import * as THREE from "three";
 import { createAnatomyPlane, MODEL_SPAN } from "./plane-mesh";
 import {
-  ALTITUDE,
-  applyGravity,
-  applyImpulse,
   clickKick,
   collideBounds,
   createBody,
-  crossedToTop,
-  nextFlightMode,
-  sinkAltitude,
   snap,
   stepSpring,
   type FlightMode,
@@ -20,6 +14,7 @@ import {
   dragModeFor,
   pixelBounds,
   PLANE_DOCK,
+  PLANE_SLOT,
   spanPxFor,
   type DragMode,
 } from "./pointer";
@@ -27,7 +22,6 @@ import {
 const EDGE = 72;
 const LONGEST = 1 / 30;
 const PROP_FLY = 42;
-const PROP_LAND = 0;
 const ISO_AZIMUTH = 52 * (Math.PI / 180);
 const ISO_ELEVATION = 20 * (Math.PI / 180);
 const ISO_DISTANCE = 14;
@@ -97,9 +91,6 @@ export function mountPlaneScene(
   let mode: FlightMode = "flight";
   let placed = false;
   let last = 0;
-  let lastInput = performance.now();
-  let lastScrollY = window.scrollY;
-  let descentFrom = 0;
   let frame = 0;
   let worldPerPixel = 0.01;
   let yaw = 0;
@@ -127,7 +118,10 @@ export function mountPlaneScene(
   let userMoved = false;
 
   const skyPark = () => {
-    const node = document.querySelector(PLANE_DOCK);
+    const dock = document.querySelector(PLANE_DOCK);
+    const slot =
+      dock instanceof HTMLElement ? dock.querySelector(PLANE_SLOT) : null;
+    const node = slot instanceof HTMLElement ? slot : dock;
     const rect = node instanceof HTMLElement ? node.getBoundingClientRect() : null;
     return dockPark(rect, { width: size.w, height: size.h }, spanPxFor(size.w), EDGE);
   };
@@ -137,15 +131,6 @@ export function mountPlaneScene(
     snap(body, sky);
     target.x = sky.x;
     target.y = sky.y;
-  };
-
-  const landPad = () => {
-    const bounds = pixelBounds(size.w, size.h, EDGE);
-    return { x: target.x, y: bounds.maxY };
-  };
-
-  const noteInput = () => {
-    lastInput = performance.now();
   };
 
   let lockY = 0;
@@ -170,7 +155,6 @@ export function mountPlaneScene(
     document.body.style.touchAction = "";
     document.documentElement.style.cursor = "";
     window.scrollTo(0, lockY);
-    lastScrollY = lockY;
   };
 
   const blockPage = (event: Event) => {
@@ -251,15 +235,6 @@ export function mountPlaneScene(
     return raycaster.intersectObject(trainer.group, true).length > 0;
   };
 
-  const takeoff = () => {
-    const sky = skyPark();
-    target.x = sky.x;
-    target.y = sky.y;
-    applyImpulse(body, { x: 0, y: -ALTITUDE.takeoffImpulse });
-    setFlight("flight");
-    noteInput();
-  };
-
   const onPointerDown = (event: PointerEvent) => {
     if (event.isPrimary) drag.extra = 0;
     else drag.extra += 1;
@@ -273,7 +248,6 @@ export function mountPlaneScene(
     drag.mode = dragModeFor(event, drag.extra);
     drag.lastX = event.clientX;
     drag.lastY = event.clientY;
-    noteInput();
     setFlight("flight");
     lockPage();
     if (drag.mode === "move") {
@@ -294,7 +268,6 @@ export function mountPlaneScene(
     }
     if (event.pointerId !== drag.id && drag.mode !== "orbit") return;
     blockPage(event);
-    noteInput();
     const dx = event.clientX - drag.lastX;
     const dy = event.clientY - drag.lastY;
     drag.lastX = event.clientX;
@@ -344,10 +317,6 @@ export function mountPlaneScene(
   const onScroll = () => {
     if (drag.active) return;
     if (!userMoved) parkAtDock();
-    const sy = window.scrollY;
-    const prev = lastScrollY;
-    lastScrollY = sy;
-    if (mode !== "flight" && crossedToTop(prev, sy)) takeoff();
   };
 
   const tick = (now: number) => {
@@ -356,8 +325,8 @@ export function mountPlaneScene(
     const still = stillRef.current;
 
     if (still) {
-      const sky = skyPark();
-      snap(body, sky);
+      if (!userMoved) parkAtDock();
+      else snap(body, target);
       yaw = 0;
       pitch = 0;
       roll = 0;
@@ -366,6 +335,7 @@ export function mountPlaneScene(
       applyPose();
       setFlight("flight");
       canvas.dataset.spinning = "0";
+      canvas.dataset.docked = userMoved ? "0" : "1";
       canvas.dataset.x = body.pos.x.toFixed(1);
       canvas.dataset.y = body.pos.y.toFixed(1);
       renderer.render(scene, camera);
@@ -373,27 +343,25 @@ export function mountPlaneScene(
       return;
     }
 
-    const interacting = drag.active;
-    const pad = landPad();
-    const atLanding =
-      body.pos.y >= pad.y - ALTITUDE.landEps && Math.abs(body.vel.y) < 40;
-    const next = nextFlightMode(mode, {
-      idleFor: performance.now() - lastInput,
-      atLanding,
-      interacting,
-      takeoff: false,
-    });
-    if (next !== mode) {
-      if (next === "descent") descentFrom = body.pos.y;
-      setFlight(next);
-    }
-
-    if (mode === "descent") {
-      target.y = sinkAltitude(target.y, pad.y, dt, ALTITUDE.sinkSeconds, descentFrom);
-      applyGravity(body, dt);
-    } else if (mode === "landed") {
-      target.x = pad.x;
-      target.y = pad.y;
+    // Until Hugo drags, stay glued to the reserved dock slot — no idle
+    // gravity, altitude loss, or landing. After a drag, leave it where
+    // he released it.
+    if (!userMoved) {
+      parkAtDock();
+      yaw = lerp(yaw, 0, 1 - Math.exp(-dt / 0.22));
+      pitch = lerp(pitch, 0, 1 - Math.exp(-dt / 0.22));
+      roll = lerp(roll, 0, 1 - Math.exp(-dt / 0.18));
+      propSpeed = lerp(propSpeed, PROP_FLY, 1 - Math.exp(-dt / 0.4));
+      trainer.prop.rotation.z += propSpeed * dt;
+      applyPose();
+      setFlight("flight");
+      canvas.dataset.spinning = propSpeed < 2 ? "0" : "1";
+      canvas.dataset.docked = "1";
+      canvas.dataset.x = body.pos.x.toFixed(1);
+      canvas.dataset.y = body.pos.y.toFixed(1);
+      renderer.render(scene, camera);
+      frame = requestAnimationFrame(tick);
+      return;
     }
 
     stepSpring(body, target, dt);
@@ -408,12 +376,12 @@ export function mountPlaneScene(
     }
     roll = lerp(roll, desiredRoll, 1 - Math.exp(-dt / 0.18));
 
-    const wantProp = mode === "landed" || still ? PROP_LAND : PROP_FLY;
-    propSpeed = lerp(propSpeed, wantProp, 1 - Math.exp(-dt / (mode === "landed" ? 0.16 : 0.4)));
+    propSpeed = lerp(propSpeed, PROP_FLY, 1 - Math.exp(-dt / 0.4));
     trainer.prop.rotation.z += propSpeed * dt;
     applyPose();
 
-    canvas.dataset.spinning = mode === "landed" || propSpeed < 2 ? "0" : "1";
+    canvas.dataset.spinning = propSpeed < 2 ? "0" : "1";
+    canvas.dataset.docked = "0";
     canvas.dataset.x = body.pos.x.toFixed(1);
     canvas.dataset.y = body.pos.y.toFixed(1);
     renderer.render(scene, camera);
@@ -433,6 +401,7 @@ export function mountPlaneScene(
   canvas.dataset.x = body.pos.x.toFixed(1);
   canvas.dataset.y = body.pos.y.toFixed(1);
   canvas.dataset.spinning = stillRef.current ? "0" : "1";
+  canvas.dataset.docked = userMoved ? "0" : "1";
   renderer.render(scene, camera);
 
   const optsClaim: AddEventListenerOptions = { capture: true, passive: false };
