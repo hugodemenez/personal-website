@@ -1,8 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { Header } from "./_components/app-header";
-import { PinnedShell } from "./_components/pinned-shell";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -73,16 +71,6 @@ export default function RootLayout({
 @keyframes via-blur {
   30% { filter: blur(3px); }
 }
-::view-transition-group(site-header) {
-  animation: none;
-  z-index: 100;
-}
-::view-transition-old(site-header) {
-  display: none;
-}
-::view-transition-new(site-header) {
-  animation: none;
-}
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(*),
   ::view-transition-new(*),
@@ -93,28 +81,7 @@ export default function RootLayout({
 }`,
         }}
       />
-      <body className="antialiased">
-        {/* -mt/pt pair extends the backdrop upward without moving the content,
-            so the pinned header also covers the status-bar strip that page
-            content flows into. offset matches the extension. */}
-        <PinnedShell
-          className="relative z-40 -mx-4 -mt-24 mb-10 px-4 pt-24 sm:mb-14"
-          offset={-96}
-        >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-background"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-full h-10 bg-linear-to-b from-background to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)]"
-          />
-          <div className="relative" style={{ viewTransitionName: "site-header" }}>
-            <Header />
-          </div>
-        </PinnedShell>
-        {children}
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

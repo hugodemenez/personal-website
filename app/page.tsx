@@ -1,7 +1,6 @@
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
 import RecentRuns from "./_components/recent-runs";
-import SubstackPosts from "./_components/substack-posts";
 import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
 import { LOCATION_CACHE_TAG } from "@/server/location-data";
@@ -190,14 +189,15 @@ export default async function Home() {
               Hugo Demenez
             </h1>
             <p className="mt-2 font-serif text-xl tracking-[-0.02em] text-muted">
-              Software writer
+              Curious builder
             </p>
           </div>
           <p className="leading-relaxed">
-            I write about the work as I go: building products, staying focused,
-            discretionary trading
+            I build products and stay avidly curious, always scouting for new
+            advances in AI. Discretionary trading
             <TradingCandlestickIcon />
-            and turning rough ideas into useful systems.
+            is part of that work: turning rough ideas into systems people can
+            actually use.
           </p>
           {track ? (
             <p className="leading-relaxed">
@@ -215,18 +215,17 @@ export default async function Home() {
             </p>
           ) : null}
           <p className="leading-relaxed">
-            I don’t spend much time on social networks, only scouting{" "}
+            I don’t spend much time on social networks; when I scout, it’s{" "}
             <a
-              className="inline-flex items-center align-baseline text-foreground transition-colors hover:text-accent"
+              className={socialLinkClass}
               href="https://x.com/hugodemenez"
               rel="noopener noreferrer"
               target="_blank"
-              aria-label="X"
             >
               <XIcon />
+              @hugodemenez
             </a>{" "}
-            from time to time to keep an eye on the latest developments around
-            AI or design inspirations.
+            for the latest in AI and design.
           </p>
           <p className="leading-relaxed">
             The work itself is less private: I build{" "}
@@ -264,7 +263,6 @@ export default async function Home() {
         <PlacesMap />
       </main>
       <RecentRuns />
-      <SubstackPosts />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import type { VisitedPlace } from "@/server/location-data";
+import { RESUME_PLACES, type ResumePlace } from "@/lib/resume-places";
 
 export const MAP_WIDTH = 900;
 export const MAP_HEIGHT = 450;
@@ -313,7 +314,7 @@ export function continentPaths(): ContinentPath[] {
 }
 
 export type StayKind = "habitual" | "casual";
-export type PlaceMarkKind = StayKind | "wanted";
+export type PlaceMarkKind = StayKind | "wanted" | "resume";
 
 export interface WantedPlace {
   name: string;
@@ -413,6 +414,7 @@ function buildCirclePath(
 }
 
 export interface ZoneCircle {
+  detail?: string;
   hitRadius: number;
   kind: PlaceMarkKind;
   label: string;
@@ -504,4 +506,59 @@ export function wantedCircles(
       y: origin.y,
     };
   });
+}
+
+function resumeRadius(span: ResumePlace["span"]): number {
+  if (span === "global") return 52;
+  if (span === "region") return 28;
+  return 22;
+}
+
+export function resumeCircles(
+  places: readonly ResumePlace[] = RESUME_PLACES
+): ZoneCircle[] {
+  return places.map((place) => {
+    const origin = zoneCenter(place);
+    const random = createRandom(`resume|${place.label}`);
+    const radius = resumeRadius(place.span);
+    const stretch = 0.74 + random() * 0.18;
+    const turns = 1.1 + random() * 0.14;
+
+    return {
+      detail: place.detail,
+      hitRadius: Math.max(radius * 1.35, 36),
+      kind: "resume",
+      label: place.label,
+      path: buildCirclePath(origin, radius, radius * stretch, random, turns),
+      width: place.span === "global" ? 1.7 : 1.85,
+      x: origin.x,
+      y: origin.y,
+    };
+  });
+}
+
+export function applyResumeToStayCircles(
+  stayCircles: readonly ZoneCircle[],
+  places: readonly ResumePlace[] = RESUME_PLACES
+): ZoneCircle[] {
+  const stays = stayCircles.map((circle) => ({ ...circle }));
+  const extras: ZoneCircle[] = [];
+
+  for (const place of places) {
+    const match = place.country
+      ? stays.find(
+          (circle) => circle.label.toLowerCase() === place.country.toLowerCase()
+        )
+      : undefined;
+
+    if (match) {
+      match.detail = place.detail;
+      continue;
+    }
+
+    const [circle] = resumeCircles([place]);
+    if (circle) extras.push(circle);
+  }
+
+  return [...stays, ...extras];
 }
