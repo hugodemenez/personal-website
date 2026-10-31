@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clientToNdc, dragModeFor, pixelBounds, shouldClaimPointer } from "./pointer";
+import {
+  clientToNdc,
+  dockPark,
+  dragModeFor,
+  pixelBounds,
+  PLANE_SPAN_PX,
+  shouldClaimPointer,
+  spanPxFor,
+} from "./pointer";
 
 test("client coordinates map to Three.js NDC", () => {
   const rect = { left: 0, top: 0, width: 200, height: 100 };
@@ -31,4 +39,36 @@ test("empty sky never claims the pointer", () => {
 test("viewport bounds keep a margin", () => {
   const bounds = pixelBounds(800, 600, 40);
   assert.deepEqual(bounds, { minX: 40, maxX: 760, minY: 40, maxY: 560 });
+});
+
+test("on-screen plane span is half the previous framing", () => {
+  assert.equal(PLANE_SPAN_PX.mobile, 74);
+  assert.equal(PLANE_SPAN_PX.desktop, 98);
+  assert.equal(spanPxFor(390), 74);
+  assert.equal(spanPxFor(1280), 98);
+});
+
+test("dock park sits just after the marker, and falls back to the top-right", () => {
+  const docked = dockPark(
+    { left: 120, top: 210, right: 168, width: 48, height: 20 },
+    { width: 1280, height: 900 },
+    98,
+    72,
+  );
+  assert.ok(docked.x > 168);
+  assert.equal(docked.y, 220);
+  const fallback = dockPark(null, { width: 1280, height: 900 }, 98, 72);
+  assert.equal(fallback.x, 1280 - 72 - 20);
+  assert.equal(fallback.y, 80);
+});
+
+test("a narrow viewport wraps the dock below the marker instead of covering it", () => {
+  const parked = dockPark(
+    { left: 297, top: 290, right: 345, width: 48, height: 20 },
+    { width: 390, height: 844 },
+    74,
+    72,
+  );
+  assert.ok(parked.y > 310);
+  assert.ok(parked.x >= 72);
 });

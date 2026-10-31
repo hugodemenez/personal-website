@@ -14,7 +14,15 @@ import {
   stepSpring,
   type FlightMode,
 } from "./physics";
-import { clientToNdc, dragModeFor, pixelBounds, type DragMode } from "./pointer";
+import {
+  clientToNdc,
+  dockPark,
+  dragModeFor,
+  pixelBounds,
+  PLANE_DOCK,
+  spanPxFor,
+  type DragMode,
+} from "./pointer";
 
 const EDGE = 72;
 const LONGEST = 1 / 30;
@@ -116,12 +124,19 @@ export function mountPlaneScene(
     canvas.dataset.flight = next;
   };
 
+  let userMoved = false;
+
   const skyPark = () => {
-    const bounds = pixelBounds(size.w, size.h, EDGE);
-    return {
-      x: Math.max(bounds.minX, size.w - EDGE - 20),
-      y: bounds.minY + 8,
-    };
+    const node = document.querySelector(PLANE_DOCK);
+    const rect = node instanceof HTMLElement ? node.getBoundingClientRect() : null;
+    return dockPark(rect, { width: size.w, height: size.h }, spanPxFor(size.w), EDGE);
+  };
+
+  const parkAtDock = () => {
+    const sky = skyPark();
+    snap(body, sky);
+    target.x = sky.x;
+    target.y = sky.y;
   };
 
   const landPad = () => {
@@ -131,6 +146,36 @@ export function mountPlaneScene(
 
   const noteInput = () => {
     lastInput = performance.now();
+  };
+
+  let lockY = 0;
+  const lockPage = () => {
+    lockY = window.scrollY;
+    document.documentElement.classList.add("plane-dragging");
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${lockY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+  };
+
+  const unlockPage = () => {
+    document.documentElement.classList.remove("plane-dragging");
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.overflow = "";
+    document.body.style.touchAction = "";
+    document.documentElement.style.cursor = "";
+    window.scrollTo(0, lockY);
+    lastScrollY = lockY;
+  };
+
+  const blockPage = (event: Event) => {
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   const updateViewPlane = () => {
@@ -152,13 +197,11 @@ export function mountPlaneScene(
     camera.updateProjectionMatrix();
     updateViewPlane();
     worldPerPixel = VIEW_H / Math.max(h, 1);
-    const spanPx = w < 640 ? 148 : 196;
+    const spanPx = spanPxFor(w);
     trainer.group.scale.setScalar((spanPx * worldPerPixel) / MODEL_SPAN);
-    if (!placed) {
-      const sky = skyPark();
-      snap(body, sky);
-      target.x = sky.x;
-      target.y = sky.y;
+    canvas.dataset.span = String(spanPx);
+    if (!placed || !userMoved) {
+      parkAtDock();
       placed = true;
     } else {
       collideBounds(body, pixelBounds(w, h, EDGE));
@@ -223,7 +266,8 @@ export function mountPlaneScene(
     const hit = hitsPlane(event.clientX, event.clientY);
     hoverHit = hit;
     if (!hit) return;
-    event.preventDefault();
+    blockPage(event);
+    userMoved = true;
     drag.active = true;
     drag.id = event.pointerId;
     drag.mode = dragModeFor(event, drag.extra);
@@ -231,7 +275,7 @@ export function mountPlaneScene(
     drag.lastY = event.clientY;
     noteInput();
     setFlight("flight");
-    document.documentElement.classList.add("plane-dragging");
+    lockPage();
     if (drag.mode === "move") {
       const point = intersectView(event.clientX, event.clientY);
       if (point) {
@@ -249,7 +293,7 @@ export function mountPlaneScene(
       return;
     }
     if (event.pointerId !== drag.id && drag.mode !== "orbit") return;
-    event.preventDefault();
+    blockPage(event);
     noteInput();
     const dx = event.clientX - drag.lastX;
     const dy = event.clientY - drag.lastY;
@@ -272,19 +316,34 @@ export function mountPlaneScene(
     if (event.pointerId === drag.id) {
       drag.active = false;
       drag.id = -1;
-      document.documentElement.classList.remove("plane-dragging");
-      document.documentElement.style.cursor = "";
+      unlockPage();
     }
     if (!event.isPrimary) drag.extra = Math.max(0, drag.extra - 1);
   };
 
   const onContextMenu = (event: MouseEvent) => {
     if (drag.active || hitsPlane(event.clientX, event.clientY)) {
-      event.preventDefault();
+      blockPage(event);
     }
   };
 
+  const onTouchStart = (event: TouchEvent) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    if (drag.active || hitsPlane(touch.clientX, touch.clientY)) blockPage(event);
+  };
+
+  const onTouchMove = (event: TouchEvent) => {
+    if (drag.active) blockPage(event);
+  };
+
+  const onWheel = (event: WheelEvent) => {
+    if (drag.active) blockPage(event);
+  };
+
   const onScroll = () => {
+    if (drag.active) return;
+    if (!userMoved) parkAtDock();
     const sy = window.scrollY;
     const prev = lastScrollY;
     lastScrollY = sy;
@@ -366,6 +425,9 @@ export function mountPlaneScene(
   themeQuery.addEventListener("change", onTheme);
 
   resize();
+  document.fonts?.ready.then(() => {
+    if (!userMoved) parkAtDock();
+  });
   setFlight("flight");
   applyPose();
   canvas.dataset.x = body.pos.x.toFixed(1);
@@ -373,13 +435,15 @@ export function mountPlaneScene(
   canvas.dataset.spinning = stillRef.current ? "0" : "1";
   renderer.render(scene, camera);
 
-  const optsMove: AddEventListenerOptions = { passive: false };
-  const optsDown: AddEventListenerOptions = { capture: true, passive: false };
-  window.addEventListener("pointerdown", onPointerDown, optsDown);
-  window.addEventListener("pointermove", onPointerMove, optsMove);
+  const optsClaim: AddEventListenerOptions = { capture: true, passive: false };
+  window.addEventListener("pointerdown", onPointerDown, optsClaim);
+  window.addEventListener("pointermove", onPointerMove, optsClaim);
   window.addEventListener("pointerup", endDrag);
   window.addEventListener("pointercancel", endDrag);
   window.addEventListener("contextmenu", onContextMenu);
+  window.addEventListener("touchstart", onTouchStart, optsClaim);
+  window.addEventListener("touchmove", onTouchMove, optsClaim);
+  window.addEventListener("wheel", onWheel, optsClaim);
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", resize);
   window.visualViewport?.addEventListener("resize", resize);
@@ -387,17 +451,23 @@ export function mountPlaneScene(
 
   const dispose = () => {
     cancelAnimationFrame(frame);
-    window.removeEventListener("pointerdown", onPointerDown, optsDown);
-    window.removeEventListener("pointermove", onPointerMove, optsMove);
+    window.removeEventListener("pointerdown", onPointerDown, optsClaim);
+    window.removeEventListener("pointermove", onPointerMove, optsClaim);
     window.removeEventListener("pointerup", endDrag);
     window.removeEventListener("pointercancel", endDrag);
     window.removeEventListener("contextmenu", onContextMenu);
+    window.removeEventListener("touchstart", onTouchStart, optsClaim);
+    window.removeEventListener("touchmove", onTouchMove, optsClaim);
+    window.removeEventListener("wheel", onWheel, optsClaim);
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", resize);
     window.visualViewport?.removeEventListener("resize", resize);
     themeQuery.removeEventListener("change", onTheme);
-    document.documentElement.classList.remove("plane-dragging");
-    document.documentElement.style.cursor = "";
+    if (drag.active) unlockPage();
+    else {
+      document.documentElement.classList.remove("plane-dragging");
+      document.documentElement.style.cursor = "";
+    }
     trainer.group.traverse((node) => {
       if (node instanceof THREE.Mesh || node instanceof THREE.LineSegments) {
         node.geometry.dispose();

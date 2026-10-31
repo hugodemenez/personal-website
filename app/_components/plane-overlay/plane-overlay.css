@@ -10,7 +10,15 @@
 }
 
 html.plane-dragging,
+html.plane-dragging body {
+  touch-action: none;
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+
+html.plane-dragging,
 html.plane-dragging * {
   user-select: none !important;
   -webkit-user-select: none !important;
+  -webkit-touch-callout: none;
 }

@@ -224,6 +224,13 @@ export default async function Home() {
             : a tool to track my daily progress, and to turn that data into a
             systematic process.
           </p>
+          <p className="leading-relaxed">
+            I keep a passion for engineering and{" "}
+            <span data-plane-dock="" className="whitespace-nowrap">
+              planes
+            </span>
+            .
+          </p>
           {track ? (
             <p className="leading-relaxed">
               Most days have a soundtrack; this week it has been{" "}

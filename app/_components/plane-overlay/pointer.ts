@@ -49,3 +49,40 @@ export function dragModeFor(event: {
 export function shouldClaimPointer(hit: boolean, dragging: boolean) {
   return hit || dragging;
 }
+
+/** On-screen wingspan in CSS pixels — half the previous 148 / 196 framing. */
+export const PLANE_SPAN_PX = { mobile: 74, desktop: 98 } as const;
+
+export const PLANE_DOCK = "[data-plane-dock]";
+
+export function spanPxFor(width: number) {
+  return width < 640 ? PLANE_SPAN_PX.mobile : PLANE_SPAN_PX.desktop;
+}
+
+/** Rest/spawn next to a marker (after “planes”), else the old top-right park. */
+export function dockPark(
+  rect: { left: number; top: number; right: number; width: number; height: number } | null,
+  view: { width: number; height: number },
+  spanPx: number,
+  margin: number,
+): { x: number; y: number } {
+  const bounds = pixelBounds(view.width, view.height, margin);
+  if (!rect || rect.width <= 0 || rect.height <= 0) {
+    return {
+      x: Math.max(bounds.minX, view.width - margin - 20),
+      y: bounds.minY + 8,
+    };
+  }
+  const gap = 8;
+  let x = rect.right + gap + spanPx * 0.38;
+  let y = rect.top + rect.height / 2;
+  const maxX = view.width - Math.max(spanPx * 0.42, 16);
+  if (x > maxX) {
+    x = Math.min(maxX, Math.max(rect.left + spanPx * 0.45, rect.right - spanPx * 0.1));
+    y = rect.top + rect.height + 12 + spanPx * 0.22;
+  }
+  return {
+    x: Math.min(bounds.maxX, Math.max(bounds.minX, x)),
+    y: Math.min(bounds.maxY, Math.max(bounds.minY, y)),
+  };
+}
