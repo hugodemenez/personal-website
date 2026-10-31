@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { VisitedPlace } from "../server/location-data";
 import {
+  GLOBAL_MARK,
   MAP_HEIGHT,
   MAP_WIDTH,
   WANTED_PLACES,
@@ -12,6 +13,7 @@ import {
   drawOrder,
   projectLocation,
   resumeCircles,
+  resumeRadius,
   stayKind,
   wantedCircles,
   zoneCenter,
@@ -153,6 +155,25 @@ test("draws circles west to east so they appear one by one", () => {
   }
 });
 
+function pathExtents(path: string) {
+  const numbers = [...path.matchAll(/-?\d+(?:\.\d+)?/g)].map((match) =>
+    Number(match[0])
+  );
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  for (let index = 0; index < numbers.length; index += 2) {
+    minX = Math.min(minX, numbers[index] ?? Infinity);
+    maxX = Math.max(maxX, numbers[index] ?? -Infinity);
+    minY = Math.min(minY, numbers[index + 1] ?? Infinity);
+    maxY = Math.max(maxY, numbers[index + 1] ?? -Infinity);
+  }
+
+  return { minX, maxX, minY, maxY };
+}
+
 test("hides CV beats on the map and folds them into matching stays", () => {
   const labels = resumeCircles().map((circle) => circle.label);
   assert.deepEqual(
@@ -168,7 +189,10 @@ test("hides CV beats on the map and folds them into matching stays", () => {
   assert.ok(foundever);
   assert.ok(sanFrancisco);
   assert.ok(harvard.x > sanFrancisco.x);
-  assert.ok(foundever.hitRadius >= 36);
+  assert.equal(foundever.x, GLOBAL_MARK.x);
+  assert.equal(foundever.y, GLOBAL_MARK.y);
+  assert.equal(foundever.global, true);
+  assert.ok(foundever.hitRadius >= Math.hypot(MAP_WIDTH / 2, MAP_HEIGHT / 2) - 1);
 
   const merged = applyResumeToStayCircles(zoneCircles([portugal, france]));
   const portugalMark = merged.find((circle) => circle.label === "Portugal");
@@ -180,4 +204,91 @@ test("hides CV beats on the map and folds them into matching stays", () => {
   assert.equal(merged.filter((circle) => circle.label === "Portugal").length, 1);
   assert.ok(merged.some((circle) => circle.label === "Harvard"));
   assert.ok(merged.some((circle) => circle.label === "Foundever"));
+});
+
+test("draws the global resume mark as a scribble around the whole map", () => {
+  assert.ok(resumeRadius("global") >= MAP_WIDTH / 2 - 24);
+  assert.ok(resumeRadius("global") > resumeRadius("region") * 8);
+  assert.equal(GLOBAL_MARK.radiusX, MAP_WIDTH / 2 - 16);
+  assert.equal(GLOBAL_MARK.radiusY, MAP_HEIGHT / 2 - 14);
+
+  const foundever = resumeCircles().find((circle) => circle.label === "Foundever");
+  assert.ok(foundever);
+  const extents = pathExtents(foundever.path);
+  assert.ok(
+    extents.maxX - extents.minX > MAP_WIDTH * 0.88,
+    "global scribble should span nearly the map width"
+  );
+  assert.ok(
+    extents.maxY - extents.minY > MAP_HEIGHT * 0.82,
+    "global scribble should span nearly the map height"
+  );
+  assert.ok(extents.minX < 40);
+  assert.ok(extents.maxX > MAP_WIDTH - 40);
+  assert.ok(extents.minY < 40);
+  assert.ok(extents.maxY > MAP_HEIGHT - 40);
+});
+
+test("prefers city and region hits over the global ring", () => {
+  const merged = applyResumeToStayCircles(zoneCircles([portugal, france]));
+  const circles = [...wantedCircles(), ...merged];
+  const portugalMark = merged.find((circle) => circle.label === "Portugal");
+  const franceMark = merged.find((circle) => circle.label === "France");
+  const foundever = merged.find((circle) => circle.label === "Foundever");
+  const sanFrancisco = wantedCircles().find((circle) => circle.label === "San Francisco");
+  assert.ok(portugalMark);
+  assert.ok(franceMark);
+  assert.ok(foundever);
+  assert.ok(sanFrancisco);
+
+  assert.equal(
+    closestPlaceCircle({ x: portugalMark.x + 8, y: portugalMark.y + 6 }, circles)?.label,
+    "Portugal"
+  );
+  assert.equal(
+    closestPlaceCircle({ x: franceMark.x, y: franceMark.y }, circles)?.label,
+    "France"
+  );
+  assert.equal(
+    closestPlaceCircle({ x: sanFrancisco.x, y: sanFrancisco.y }, circles)?.label,
+    "San Francisco"
+  );
+
+  const emptyOcean = closestPlaceCircle({ x: 210, y: 300 }, circles);
+  assert.equal(emptyOcean?.label, "Foundever");
+
+  const mapCenter = closestPlaceCircle(
+    { x: MAP_WIDTH / 2, y: MAP_HEIGHT / 2 },
+    circles
+  );
+  assert.equal(mapCenter?.label, "Foundever");
+
+  const hoverInterior = closestPlaceCircle(
+    { x: MAP_WIDTH / 2, y: MAP_HEIGHT / 2 },
+    circles,
+    { globalFallback: false }
+  );
+  assert.equal(hoverInterior, null);
+
+  const ringPoint = {
+    x: foundever.x + (foundever.radiusX ?? GLOBAL_MARK.radiusX),
+    y: foundever.y,
+  };
+  assert.equal(
+    closestPlaceCircle(ringPoint, circles, { globalFallback: false })?.label,
+    "Foundever"
+  );
+});
+
+test("draws the global ring first, then remaining marks west to east", () => {
+  const ordered = drawOrder([
+    ...wantedCircles(),
+    ...applyResumeToStayCircles(zoneCircles([portugal, france])),
+  ]);
+  assert.equal(ordered[0]?.label, "Foundever");
+  assert.equal(ordered[0]?.global, true);
+  const rest = ordered.slice(1);
+  for (let index = 1; index < rest.length; index += 1) {
+    assert.ok(rest[index].x >= rest[index - 1].x);
+  }
 });

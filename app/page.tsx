@@ -188,47 +188,11 @@ export default async function Home() {
             <h1 className="font-serif text-5xl leading-[0.95] tracking-[-0.04em] text-foreground sm:text-6xl">
               Hugo Demenez
             </h1>
-            <p className="mt-2 font-serif text-xl tracking-[-0.02em] text-muted">
-              Curious builder
-            </p>
           </div>
           <p className="leading-relaxed">
-            I build products and stay avidly curious, always scouting for new
-            advances in AI. Discretionary trading
+            I have been trading
             <TradingCandlestickIcon />
-            is part of that work: turning rough ideas into systems people can
-            actually use.
-          </p>
-          {track ? (
-            <p className="leading-relaxed">
-              Most days have a soundtrack; this week it has been{" "}
-              <a
-                className={musicLinkClass}
-                href={track.url}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <SpotifyIcon />
-                {track.name} by {track.artist}
-              </a>
-              .
-            </p>
-          ) : null}
-          <p className="leading-relaxed">
-            I don’t spend much time on social networks; when I scout, it’s{" "}
-            <a
-              className={socialLinkClass}
-              href="https://x.com/hugodemenez"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <XIcon />
-              @hugodemenez
-            </a>{" "}
-            for the latest in AI and design.
-          </p>
-          <p className="leading-relaxed">
-            The work itself is less private: I build{" "}
+            for almost a decade. What I learned there led me to build{" "}
             <a
               className={socialLinkClass}
               href="https://deltalytix.app"
@@ -257,7 +221,36 @@ export default async function Home() {
               <GitHubIcon />
               GitHub
             </a>
-            .
+            : a tool to track my daily progress, and to turn that data into a
+            systematic process.
+          </p>
+          {track ? (
+            <p className="leading-relaxed">
+              Most days have a soundtrack; this week it has been{" "}
+              <a
+                className={musicLinkClass}
+                href={track.url}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <SpotifyIcon />
+                {track.name} by {track.artist}
+              </a>
+              .
+            </p>
+          ) : null}
+          <p className="leading-relaxed">
+            I don’t spend much time on social networks; when I scout, it’s{" "}
+            <a
+              className={socialLinkClass}
+              href="https://x.com/hugodemenez"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <XIcon />
+              @hugodemenez
+            </a>{" "}
+            for the latest in AI and design.
           </p>
         </section>
         <PlacesMap />
