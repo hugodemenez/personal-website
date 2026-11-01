@@ -77,8 +77,9 @@ test("applyAction edits the named chart, not a random dimension", () => {
   assert.notEqual(smoothed.days[1]?.pnl, before);
   assert.equal(smoothed.shape, "rounded");
 
-  const raised = applyAction(winrate, { type: "raise", amount: 16 });
+  const raised = applyAction(winrate, { type: "raise", amount: 34 });
   assert.ok((raised.days[1]?.pnl ?? 0) > (winrate.days[1]?.pnl ?? 0));
+  assert.equal(raised.focus, "Tue");
   assert.equal(raised.kind, "bars");
 
   const deep = applyAction(drawdown, { type: "trough", day: "Wed", delta: -14 });

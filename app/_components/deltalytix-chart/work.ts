@@ -101,7 +101,7 @@ export const JOBS: readonly Job[] = [
     text: "raise win rate",
     series: "winrate",
     day: "Tue",
-    action: { type: "raise", amount: 16 },
+    action: { type: "raise", amount: 34 },
   },
   {
     text: "deepen the trough",
@@ -219,6 +219,7 @@ export function applyAction(cell: CellState, action: Action): CellState {
         ...cell,
         kind: cell.kind === "bars" ? "line" : cell.kind,
         shape: "rounded",
+        focus: "Wed",
         days: smoothDays(cell.days),
         flash: true,
       };
@@ -232,7 +233,8 @@ export function applyAction(cell: CellState, action: Action): CellState {
     case "raise":
       return {
         ...cell,
-        days: raiseDays(cell.days, action.amount, 100),
+        focus: "Tue",
+        days: nudgeDay(cell.days, "Tue", action.amount),
         flash: true,
       };
     case "fill":
