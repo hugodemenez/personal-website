@@ -1,13 +1,11 @@
 import { createRandom } from "@/lib/seeded-random";
 import {
   cloneDays,
-  nudgeDay,
-  raiseDays,
   seriesFor,
-  smoothDays,
   type ChartKind,
   type ChartPalette,
   type ChartShape,
+  type ChartStroke,
   type DayPoint,
   type SeriesId,
 } from "./series";
@@ -18,18 +16,14 @@ export const MAX_AGENTS = 4;
 export type WorkKind = "spawn" | "dart" | "select" | "click" | "idle";
 
 export type Action =
-  | { type: "highlight"; day: string }
-  | { type: "nudge"; day: string; delta: number }
-  | { type: "smooth" }
-  | { type: "extend"; day: string; delta: number }
-  | { type: "raise"; amount: number }
-  | { type: "fill" }
-  | { type: "trough"; day: string; delta: number };
+  | { type: "kind"; kind: ChartKind }
+  | { type: "palette"; palette: ChartPalette }
+  | { type: "shape"; shape: ChartShape }
+  | { type: "stroke"; stroke: ChartStroke };
 
 export type Job = {
   text: string;
   series: SeriesId;
-  day: string;
   action: Action;
 };
 
@@ -47,8 +41,8 @@ export type CellState = {
   kind: ChartKind;
   shape: ChartShape;
   palette: ChartPalette;
+  stroke: ChartStroke;
   days: DayPoint[];
-  focus: string | null;
   job: string | null;
   flash: boolean;
 };
@@ -58,7 +52,6 @@ export type AgentSeed = {
   cellId: number;
   prompt: string;
   action: Action;
-  day: string;
   target: string;
   size: number;
   x: number;
@@ -85,53 +78,33 @@ export type AgentPose = {
 export type PlayPhase = "gap" | "send" | "work";
 
 export const JOBS: readonly Job[] = [
+  { text: "kind: pie", series: "weekday", action: { type: "kind", kind: "pie" } },
   {
-    text: "highlight Friday",
-    series: "weekday",
-    day: "Fri",
-    action: { type: "highlight", day: "Fri" },
-  },
-  {
-    text: "smooth equity",
+    text: "kind: doughnut",
     series: "equity",
-    day: "Wed",
-    action: { type: "smooth" },
+    action: { type: "kind", kind: "doughnut" },
   },
+  { text: "kind: line", series: "winrate", action: { type: "kind", kind: "line" } },
+  { text: "kind: area", series: "drawdown", action: { type: "kind", kind: "area" } },
   {
-    text: "raise win rate",
-    series: "winrate",
-    day: "Tue",
-    action: { type: "raise", amount: 34 },
-  },
-  {
-    text: "deepen the trough",
-    series: "drawdown",
-    day: "Wed",
-    action: { type: "trough", day: "Wed", delta: -14 },
-  },
-  {
-    text: "lift Tuesday",
+    text: "palette: mint",
     series: "weekday",
-    day: "Tue",
-    action: { type: "nudge", day: "Tue", delta: 860 },
+    action: { type: "palette", palette: "mint" },
   },
   {
-    text: "extend Friday",
+    text: "stroke: soft",
     series: "equity",
-    day: "Fri",
-    action: { type: "extend", day: "Fri", delta: 420 },
+    action: { type: "stroke", stroke: "soft" },
   },
   {
-    text: "fill the wins",
+    text: "shape: rounded",
     series: "winrate",
-    day: "Wed",
-    action: { type: "fill" },
+    action: { type: "shape", shape: "rounded" },
   },
   {
-    text: "shallow Thursday",
+    text: "palette: amber",
     series: "drawdown",
-    day: "Thu",
-    action: { type: "trough", day: "Thu", delta: 8 },
+    action: { type: "palette", palette: "amber" },
   },
 ];
 
@@ -159,6 +132,7 @@ function cellFromSeries(
   kind: ChartKind,
   shape: ChartShape,
   palette: ChartPalette,
+  stroke: ChartStroke = "thin",
 ): CellState {
   return {
     id,
@@ -167,8 +141,8 @@ function cellFromSeries(
     kind,
     shape,
     palette,
+    stroke,
     days: cloneDays(seriesFor(series)),
-    focus: null,
     job: null,
     flash: false,
   };
@@ -178,7 +152,7 @@ export const INITIAL_CELLS: CellState[] = [
   cellFromSeries(1, "weekday", "weekday", "bars", "rounded", "pnl"),
   cellFromSeries(2, "equity", "equity", "area", "rounded", "mint"),
   cellFromSeries(3, "win rate", "winrate", "bars", "sharp", "ink"),
-  cellFromSeries(4, "drawdown", "drawdown", "area", "sharp", "ink"),
+  cellFromSeries(4, "drawdown", "drawdown", "line", "sharp", "ink"),
 ];
 
 export function clamp01(value: number): number {
@@ -197,62 +171,23 @@ export function jobFor(text: string): Job {
 }
 
 export function applyAction(cell: CellState, action: Action): CellState {
+  const days = cell.days.map((day) => ({ ...day }));
   switch (action.type) {
-    case "highlight": {
-      const again = cell.focus === action.day;
-      return {
-        ...cell,
-        focus: action.day,
-        days: again ? nudgeDay(cell.days, action.day, -140) : cloneDays(cell.days),
-        flash: true,
-      };
-    }
-    case "nudge":
-      return {
-        ...cell,
-        focus: action.day,
-        days: nudgeDay(cell.days, action.day, action.delta),
-        flash: true,
-      };
-    case "smooth":
-      return {
-        ...cell,
-        kind: cell.kind === "bars" ? "line" : cell.kind,
-        shape: "rounded",
-        focus: "Wed",
-        days: smoothDays(cell.days),
-        flash: true,
-      };
-    case "extend":
-      return {
-        ...cell,
-        focus: action.day,
-        days: nudgeDay(cell.days, action.day, action.delta),
-        flash: true,
-      };
-    case "raise":
-      return {
-        ...cell,
-        focus: "Tue",
-        days: nudgeDay(cell.days, "Tue", action.amount),
-        flash: true,
-      };
-    case "fill":
-      return {
-        ...cell,
-        kind: "area",
-        shape: "rounded",
-        days: raiseDays(cell.days, 6, 100),
-        flash: true,
-      };
-    case "trough":
-      return {
-        ...cell,
-        focus: action.day,
-        days: nudgeDay(cell.days, action.day, action.delta),
-        flash: true,
-      };
+    case "kind":
+      return { ...cell, days, kind: action.kind, flash: true };
+    case "palette":
+      return { ...cell, days, palette: action.palette, flash: true };
+    case "shape":
+      return { ...cell, days, shape: action.shape, flash: true };
+    case "stroke":
+      return { ...cell, days, stroke: action.stroke, flash: true };
   }
+}
+
+export function valuesUnchanged(before: CellState, after: CellState): boolean {
+  return before.days.every(
+    (day, index) => day.pnl === after.days[index]?.pnl && day.label === after.days[index]?.label,
+  );
 }
 
 export function nextFreeCell(busy: readonly number[], cursor: number): number {
@@ -263,22 +198,19 @@ export function nextFreeCell(busy: readonly number[], cursor: number): number {
   return ((cursor - 1) % CELL_COUNT) + 1;
 }
 
-export function cellForSeries(cells: readonly CellState[], series: SeriesId): CellState {
+export function cellForSeries(
+  cells: readonly CellState[],
+  series: SeriesId,
+): CellState {
   return cells.find((cell) => cell.series === series) ?? cells[0]!;
 }
 
-export function sampleStations(cellId: number, day = "Fri"): Station[] {
+export function sampleStations(cellId: number): Station[] {
   const col = (cellId - 1) % 2;
   const row = Math.floor((cellId - 1) / 2);
-  const plot = { id: "plot", cellId, x: 80 + col * 200, y: 28 + row * 64 };
   return [
     { id: "composer", cellId: 0, x: 120, y: 118 },
-    plot,
-    { ...plot, id: day },
-    { ...plot, id: "Tue", x: plot.x - 24 },
-    { ...plot, id: "Wed", x: plot.x },
-    { ...plot, id: "Thu", x: plot.x + 16 },
-    { ...plot, id: "Fri", x: plot.x + 32 },
+    { id: "plot", cellId, x: 80 + col * 200, y: 36 + row * 88 },
   ];
 }
 
@@ -335,7 +267,7 @@ export function createReducedWork(): ChartWork {
     agents: sent.agents.map((item) => ({
       ...item,
       work: "idle" as const,
-      target: item.day,
+      target: "plot",
     })),
   };
 }
@@ -392,9 +324,7 @@ export function submitPrompt(
   const busy = current.agents
     .filter((agent) => agent.work !== "idle")
     .map((agent) => agent.cellId);
-  const cellId = busy.includes(match.id)
-    ? nextFreeCell(busy, match.id)
-    : match.id;
+  const cellId = busy.includes(match.id) ? nextFreeCell(busy, match.id) : match.id;
   const existing = current.agents.find((agent) => agent.cellId === cellId);
   const rand = createRandom(`prompt-${current.nextId}-${prompt}`);
   const agent: AgentSeed = {
@@ -402,7 +332,6 @@ export function submitPrompt(
     cellId,
     prompt: job.text,
     action: job.action,
-    day: job.day,
     target: "composer",
     size: 0.72,
     x: composer.x,
@@ -440,8 +369,7 @@ export function relocateAgents(
   for (const agent of agents) {
     const own = stationsByCell.get(agent.cellId) ?? [];
     const plot = stationById(own, "plot") ?? own[0];
-    const dest =
-      stationById(own, agent.target) ?? stationById(own, agent.day) ?? plot;
+    const dest = stationById(own, agent.target) ?? plot;
     if ((agent.work === "spawn" || agent.work === "dart") && composer) {
       agent.fromX = composer.x;
       agent.fromY = composer.y;
@@ -476,7 +404,7 @@ export function poseAgent(
 ): AgentPose {
   const parked =
     stationById(stations, agent.target) ??
-    stationById(stations, agent.day) ??
+    stationById(stations, "plot") ??
     stations[stations.length - 1];
   if (still || !parked || agent.work === "idle") {
     return {
@@ -528,7 +456,7 @@ export function stepAgent(
   if (still) {
     const parked =
       stationById(stations, agent.target) ??
-      stationById(stations, agent.day) ??
+      stationById(stations, "plot") ??
       stations[stations.length - 1];
     if (parked) {
       agent.x = parked.x;
@@ -552,11 +480,9 @@ export function stepAgent(
   let edit = false;
   if (agent.elapsed >= agent.duration) {
     const finished = agent.work;
-    if (finished === "spawn") agent.target = agent.day;
+    if (finished === "spawn") agent.target = "plot";
     const station =
-      stationById(stations, agent.target) ??
-      stationById(stations, agent.day) ??
-      stationById(stations, "plot");
+      stationById(stations, agent.target) ?? stationById(stations, "plot");
     if (station && station.id !== "composer" && finished === "click" && agent.tweaksLeft > 0) {
       edit = true;
       agent.tweaksLeft -= 1;

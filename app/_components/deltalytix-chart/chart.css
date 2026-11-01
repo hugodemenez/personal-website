@@ -49,10 +49,6 @@
   height: auto;
 }
 
-.dx-chart-hit {
-  fill: transparent;
-}
-
 .dx-chart-zero {
   stroke: currentColor;
   stroke-opacity: 0.18;
@@ -88,18 +84,22 @@
   stroke: var(--dx-down);
 }
 
-.dx-chart-cell.has-focus .dx-chart-bar:not(.is-focus) {
-  opacity: 0.34;
-}
-
-.dx-chart-mark.is-focus {
+.dx-chart-slice {
   fill: var(--dx-up);
   stroke: var(--background, #fff);
-  stroke-width: 1;
+  stroke-width: 0.7;
 }
 
-.dx-chart-mark.is-focus.is-down {
+.dx-chart-slice.is-down {
   fill: var(--dx-down);
+}
+
+.dx-chart-cell[data-stroke="soft"] .dx-chart-slice {
+  stroke-width: 1.2;
+}
+
+.dx-chart-cell[data-stroke="bold"] .dx-chart-slice {
+  stroke-width: 1.6;
 }
 
 .dx-chart-label,

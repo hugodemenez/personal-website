@@ -4,12 +4,13 @@ import {
   WEEKDAYS,
   WINRATE,
   areaPath,
-  cloneDays,
-  cumulative,
   layoutSeries,
   linePath,
+  pieCenter,
+  pieSlices,
   seriesFor,
-  smoothDays,
+  slicePath,
+  cumulative,
 } from "./series";
 import {
   CELL_COUNT,
@@ -30,6 +31,7 @@ import {
   stepAgent,
   submitPrompt,
   tickPlay,
+  valuesUnchanged,
 } from "./work";
 
 test("dart ease overshoots then settles", () => {
@@ -38,21 +40,23 @@ test("dart ease overshoots then settles", () => {
   assert.ok(Math.abs(dartEase(1) - 1) < 1e-9);
 });
 
-test("jobs name a real action on a matching series", () => {
-  assert.equal(jobFor("highlight Friday").series, "weekday");
-  assert.equal(jobFor("highlight Friday").action.type, "highlight");
-  assert.equal(jobFor("smooth equity").series, "equity");
-  assert.equal(jobFor("raise win rate").action.type, "raise");
-  assert.equal(jobFor("deepen the trough").series, "drawdown");
+test("jobs name design moves, not data edits", () => {
+  assert.equal(jobFor("kind: pie").action.type, "kind");
+  assert.equal(jobFor("kind: pie").series, "weekday");
+  assert.equal(jobFor("kind: doughnut").action.type, "kind");
+  assert.equal(jobFor("kind: line").series, "winrate");
+  assert.equal(jobFor("palette: mint").action.type, "palette");
+  assert.equal(jobFor("stroke: soft").action.type, "stroke");
   assert.deepEqual(SCRIPT.slice(0, 4), [
-    "highlight Friday",
-    "smooth equity",
-    "raise win rate",
-    "deepen the trough",
+    "kind: pie",
+    "kind: doughnut",
+    "kind: line",
+    "kind: area",
   ]);
+  assert.ok(SCRIPT.every((text) => /^(kind|palette|stroke|shape): /.test(text)));
 });
 
-test("applyAction edits the named chart, not a random dimension", () => {
+test("applyAction only changes design and never PnL values", () => {
   const work = createInitialWork();
   const weekday = work.cells[0];
   const equity = work.cells[1];
@@ -60,34 +64,32 @@ test("applyAction edits the named chart, not a random dimension", () => {
   const drawdown = work.cells[3];
   if (!weekday || !equity || !winrate || !drawdown) throw new Error("missing cell");
 
-  const highlighted = applyAction(weekday, { type: "highlight", day: "Fri" });
-  assert.equal(highlighted.focus, "Fri");
-  assert.equal(highlighted.kind, weekday.kind);
-  assert.equal(highlighted.palette, weekday.palette);
-  assert.deepEqual(
-    highlighted.days.map((day) => day.pnl),
-    weekday.days.map((day) => day.pnl),
-  );
+  const pie = applyAction(weekday, { type: "kind", kind: "pie" });
+  assert.equal(pie.kind, "pie");
+  assert.ok(valuesUnchanged(weekday, pie));
 
-  const lifted = applyAction(weekday, { type: "nudge", day: "Tue", delta: 860 });
-  assert.ok((lifted.days.find((day) => day.label === "Tue")?.pnl ?? 0) > -100);
+  const doughnut = applyAction(equity, { type: "kind", kind: "doughnut" });
+  assert.equal(doughnut.kind, "doughnut");
+  assert.ok(valuesUnchanged(equity, doughnut));
 
-  const before = equity.days[1]?.pnl ?? 0;
-  const smoothed = applyAction(equity, { type: "smooth" });
-  assert.notEqual(smoothed.days[1]?.pnl, before);
-  assert.equal(smoothed.shape, "rounded");
+  const line = applyAction(winrate, { type: "kind", kind: "line" });
+  assert.equal(line.kind, "line");
+  assert.ok(valuesUnchanged(winrate, line));
 
-  const raised = applyAction(winrate, { type: "raise", amount: 34 });
-  assert.ok((raised.days[1]?.pnl ?? 0) > (winrate.days[1]?.pnl ?? 0));
-  assert.equal(raised.focus, "Tue");
-  assert.equal(raised.kind, "bars");
+  const mint = applyAction(weekday, { type: "palette", palette: "mint" });
+  assert.equal(mint.palette, "mint");
+  assert.ok(valuesUnchanged(weekday, mint));
 
-  const deep = applyAction(drawdown, { type: "trough", day: "Wed", delta: -14 });
-  assert.ok((deep.days[2]?.pnl ?? 0) < (drawdown.days[2]?.pnl ?? 0));
-  assert.equal(deep.focus, "Wed");
+  const soft = applyAction(equity, { type: "stroke", stroke: "soft" });
+  assert.equal(soft.stroke, "soft");
+  assert.ok(valuesUnchanged(equity, soft));
+
+  const area = applyAction(drawdown, { type: "kind", kind: "area" });
+  assert.equal(area.kind, "area");
+  assert.ok(valuesUnchanged(drawdown, area));
 });
 
-test("each job sends an agent to its own chart cell", () => {
+test("each design job sends an agent to its chart cell", () => {
   let work = createInitialWork();
   assert.equal(work.cells.length, CELL_COUNT);
   assert.equal(work.agents.length, 0);
@@ -96,16 +98,13 @@ test("each job sends an agent to its own chart cell", () => {
     work = submitPrompt(work, job.text);
   }
   assert.equal(work.agents.length, 4);
-  const cells = work.agents.map((agent) => agent.cellId).sort();
-  assert.deepEqual(cells, [1, 2, 3, 4]);
+  assert.deepEqual(work.agents.map((agent) => agent.cellId).sort(), [1, 2, 3, 4]);
   assert.deepEqual(
     work.agents.map((agent) => agent.prompt).sort(),
     JOBS.slice(0, 4).map((job) => job.text).sort(),
   );
-  assert.equal(work.agents.find((agent) => agent.cellId === 1)?.day, "Fri");
-  assert.equal(work.agents.find((agent) => agent.cellId === 4)?.day, "Wed");
 
-  const extra = submitPrompt(work, "lift Tuesday");
+  const extra = submitPrompt(work, "palette: mint");
   assert.ok(extra.agents.length <= MAX_AGENTS);
 });
 
@@ -115,12 +114,12 @@ test("nextFreeCell skips busy cells then wraps", () => {
   assert.equal(nextFreeCell([1, 2, 3, 4], 3), 3);
 });
 
-test("an agent on a cell clicks the named day and then idles", () => {
-  const work = submitPrompt(createInitialWork(), "highlight Friday");
+test("an agent clicks the plot, switches kind, then idles", () => {
+  const work = submitPrompt(createInitialWork(), "kind: pie");
   const agent = work.agents[0];
   if (!agent) throw new Error("missing agent");
-  const stations = sampleStations(agent.cellId, agent.day);
-  agent.target = agent.day;
+  const stations = sampleStations(agent.cellId);
+  agent.target = "plot";
   agent.work = "click";
   agent.elapsed = 0;
   agent.duration = 0.28;
@@ -134,21 +133,21 @@ test("an agent on a cell clicks the named day and then idles", () => {
   assert.equal(agent.work, "idle");
 });
 
-test("reduced motion parks the pointer on the named day", () => {
-  const work = submitPrompt(createInitialWork(), "highlight Friday");
+test("reduced motion parks the pointer on the plot", () => {
+  const work = submitPrompt(createInitialWork(), "kind: pie");
   const agent = work.agents[0];
   if (!agent) throw new Error("missing agent");
-  const stations = sampleStations(agent.cellId, agent.day);
+  const stations = sampleStations(agent.cellId);
   agent.work = "click";
   agent.elapsed = 0.1;
   agent.duration = 0.28;
-  agent.target = agent.day;
+  agent.target = "plot";
   const still = poseAgent(agent, true, stations);
   assert.equal(still.ripple, 0);
-  assert.equal(still.x, stations.find((station) => station.id === "Fri")?.x);
+  assert.equal(still.x, stations.find((station) => station.id === "plot")?.x);
 });
 
-test("autoplay sends a chip then spawns a pointer onto that chart", () => {
+test("autoplay sends a design chip then spawns a pointer", () => {
   const composer = { id: "composer", cellId: 0, x: 16, y: 90 };
   let work = createInitialWork();
   assert.equal(work.phase, "gap");
@@ -156,35 +155,31 @@ test("autoplay sends a chip then spawns a pointer onto that chart", () => {
 
   work = tickPlay(work, GAP_HOLD, composer);
   assert.equal(work.phase, "send");
-  assert.equal(work.outgoing, "highlight Friday");
+  assert.equal(work.outgoing, "kind: pie");
   assert.equal(work.agents.length, 0);
 
   work = tickPlay(work, SEND_HOLD, composer);
   assert.equal(work.phase, "work");
-  assert.equal(work.outgoing, "highlight Friday");
+  assert.equal(work.outgoing, "kind: pie");
   assert.equal(work.agents.length, 1);
   assert.equal(work.agents[0]?.cellId, 1);
-  assert.equal(work.agents[0]?.prompt, "highlight Friday");
-  assert.equal(work.agents[0]?.day, "Fri");
+  assert.equal(work.agents[0]?.prompt, "kind: pie");
   assert.equal(work.agents[0]?.work, "spawn");
-  assert.equal(work.agents[0]?.fromX, composer.x);
 });
 
-test("spawn holds on the message then darts to Friday", () => {
+test("spawn holds on the message then darts to the plot", () => {
   const composer = { id: "composer", cellId: 0, x: 16, y: 90 };
-  const work = submitPrompt(createInitialWork(), "highlight Friday", composer);
+  const work = submitPrompt(createInitialWork(), "kind: pie", composer);
   const agent = work.agents[0];
   if (!agent) throw new Error("missing agent");
-  assert.equal(agent.work, "spawn");
-  const stations = [composer, ...sampleStations(agent.cellId, agent.day).slice(1)];
+  const stations = [composer, ...sampleStations(agent.cellId).slice(1)];
   stepAgent(agent, 0.3, false, stations);
   assert.equal(agent.work, "dart");
-  assert.equal(agent.target, "Fri");
-  assert.equal(agent.fromX, composer.x);
-  assert.equal(agent.toX, stations.find((station) => station.id === "Fri")?.x);
+  assert.equal(agent.target, "plot");
+  assert.equal(agent.toX, stations.find((station) => station.id === "plot")?.x);
 });
 
-test("autoplay sequences later messages onto other cells", () => {
+test("autoplay sequences later design jobs onto other cells", () => {
   const composer = { id: "composer", cellId: 0, x: 16, y: 90 };
   let work = createInitialWork();
   const seen = new Set<number>();
@@ -201,17 +196,18 @@ test("autoplay sequences later messages onto other cells", () => {
   assert.equal(work.beat, 4);
 });
 
-test("reduced motion parks the first sent message and pointer", () => {
+test("reduced motion settles on a pie without changing values", () => {
+  const initial = createInitialWork();
   const work = createReducedWork();
-  assert.equal(work.outgoing, "highlight Friday");
+  assert.equal(work.outgoing, "kind: pie");
   assert.equal(work.phase, "work");
-  assert.equal(work.agents.length, 1);
   assert.equal(work.agents[0]?.work, "idle");
-  assert.equal(work.cells[0]?.focus, "Fri");
-  assert.equal(work.cells[0]?.job, "highlight Friday");
+  assert.equal(work.cells[0]?.kind, "pie");
+  assert.equal(work.cells[0]?.job, "kind: pie");
+  assert.ok(initial.cells[0] && valuesUnchanged(initial.cells[0], work.cells[0]!));
 });
 
-test("tiny layouts stay drawable after a relevant edit", () => {
+test("layouts stay drawable and pie slices use the same values", () => {
   assert.ok(WEEKDAYS.some((day) => day.pnl < 0));
   assert.ok(WINRATE.every((day) => day.pnl > 0));
   assert.notEqual(seriesFor("equity")[1]?.pnl, WEEKDAYS[1]?.pnl);
@@ -220,6 +216,15 @@ test("tiny layouts stay drawable after a relevant edit", () => {
   assert.equal(points.length, 5);
   assert.match(linePath(points, false), /^M /);
   assert.match(areaPath(points, true), /Z$/);
-  const smoothed = smoothDays(cloneDays(seriesFor("equity")));
-  assert.notEqual(smoothed[1]?.pnl, seriesFor("equity")[1]?.pnl);
+  const slices = pieSlices(WEEKDAYS);
+  assert.equal(slices.length, 5);
+  assert.equal(slices.filter((slice) => slice.down).length, 2);
+  const { cx, cy, radius } = pieCenter();
+  const first = slices[0];
+  if (!first) throw new Error("missing slice");
+  assert.match(slicePath(cx, cy, radius, 0, first.start, first.end, first.large), /Z$/);
+  assert.match(
+    slicePath(cx, cy, radius, radius * 0.5, first.start, first.end, first.large),
+    /Z$/,
+  );
 });

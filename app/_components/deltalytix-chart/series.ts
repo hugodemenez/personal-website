@@ -3,9 +3,10 @@ export type DayPoint = {
   pnl: number;
 };
 
-export type ChartKind = "bars" | "line" | "area";
+export type ChartKind = "bars" | "line" | "area" | "pie" | "doughnut";
 export type ChartShape = "rounded" | "sharp" | "markers";
 export type ChartPalette = "pnl" | "mint" | "ink" | "amber";
+export type ChartStroke = "thin" | "soft" | "bold";
 export type SeriesId = "weekday" | "equity" | "winrate" | "drawdown";
 
 export const WEEKDAYS: DayPoint[] = [
@@ -34,7 +35,7 @@ export const DRAWDOWN: DayPoint[] = [
 
 export const TILE_PLOT = {
   width: 168,
-  height: 46,
+  height: 70,
   left: 3,
   right: 3,
   top: 4,
@@ -43,37 +44,6 @@ export const TILE_PLOT = {
 
 export function cloneDays(days: DayPoint[]): DayPoint[] {
   return days.map((day) => ({ ...day }));
-}
-
-export function nudgeDay(
-  days: DayPoint[],
-  label: string,
-  delta: number,
-): DayPoint[] {
-  return days.map((day) =>
-    day.label === label ? { ...day, pnl: day.pnl + delta } : day,
-  );
-}
-
-export function smoothDays(days: DayPoint[]): DayPoint[] {
-  return days.map((day, index, all) => {
-    if (index === 0 || index === all.length - 1) return { ...day };
-    const prev = all[index - 1];
-    const next = all[index + 1];
-    if (!prev || !next) return { ...day };
-    return { ...day, pnl: (prev.pnl + day.pnl + next.pnl) / 3 };
-  });
-}
-
-export function raiseDays(
-  days: DayPoint[],
-  amount: number,
-  cap = 100,
-): DayPoint[] {
-  return days.map((day) => ({
-    ...day,
-    pnl: Math.min(cap, day.pnl + amount),
-  }));
 }
 
 export type Plot = typeof TILE_PLOT;
@@ -173,4 +143,67 @@ export function areaPath(points: PlotPoint[], smooth: boolean): string {
   const first = points[0];
   const last = points[points.length - 1];
   return `${linePath(points, smooth)} L ${last.x} ${last.zeroY} L ${first.x} ${first.zeroY} Z`;
+}
+
+export type Slice = {
+  label: string;
+  value: number;
+  start: number;
+  end: number;
+  large: 0 | 1;
+  down: boolean;
+};
+
+export function pieCenter(plot: Plot = TILE_PLOT): {
+  cx: number;
+  cy: number;
+  radius: number;
+} {
+  const cx = plot.width / 2;
+  const cy = plot.height / 2;
+  const radius = Math.min(plot.width, plot.height) / 2 - 3;
+  return { cx, cy, radius };
+}
+
+export function pieSlices(days: DayPoint[]): Slice[] {
+  const weights = days.map((day) => Math.max(Math.abs(day.pnl), 1));
+  const total = weights.reduce((sum, value) => sum + value, 0);
+  let angle = -Math.PI / 2;
+  return days.map((day, index) => {
+    const sweep = ((weights[index] ?? 1) / total) * Math.PI * 2;
+    const start = angle;
+    const end = angle + sweep;
+    angle = end;
+    return {
+      label: day.label,
+      value: day.pnl,
+      start,
+      end,
+      large: sweep > Math.PI ? 1 : 0,
+      down: day.pnl < 0,
+    };
+  });
+}
+
+export function slicePath(
+  cx: number,
+  cy: number,
+  radius: number,
+  inner: number,
+  start: number,
+  end: number,
+  large: 0 | 1,
+): string {
+  const x1 = cx + radius * Math.cos(start);
+  const y1 = cy + radius * Math.sin(start);
+  const x2 = cx + radius * Math.cos(end);
+  const y2 = cy + radius * Math.sin(end);
+  if (inner <= 0) {
+    return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2} Z`;
+  }
+  const ix1 = cx + inner * Math.cos(start);
+  const iy1 = cy + inner * Math.sin(start);
+  const ix2 = cx + inner * Math.cos(end);
+  const iy2 = cy + inner * Math.sin(end);
+  return `M ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${inner} ${inner} 0 ${large} 0 ${ix1} ${iy1} Z`;
 }

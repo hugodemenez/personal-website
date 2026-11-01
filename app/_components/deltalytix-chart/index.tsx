@@ -6,8 +6,12 @@ import {
   areaPath,
   layoutSeries,
   linePath,
+  pieCenter,
+  pieSlices,
+  slicePath,
   type ChartKind,
   type ChartShape,
+  type ChartStroke,
   type DayPoint,
 } from "./series";
 import {
@@ -107,23 +111,32 @@ function paintNode(
   }
 }
 
+function strokeWidth(stroke: ChartStroke, shape: ChartShape): number {
+  if (stroke === "bold") return 2.5;
+  if (stroke === "soft") return 1.85;
+  return shape === "rounded" ? 1.5 : 1.15;
+}
+
 function Spark({
   kind,
   shape,
+  stroke,
   days,
-  focus,
   label,
 }: {
   kind: ChartKind;
   shape: ChartShape;
+  stroke: ChartStroke;
   days: DayPoint[];
-  focus: string | null;
   label: string;
 }) {
   const points = layoutSeries(days, shape);
-  const smooth = shape === "rounded";
+  const smooth = shape === "rounded" || stroke === "soft";
   const dashed = shape === "markers";
   const radius = shape === "rounded" ? 1.4 : 0;
+  const pie = kind === "pie" || kind === "doughnut";
+  const { cx, cy, radius: pieR } = pieCenter();
+  const inner = kind === "doughnut" ? pieR * 0.54 : 0;
   return (
     <svg
       data-station="plot"
@@ -132,75 +145,60 @@ function Spark({
       role="img"
       aria-label={label}
     >
-      <line
-        className="dx-chart-zero"
-        x1={TILE_PLOT.left}
-        x2={TILE_PLOT.width - TILE_PLOT.right}
-        y1={points[0]?.zeroY ?? TILE_PLOT.height / 2}
-        y2={points[0]?.zeroY ?? TILE_PLOT.height / 2}
-      />
-      {kind === "bars"
-        ? points.map((point) => (
-            <g key={point.label}>
-              <rect
-                className={`dx-chart-bar${point.value < 0 ? " is-down" : ""}${
-                  focus === point.label ? " is-focus" : ""
-                }`}
-                x={point.bar.x}
-                y={point.bar.y}
-                width={point.bar.width}
-                height={point.bar.height}
-                rx={radius}
-              />
-              {shape === "markers" || focus === point.label ? (
-                <circle
-                  className={`dx-chart-mark${point.value < 0 ? " is-down" : ""}${
-                    focus === point.label ? " is-focus" : ""
-                  }`}
-                  cx={point.x}
-                  cy={point.y}
-                  r={focus === point.label ? 2.1 : 1.3}
-                />
-              ) : null}
-            </g>
-          ))
-        : (
-            <>
-              {kind === "area" ? (
-                <path className="dx-chart-area" d={areaPath(points, smooth)} />
-              ) : null}
-              <path
-                className="dx-chart-series"
-                d={linePath(points, smooth)}
-                strokeWidth={smooth ? 1.7 : 1.2}
-                strokeLinecap={smooth ? "round" : "butt"}
-                strokeDasharray={dashed ? "1.6 2" : undefined}
-              />
-              {points.map((point) =>
-                focus === point.label ? (
-                  <circle
-                    key={`focus-${point.label}`}
-                    className={`dx-chart-mark is-focus${
-                      point.value < 0 ? " is-down" : ""
-                    }`}
-                    cx={point.x}
-                    cy={point.y}
-                    r="2.2"
+      {pie ? (
+        pieSlices(days).map((slice) => (
+          <path
+            key={slice.label}
+            className={`dx-chart-slice${slice.down ? " is-down" : ""}`}
+            d={slicePath(cx, cy, pieR, inner, slice.start, slice.end, slice.large)}
+          />
+        ))
+      ) : (
+        <>
+          <line
+            className="dx-chart-zero"
+            x1={TILE_PLOT.left}
+            x2={TILE_PLOT.width - TILE_PLOT.right}
+            y1={points[0]?.zeroY ?? TILE_PLOT.height / 2}
+            y2={points[0]?.zeroY ?? TILE_PLOT.height / 2}
+          />
+          {kind === "bars"
+            ? points.map((point) => (
+                <g key={point.label}>
+                  <rect
+                    className={`dx-chart-bar${point.value < 0 ? " is-down" : ""}`}
+                    x={point.bar.x}
+                    y={point.bar.y}
+                    width={point.bar.width}
+                    height={point.bar.height}
+                    rx={radius}
                   />
-                ) : null,
+                  {shape === "markers" ? (
+                    <circle
+                      className={`dx-chart-mark${point.value < 0 ? " is-down" : ""}`}
+                      cx={point.x}
+                      cy={point.y}
+                      r="1.3"
+                    />
+                  ) : null}
+                </g>
+              ))
+            : (
+                <>
+                  {kind === "area" ? (
+                    <path className="dx-chart-area" d={areaPath(points, smooth)} />
+                  ) : null}
+                  <path
+                    className="dx-chart-series"
+                    d={linePath(points, smooth)}
+                    strokeWidth={strokeWidth(stroke, shape)}
+                    strokeLinecap={smooth ? "round" : "butt"}
+                    strokeDasharray={dashed ? "1.6 2" : undefined}
+                  />
+                </>
               )}
-            </>
-          )}
-      {points.map((point) => (
-        <circle
-          key={`hit-${point.label}`}
-          data-station={point.label}
-          className="dx-chart-hit"
-          cx={point.x}
-          cy={point.y}
-          r="4"
-        />
-      ))}
+        </>
+      )}
     </svg>
   );
 }
@@ -350,18 +348,16 @@ export function DeltalytixChart() {
             data-kind={cell.kind}
             data-shape={cell.shape}
             data-palette={cell.palette}
+            data-stroke={cell.stroke}
             data-series={cell.series}
-            data-focus={cell.focus ?? undefined}
             data-job={cell.job ?? undefined}
-            className={`dx-chart-cell${cell.flash ? " is-flash" : ""}${
-              cell.focus ? " has-focus" : ""
-            }`}
+            className={`dx-chart-cell${cell.flash ? " is-flash" : ""}`}
           >
             <Spark
               kind={cell.kind}
               shape={cell.shape}
+              stroke={cell.stroke}
               days={cell.days}
-              focus={cell.focus}
               label={cell.label}
             />
             <span className={cell.job ? "dx-chart-job" : "dx-chart-label"}>
