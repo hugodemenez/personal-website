@@ -360,9 +360,7 @@ export function DeltalytixChart() {
               days={cell.days}
               label={cell.label}
             />
-            <span className={cell.job ? "dx-chart-job" : "dx-chart-label"}>
-              {cell.job ?? cell.label}
-            </span>
+            <span className="dx-chart-label">{cell.label}</span>
           </article>
         ))}
       </div>
