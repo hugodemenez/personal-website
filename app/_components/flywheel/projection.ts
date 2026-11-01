@@ -9,15 +9,15 @@ export type Projection = {
   elevation?: number;
 };
 
-// Baked by `node build.mjs` (fitProjection of the volano plate, azimuth 38 / elevation 30).
+// Baked by v2 `node build.mjs` (fitProjection, viewBox 640×460, azimuth 38 / elevation 30).
 export const P: Projection = {
-  origin: [251.86418810856406, 274.580527113824],
-  scale: 1.436214789628333,
+  origin: [358.06721646768835, 332.705961872158],
+  scale: 1.2690209618395607,
   azimuth: 38,
   elevation: 30,
 };
 
-export const H0: Point3 = [0, 64, 0];
+export const H0: Point3 = [0, 47, 0];
 
 const RADIANS = Math.PI / 180;
 const UNIT = Math.sqrt(1.6);

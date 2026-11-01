@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { linkage, rodPath } from "./geometry";
+import { leverPath, linkage, rodPath, W } from "./geometry";
 import { FLYWHEEL_SVG } from "./flywheel-art";
 import { H0, P, translateAlong } from "./projection";
 import "./iso.css";
 
-const IDLE = 360 / 14;
+const IDLE = 360 / 9;
 const CAPTION =
-  "A Berkel volano (manual flywheel slicer). Turning the flowered wheel clockwise drives both the blade and the carriage: through gears and a connecting rod, about one flywheel turn makes one blade turn while the carriage walks a slice past it. Sources: originalslicers.com on the Berkel flywheel; Berkel Volano manuals. Drawn with Anatomy (MIT).";
+  "A Berkel volano (manual flywheel slicer) after period photos: flower flywheel of the Model L / 80 era; carriage, rails, shoulder and tray as on the Model 8/21. The wheel turns gears in the base: they spin the blade faster than the wheel and, through a crank and connecting rod, walk the carriage and its ham past the blade — one slice per turn. Sources: originalslicers.com on the Berkel flywheel; Berkel Volano / Model 8 manuals. Drawn with Anatomy (MIT).";
 
 type Drag = { from: number; t: number };
 
@@ -25,15 +25,36 @@ export function Flywheel() {
 
     const part = (name: string) => svg.querySelector(`[data-part="${name}"]`);
     const wheel = part("wheel");
-    const back = part("wheel-back");
     const pinion = part("pinion");
+    const crank = part("crank");
+    const blade = part("blade");
     const rod = part("rod");
     const rodEdge = part("rod-edge");
-    const slider = part("slider");
+    const lever = part("lever");
+    const leverEdge = part("lever-edge");
+    const carriage = part("carriage");
+    const pin = part("drivepin");
     const handle = part("handle");
-    if (!wheel || !back || !pinion || !rod || !rodEdge || !slider || !handle) return;
+    const fly = part("slice-fly");
+    if (
+      !wheel ||
+      !pinion ||
+      !crank ||
+      !blade ||
+      !rod ||
+      !rodEdge ||
+      !lever ||
+      !leverEdge ||
+      !carriage ||
+      !pin ||
+      !handle ||
+      !fly
+    ) {
+      return;
+    }
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const rest = linkage(0);
     let angle = 0;
     let speed = still.matches ? 0 : IDLE;
     let frame = 0;
@@ -43,21 +64,33 @@ export function Flywheel() {
     let idleAt = 0;
 
     const draw = () => {
-      const r = `rotate(${angle.toFixed(2)})`;
-      wheel.setAttribute("transform", r);
-      back.setAttribute("transform", r);
-      pinion.setAttribute("transform", r);
+      wheel.setAttribute("transform", `rotate(${angle.toFixed(2)})`);
+      pinion.setAttribute("transform", `rotate(${angle.toFixed(2)})`);
+      crank.setAttribute("transform", `rotate(${(-angle).toFixed(2)})`);
+      blade.setAttribute("transform", `rotate(${(-angle * W.ratio).toFixed(2)})`);
       const link = linkage(angle);
-      const d = rodPath(link);
-      rod.setAttribute("d", d);
-      rodEdge.setAttribute("d", d);
-      slider.setAttribute("transform", translateAlong(P, [0, link.slide, 0]));
+      const rodD = rodPath(link);
+      const leverD = leverPath(link);
+      rod.setAttribute("d", rodD);
+      rodEdge.setAttribute("d", rodD);
+      lever.setAttribute("d", leverD);
+      leverEdge.setAttribute("d", leverD);
+      carriage.setAttribute("transform", translateAlong(P, [link.slide - rest.slide, 0, 0]));
+      pin.setAttribute("transform", translateAlong(P, [link.top[0] - rest.top[0], 0, link.top[1] - rest.top[1]]));
       const a = (angle * Math.PI) / 180;
-      const u = H0[1] * Math.cos(a);
-      const v = H0[1] * Math.sin(a);
-      handle.setAttribute("transform", translateAlong(P, [0, u - H0[1], v]));
+      handle.setAttribute("transform", translateAlong(P, [0, H0[1] * Math.cos(a) - H0[1], H0[1] * Math.sin(a)]));
+      const phase = ((((angle - 120) % 360) + 360) % 360) / 360;
+      if (phase < 0.4) {
+        const s = phase / 0.4;
+        const e = 1 - Math.pow(1 - s, 2);
+        fly.setAttribute("transform", `translate(${(24 - 48 * e).toFixed(2)} ${(10 - 28 * e).toFixed(2)}) rotate(${(70 * e).toFixed(1)})`);
+        fly.setAttribute("opacity", String(Math.min(1, s * 8, (1 - s) * 6).toFixed(2)));
+      } else {
+        fly.setAttribute("opacity", "0");
+      }
       const deg = ((Math.round(angle) % 360) + 360) % 360;
-      const text = `${deg}° · blade ${deg}° · 1 turn → 1 blade turn`;
+      const mm = Math.round((link.slide - rest.slide) * 2.2);
+      const text = `${deg}° · carriage ${mm > 0 ? "+" : ""}${mm} mm · 1 turn → 1 slice`;
       if (readout && readout.textContent !== text) readout.textContent = text;
       stage.setAttribute("aria-valuenow", String(deg));
     };
@@ -97,7 +130,7 @@ export function Flywheel() {
 
     const centre = () => {
       const box = svg.getBoundingClientRect();
-      return [box.left + box.width * 0.5, box.top + box.height * 0.42] as const;
+      return [box.left + box.width * 0.78, box.top + box.height * 0.62] as const;
     };
     const angleOf = (event: PointerEvent) => {
       const [cx, cy] = centre();
@@ -173,7 +206,7 @@ export function Flywheel() {
               Berkel volano
             </span>
             <span className="iso-plate-corner" data-corner="hint">
-              Drag to turn the wheel
+              Drag the wheel to slice
             </span>
             <span
               ref={readoutRef}
@@ -181,7 +214,7 @@ export function Flywheel() {
               data-corner="readout"
               data-readout=""
             >
-              0° · 1 turn → 1 blade turn
+              0° · carriage 0 mm · 1 turn → 1 slice
             </span>
           </div>
           <div

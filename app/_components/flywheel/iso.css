@@ -104,15 +104,11 @@
 .iso-swatch-crease{stroke:var(--anatomy-lo)!important}
 @media (max-width:560px){.iso-plate{padding:48px 12px 70px}.iso-plate-corner[data-corner="hint"]{bottom:18px}}
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
-
-/* Flywheel parts + stage (from build.mjs). */
-.fw-plane path{vector-effect:non-scaling-stroke}
-.fw-dot{fill:var(--anatomy-paper);stroke-width:var(--anatomy-weight);vector-effect:non-scaling-stroke}
-.fw-dot[data-tone="hi"]{stroke:var(--anatomy-hi)}
-.fw-dot[data-tone="mid"]{stroke:var(--anatomy-mid)}
-.fw-text{fill:var(--anatomy-lo);font-family:ui-monospace,monospace}
-.iso-stage{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.iso-stage:active{cursor:grabbing}
+.fw-plane path{vector-effect:non-scaling-stroke}.fw-dot{fill:var(--anatomy-paper);stroke-width:var(--anatomy-weight);vector-effect:non-scaling-stroke}.fw-dot[data-tone="hi"]{stroke:var(--anatomy-hi)}.fw-dot[data-tone="mid"]{stroke:var(--anatomy-mid)}.fw-text{fill:var(--anatomy-lo);font-family:ui-monospace,monospace}.fw-rimtext{fill:var(--anatomy-mid)}
+.fw-meat .iso-fill,.fw-bone .iso-shade{}.fw-meat .iso-shade{opacity:.45}.fw-meat .iso-fill{fill:color-mix(in oklab,var(--anatomy-paper) 15%,#b85a4c)}.fw-bone .iso-fill{fill:color-mix(in oklab,var(--anatomy-paper) 20%,#e3d6b8)}
+.fw-slice .iso-fill{fill:color-mix(in oklab,var(--anatomy-paper) 15%,#e8968a);fill-opacity:.9}
+.iso-stage{cursor:grab;touch-action:pan-y}.iso-stage:active{cursor:grabbing}
+.iso-stage{user-select:none;-webkit-user-select:none}
 
 /* Site theme is light by default, dark via prefers-color-scheme — same as globals.css. */
 @media (prefers-color-scheme: light) {
@@ -136,7 +132,6 @@
   margin: 1.35rem 0 0;
 }
 .fw-embed .iso-plate{
-  /* Stay in document flow so the floating plane can sit above the heading. */
   position: relative;
   z-index: 0;
 }
