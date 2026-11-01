@@ -5,7 +5,6 @@ import { createRandom } from "@/lib/seeded-random";
 import {
   PLOT,
   areaPath,
-  formatPnl,
   layoutSeries,
   linePath,
   seriesForKind,
@@ -404,7 +403,6 @@ export function DeltalytixChart() {
                 textAnchor="middle"
               >
                 {point.label}
-                {edit.kind === "bars" ? ` ${formatPnl(point.value)}` : ""}
               </text>
             ))}
           </svg>
@@ -436,7 +434,7 @@ export function DeltalytixChart() {
               }
               data-kind={agent.kind}
             >
-              <circle data-ripple="" className="dx-chart-ripple" r="0" opacity="0" />
+              <circle data-ripple="" className="dx-chart-ripple" fill="none" r="0" opacity="0" />
               <g data-pointer="">
                 <PointerMark />
               </g>

@@ -128,10 +128,3 @@ export function areaPath(points: PlotPoint[], smooth: boolean): string {
   const last = points[points.length - 1];
   return `${line} L ${last.x} ${last.zeroY} L ${first.x} ${first.zeroY} Z`;
 }
-
-export function formatPnl(value: number): string {
-  const sign = value > 0 ? "+" : "";
-  const abs = Math.abs(value);
-  if (abs >= 1000) return `${sign}${(value / 1000).toFixed(1)}k`;
-  return `${sign}${value}`;
-}
