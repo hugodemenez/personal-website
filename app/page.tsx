@@ -224,17 +224,22 @@ export default async function Home() {
             : a tool to track my daily progress, and to turn that data into a
             systematic process.
           </p>
-          <p className="leading-relaxed">
-            <span data-plane-dock="" className="plane-dock">
+          <div>
+            <h2
+              data-plane-dock=""
+              className="plane-heading font-serif text-3xl tracking-[-0.035em] text-foreground"
+            >
               <span data-plane-slot="" className="plane-dock-slot" aria-hidden="true" />
-              Planes
-            </span>{" "}
-            keep a passion for engineering close: understanding how things work,
-            tinkering all the time — programmatic and mechanical. I like
-            practical engineering, the multipurpose things optimized to do their
-            job to perfection. The volano (flywheel) from a Berkel ham slicer is
-            a mechanism in that spirit.
-          </p>
+              Why engineering?
+            </h2>
+            <p className="mt-3 leading-relaxed">
+              A passion for engineering: understanding how things work,
+              tinkering all the time — programmatic and mechanical. I like
+              practical engineering, the multipurpose things optimized to do
+              their job to perfection. The volano (flywheel) from a Berkel ham
+              slicer is a mechanism in that spirit.
+            </p>
+          </div>
           {track ? (
             <p className="leading-relaxed">
               Most days have a soundtrack; this week it has been{" "}

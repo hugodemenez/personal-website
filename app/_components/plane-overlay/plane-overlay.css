@@ -1,12 +1,28 @@
+.plane-overlay-host {
+  display: contents;
+}
+
 .plane-overlay {
+  display: block;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* Idle: the canvas lives inside the heading slot and scrolls with the page. */
+.plane-dock-slot > .plane-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Dragged (or no dock): full-viewport overlay, not tied to flowing text. */
+.plane-overlay.is-flying {
   position: fixed;
   inset: 0;
   z-index: 50;
-  display: block;
   width: 100%;
   height: 100%;
-  pointer-events: none;
-  background: transparent;
 }
 
 html.plane-dragging,
@@ -23,26 +39,23 @@ html.plane-dragging * {
   -webkit-touch-callout: none;
 }
 
-/* In-flow slot so the paper plane and its dock word stay one unit. */
-.plane-dock {
-  display: inline-flex;
+.plane-heading {
+  display: flex;
   align-items: center;
-  vertical-align: middle;
-  gap: 0.35em;
-  max-width: 100%;
-  white-space: nowrap;
+  gap: 0.7rem;
 }
 
 .plane-dock-slot {
-  display: inline-block;
+  position: relative;
+  display: block;
   flex: none;
-  width: 74px;
-  height: 48px;
+  width: 112px;
+  height: 68px;
 }
 
 @media (min-width: 640px) {
   .plane-dock-slot {
-    width: 98px;
-    height: 64px;
+    width: 140px;
+    height: 84px;
   }
 }

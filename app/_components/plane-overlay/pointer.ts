@@ -79,3 +79,48 @@ export function dockPark(
     y: rect.top + rect.height / 2,
   };
 }
+
+export function rectOnScreen(
+  rect: { left: number; top: number; width: number; height: number } | null,
+  view: { width: number; height: number },
+  slop = 8,
+): boolean {
+  if (!rect || rect.width <= 0 || rect.height <= 0) return false;
+  return (
+    rect.left + rect.width > -slop &&
+    rect.left < view.width + slop &&
+    rect.top + rect.height > -slop &&
+    rect.top < view.height + slop
+  );
+}
+
+/** Off-screen point in the direction the dock left the view. */
+export function exitPark(
+  rect: { left: number; top: number; width: number; height: number } | null,
+  view: { width: number; height: number },
+  from: { x: number; y: number },
+  pad = 140,
+): { x: number; y: number } {
+  const cx = rect ? rect.left + rect.width / 2 : from.x;
+  const cy = rect ? rect.top + rect.height / 2 : from.y;
+  const x = Math.min(view.width - 40, Math.max(40, Number.isFinite(cx) ? cx : from.x));
+  if (cy < view.height / 2) return { x, y: -pad };
+  return { x, y: view.height + pad };
+}
+
+export type Recall = { kind: "home" | "exit"; point: { x: number; y: number } };
+
+/** One-shot destination: fly to the dock if it is on-screen, otherwise leave. */
+export function homeOrExit(
+  rect: { left: number; top: number; width: number; height: number } | null,
+  view: { width: number; height: number },
+  from: { x: number; y: number },
+): Recall {
+  if (rect && rectOnScreen(rect, view)) {
+    return {
+      kind: "home",
+      point: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+    };
+  }
+  return { kind: "exit", point: exitPark(rect, view, from) };
+}

@@ -4,8 +4,11 @@ import {
   clientToNdc,
   dockPark,
   dragModeFor,
+  exitPark,
+  homeOrExit,
   pixelBounds,
   PLANE_SPAN_PX,
+  rectOnScreen,
   shouldClaimPointer,
   spanPxFor,
 } from "./pointer";
@@ -60,4 +63,26 @@ test("dock park centers on the reserved slot, and falls back to the top-right", 
   const fallback = dockPark(null, { width: 1280, height: 900 }, 98, 72);
   assert.equal(fallback.x, 1280 - 72 - 20);
   assert.equal(fallback.y, 80);
+});
+
+test("a dock in the view is home; a dock above or below the view is an exit", () => {
+  const view = { width: 390, height: 844 };
+  const onScreen = { left: 16, top: 240, width: 112, height: 68 };
+  assert.equal(rectOnScreen(onScreen, view), true);
+  const home = homeOrExit(onScreen, view, { x: 200, y: 400 });
+  assert.equal(home.kind, "home");
+  assert.equal(home.point.x, 72);
+  assert.equal(home.point.y, 274);
+
+  const above = { left: 16, top: -200, width: 112, height: 68 };
+  assert.equal(rectOnScreen(above, view), false);
+  const up = homeOrExit(above, view, { x: 200, y: 400 });
+  assert.equal(up.kind, "exit");
+  assert.equal(up.point.y, -140);
+  assert.equal(exitPark(above, view, { x: 200, y: 400 }).y, -140);
+
+  const below = { left: 16, top: 980, width: 112, height: 68 };
+  const down = homeOrExit(below, view, { x: 180, y: 120 });
+  assert.equal(down.kind, "exit");
+  assert.equal(down.point.y, 844 + 140);
 });
