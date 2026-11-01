@@ -1,3 +1,4 @@
+import { Flywheel } from "./_components/flywheel/Flywheel";
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
 import RecentRuns from "./_components/recent-runs";
@@ -224,6 +225,26 @@ export default async function Home() {
             : a tool to track my daily progress, and to turn that data into a
             systematic process.
           </p>
+          <div>
+            <h2
+              data-plane-dock=""
+              className="plane-heading font-serif text-3xl tracking-[-0.035em] text-foreground"
+            >
+              <span className="plane-heading-text">Why engineering?</span>
+              <span data-plane-slot="" className="plane-dock-slot" aria-hidden="true" />
+            </h2>
+            <p className="mt-3 leading-relaxed">
+              I like knowing how things work. I tinker with code and with
+              machines, and I care most about things built to do their job well:
+              sturdy, lasting, hard to break.
+            </p>
+            <p className="mt-3 leading-relaxed">
+              Planes are what drew me in. I wondered how machines like that
+              could stay in the sky. A Berkel flywheel is the same idea close
+              up: built to last for decades, slicing ham as fine as dentelle.
+            </p>
+            <Flywheel />
+          </div>
           {track ? (
             <p className="leading-relaxed">
               Most days have a soundtrack; this week it has been{" "}
