@@ -78,31 +78,43 @@ export type AgentPose = {
 export type PlayPhase = "gap" | "send" | "work";
 
 export const JOBS: readonly Job[] = [
-  { text: "kind: pie", series: "weekday", action: { type: "kind", kind: "pie" } },
   {
-    text: "kind: doughnut",
+    text: "Switch this chart to a pie.",
+    series: "weekday",
+    action: { type: "kind", kind: "pie" },
+  },
+  {
+    text: "Turn the equity series into a doughnut.",
     series: "equity",
     action: { type: "kind", kind: "doughnut" },
   },
-  { text: "kind: line", series: "winrate", action: { type: "kind", kind: "line" } },
-  { text: "kind: area", series: "drawdown", action: { type: "kind", kind: "area" } },
   {
-    text: "palette: mint",
+    text: "Redraw the win rate as a line chart.",
+    series: "winrate",
+    action: { type: "kind", kind: "line" },
+  },
+  {
+    text: "Fill the drawdown series as an area chart.",
+    series: "drawdown",
+    action: { type: "kind", kind: "area" },
+  },
+  {
+    text: "Try a mint palette on this cell.",
     series: "weekday",
     action: { type: "palette", palette: "mint" },
   },
   {
-    text: "stroke: soft",
+    text: "Use a soft stroke on this series.",
     series: "equity",
     action: { type: "stroke", stroke: "soft" },
   },
   {
-    text: "shape: rounded",
+    text: "Round the corners on this chart.",
     series: "winrate",
     action: { type: "shape", shape: "rounded" },
   },
   {
-    text: "palette: amber",
+    text: "Warm this cell with an amber palette.",
     series: "drawdown",
     action: { type: "palette", palette: "amber" },
   },
@@ -167,7 +179,7 @@ export function dartEase(t: number): number {
 
 export function jobFor(text: string): Job {
   const needle = text.trim().toLowerCase();
-  return JOBS.find((job) => job.text === needle) ?? JOBS[0]!;
+  return JOBS.find((job) => job.text.toLowerCase() === needle) ?? JOBS[0]!;
 }
 
 export function applyAction(cell: CellState, action: Action): CellState {

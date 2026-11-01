@@ -40,20 +40,21 @@ test("dart ease overshoots then settles", () => {
   assert.ok(Math.abs(dartEase(1) - 1) < 1e-9);
 });
 
-test("jobs name design moves, not data edits", () => {
-  assert.equal(jobFor("kind: pie").action.type, "kind");
-  assert.equal(jobFor("kind: pie").series, "weekday");
-  assert.equal(jobFor("kind: doughnut").action.type, "kind");
-  assert.equal(jobFor("kind: line").series, "winrate");
-  assert.equal(jobFor("palette: mint").action.type, "palette");
-  assert.equal(jobFor("stroke: soft").action.type, "stroke");
+test("jobs name design moves in full sentences", () => {
+  assert.equal(jobFor("Switch this chart to a pie.").action.type, "kind");
+  assert.equal(jobFor("Switch this chart to a pie.").series, "weekday");
+  assert.equal(jobFor("Turn the equity series into a doughnut.").series, "equity");
+  assert.equal(jobFor("Redraw the win rate as a line chart.").series, "winrate");
+  assert.equal(jobFor("Try a mint palette on this cell.").action.type, "palette");
+  assert.equal(jobFor("Use a soft stroke on this series.").action.type, "stroke");
   assert.deepEqual(SCRIPT.slice(0, 4), [
-    "kind: pie",
-    "kind: doughnut",
-    "kind: line",
-    "kind: area",
+    "Switch this chart to a pie.",
+    "Turn the equity series into a doughnut.",
+    "Redraw the win rate as a line chart.",
+    "Fill the drawdown series as an area chart.",
   ]);
-  assert.ok(SCRIPT.every((text) => /^(kind|palette|stroke|shape): /.test(text)));
+  assert.ok(SCRIPT.every((text) => /^[A-Z].*\.$/.test(text)));
+  assert.ok(SCRIPT.every((text) => text.split(/\s+/).length >= 5));
 });
 
 test("applyAction only changes design and never PnL values", () => {
@@ -104,7 +105,7 @@ test("each design job sends an agent to its chart cell", () => {
     JOBS.slice(0, 4).map((job) => job.text).sort(),
   );
 
-  const extra = submitPrompt(work, "palette: mint");
+  const extra = submitPrompt(work, "Try a mint palette on this cell.");
   assert.ok(extra.agents.length <= MAX_AGENTS);
 });
 
@@ -115,7 +116,7 @@ test("nextFreeCell skips busy cells then wraps", () => {
 });
 
 test("an agent clicks the plot, switches kind, then idles", () => {
-  const work = submitPrompt(createInitialWork(), "kind: pie");
+  const work = submitPrompt(createInitialWork(), "Switch this chart to a pie.");
   const agent = work.agents[0];
   if (!agent) throw new Error("missing agent");
   const stations = sampleStations(agent.cellId);
@@ -134,7 +135,7 @@ test("an agent clicks the plot, switches kind, then idles", () => {
 });
 
 test("reduced motion parks the pointer on the plot", () => {
-  const work = submitPrompt(createInitialWork(), "kind: pie");
+  const work = submitPrompt(createInitialWork(), "Switch this chart to a pie.");
   const agent = work.agents[0];
   if (!agent) throw new Error("missing agent");
   const stations = sampleStations(agent.cellId);
@@ -155,21 +156,21 @@ test("autoplay sends a design chip then spawns a pointer", () => {
 
   work = tickPlay(work, GAP_HOLD, composer);
   assert.equal(work.phase, "send");
-  assert.equal(work.outgoing, "kind: pie");
+  assert.equal(work.outgoing, "Switch this chart to a pie.");
   assert.equal(work.agents.length, 0);
 
   work = tickPlay(work, SEND_HOLD, composer);
   assert.equal(work.phase, "work");
-  assert.equal(work.outgoing, "kind: pie");
+  assert.equal(work.outgoing, "Switch this chart to a pie.");
   assert.equal(work.agents.length, 1);
   assert.equal(work.agents[0]?.cellId, 1);
-  assert.equal(work.agents[0]?.prompt, "kind: pie");
+  assert.equal(work.agents[0]?.prompt, "Switch this chart to a pie.");
   assert.equal(work.agents[0]?.work, "spawn");
 });
 
 test("spawn holds on the message then darts to the plot", () => {
   const composer = { id: "composer", cellId: 0, x: 16, y: 90 };
-  const work = submitPrompt(createInitialWork(), "kind: pie", composer);
+  const work = submitPrompt(createInitialWork(), "Switch this chart to a pie.", composer);
   const agent = work.agents[0];
   if (!agent) throw new Error("missing agent");
   const stations = [composer, ...sampleStations(agent.cellId).slice(1)];
@@ -199,11 +200,11 @@ test("autoplay sequences later design jobs onto other cells", () => {
 test("reduced motion settles on a pie without changing values", () => {
   const initial = createInitialWork();
   const work = createReducedWork();
-  assert.equal(work.outgoing, "kind: pie");
+  assert.equal(work.outgoing, "Switch this chart to a pie.");
   assert.equal(work.phase, "work");
   assert.equal(work.agents[0]?.work, "idle");
   assert.equal(work.cells[0]?.kind, "pie");
-  assert.equal(work.cells[0]?.job, "kind: pie");
+  assert.equal(work.cells[0]?.job, "Switch this chart to a pie.");
   assert.ok(initial.cells[0] && valuesUnchanged(initial.cells[0], work.cells[0]!));
 });
 
