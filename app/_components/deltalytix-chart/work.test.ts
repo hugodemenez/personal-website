@@ -134,8 +134,23 @@ test("autoplay sends a chip then spawns a pointer onto a free cell", () => {
   assert.equal(work.agents.length, 1);
   assert.equal(work.agents[0]?.cellId, 1);
   assert.equal(work.agents[0]?.prompt, SCRIPT[0]);
-  assert.equal(work.agents[0]?.work, "dart");
+  assert.equal(work.agents[0]?.work, "spawn");
   assert.equal(work.agents[0]?.fromX, composer.x);
+  assert.equal(work.agents[0]?.x, composer.x);
+});
+
+test("spawn holds on the message then darts to the plot", () => {
+  const composer = { id: "composer", cellId: 0, x: 16, y: 90 };
+  const work = submitPrompt(createInitialWork(), SCRIPT[0], composer);
+  const agent = work.agents[0];
+  if (!agent) throw new Error("missing agent");
+  assert.equal(agent.work, "spawn");
+  const stations = [composer, ...sampleStations(agent.cellId).slice(1)];
+  stepAgent(agent, 0.3, false, stations);
+  assert.equal(agent.work, "dart");
+  assert.equal(agent.station, 1);
+  assert.equal(agent.fromX, composer.x);
+  assert.equal(agent.toX, stations[1]?.x);
 });
 
 test("autoplay sequences later messages onto other cells", () => {

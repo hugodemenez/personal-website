@@ -13,7 +13,7 @@ export const KINDS = ["bars", "line", "area"] as const satisfies readonly ChartK
 export const SHAPES = ["rounded", "sharp", "markers"] as const satisfies readonly ChartShape[];
 export const PALETTES = ["pnl", "mint", "ink", "amber"] as const satisfies readonly ChartPalette[];
 
-export type WorkKind = "dart" | "select" | "click" | "idle";
+export type WorkKind = "spawn" | "dart" | "select" | "click" | "idle";
 
 export type Tweak = {
   kind?: ChartKind;
@@ -204,8 +204,10 @@ export function sampleStations(cellId: number): Station[] {
 
 function durationFor(work: WorkKind, rand: () => number): number {
   switch (work) {
+    case "spawn":
+      return 0.22;
     case "dart":
-      return 0.28 + rand() * 0.12;
+      return 0.36 + rand() * 0.1;
     case "select":
       return 0.28 + rand() * 0.16;
     case "click":
@@ -240,7 +242,11 @@ export function createReducedWork(): ChartWork {
       if (!agent || cell.id !== agent.cellId) return cell;
       return applyTweak({ ...cell, job: agent.prompt }, agent.tweak, () => 0.2);
     }),
-    agents: sent.agents.map((item) => ({ ...item, work: "idle" as const })),
+    agents: sent.agents.map((item) => ({
+      ...item,
+      work: "idle" as const,
+      station: 1,
+    })),
   };
 }
 
@@ -310,12 +316,12 @@ export function submitPrompt(
     y: composer.y,
     fromX: composer.x,
     fromY: composer.y,
-    toX: plot.x,
-    toY: plot.y,
-    work: "dart",
+    toX: composer.x,
+    toY: composer.y,
+    work: "spawn",
     elapsed: 0,
-    duration: durationFor("dart", rand),
-    station: 1,
+    duration: durationFor("spawn", rand),
+    station: 0,
     ripple: 0,
     tweaksLeft: 2,
   };
@@ -341,8 +347,23 @@ export function relocateAgents(
 ) {
   for (const agent of agents) {
     const own = stationsByCell.get(agent.cellId) ?? [];
+    const plot = own.find((station) => station.id === "plot") ?? own[0];
+    if ((agent.work === "spawn" || agent.work === "dart") && composer) {
+      agent.fromX = composer.x;
+      agent.fromY = composer.y;
+      if (agent.work === "spawn") {
+        agent.x = composer.x;
+        agent.y = composer.y;
+        agent.toX = composer.x;
+        agent.toY = composer.y;
+      } else if (plot) {
+        agent.toX = plot.x;
+        agent.toY = plot.y;
+      }
+      continue;
+    }
     const stations = composer ? [composer, ...own] : own;
-    const next = stations[agent.station] ?? own[0] ?? composer;
+    const next = stations[agent.station] ?? plot ?? composer;
     if (!next) continue;
     const dx = next.x - agent.toX;
     const dy = next.y - agent.toY;
@@ -377,7 +398,11 @@ export function poseAgent(
   let tilt = 0;
   let scale = agent.size;
 
-  if (agent.work === "dart") {
+  if (agent.work === "spawn") {
+    x = agent.fromX;
+    y = agent.fromY;
+    scale = agent.size * (0.35 + 0.75 * dartEase(t));
+  } else if (agent.work === "dart") {
     const e = dartEase(t);
     x = agent.fromX + (agent.toX - agent.fromX) * e;
     y = agent.fromY + (agent.toY - agent.fromY) * e;
@@ -428,6 +453,7 @@ export function stepAgent(
   let edit = false;
   if (agent.elapsed >= agent.duration) {
     const finished = agent.work;
+    if (finished === "spawn") agent.station = 1;
     const station = stations[agent.station];
     if (station?.id === "plot" && finished === "click" && agent.tweaksLeft > 0) {
       edit = true;
@@ -437,13 +463,15 @@ export function stepAgent(
     agent.x = pose.x;
     agent.y = pose.y;
     const next: WorkKind =
-      finished === "dart"
-        ? "select"
-        : finished === "select"
-          ? "click"
-          : agent.tweaksLeft > 0
-            ? "select"
-            : "idle";
+      finished === "spawn"
+        ? "dart"
+        : finished === "dart"
+          ? "select"
+          : finished === "select"
+            ? "click"
+            : agent.tweaksLeft > 0
+              ? "select"
+              : "idle";
     agent.work = next;
     agent.elapsed = 0;
     agent.duration = durationFor(next, rand);
