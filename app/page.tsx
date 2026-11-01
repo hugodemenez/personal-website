@@ -1,3 +1,4 @@
+import { Flywheel } from "./_components/flywheel/Flywheel";
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
 import RecentRuns from "./_components/recent-runs";
@@ -242,6 +243,7 @@ export default async function Home() {
               could stay in the sky. A Berkel flywheel is the same idea close
               up: built to last for decades, slicing ham as fine as dentelle.
             </p>
+            <Flywheel />
           </div>
           {track ? (
             <p className="leading-relaxed">
