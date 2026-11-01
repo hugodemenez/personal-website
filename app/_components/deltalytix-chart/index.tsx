@@ -1,11 +1,25 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createRandom } from "@/lib/seeded-random";
 import {
+  PLOT,
+  areaPath,
+  formatPnl,
+  layoutSeries,
+  linePath,
+  seriesForKind,
+  titleForKind,
+  type ChartKind,
+  type ChartShape,
+} from "./series";
+import {
   DEFAULT_EDIT,
+  KINDS,
+  PALETTES,
+  SHAPES,
   type AgentSeed,
-  type HeroEdit,
+  type ChartEdit,
   type Station,
   applyStationEdit,
   createInitialAgents,
@@ -14,7 +28,7 @@ import {
   spawnAgents,
   stepAgent,
 } from "./work";
-import "./hero.css";
+import "./chart.css";
 
 const QUERY = "(prefers-reduced-motion: reduce)";
 const SITE = "https://deltalytix.app";
@@ -40,10 +54,10 @@ function DeltalytixIcon() {
   );
 }
 
-/** Lucide MousePointer2, filled — the working-agent cursor, not the cube. */
+/** Lucide MousePointer2, filled — OS cursor, not the cube. */
 function PointerMark() {
   return (
-    <g className="dx-hero-pointer-mark">
+    <g className="dx-chart-pointer-mark">
       <path
         d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.941l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.941.063z"
         fill="#111"
@@ -61,9 +75,9 @@ function measureStations(root: HTMLElement): Station[] {
   return [...root.querySelectorAll<HTMLElement>("[data-station]")].map((node) => {
     const rect = node.getBoundingClientRect();
     return {
-      id: node.dataset.station ?? "headline",
-      x: rect.left - box.left + Math.min(rect.width * 0.42, 72),
-      y: rect.top - box.top + Math.min(rect.height * 0.45, 18),
+      id: node.dataset.station ?? "plot",
+      x: rect.left - box.left + Math.min(rect.width * 0.42, 64),
+      y: rect.top - box.top + Math.min(rect.height * 0.5, 16),
     };
   });
 }
@@ -74,18 +88,12 @@ function paintNode(
   pose: ReturnType<typeof poseAgent>,
 ) {
   const mark = node.querySelector("[data-pointer]");
-  const caret = node.querySelector("[data-caret]");
   const ripple = node.querySelector("[data-ripple]");
   const deg = ((pose.tilt * 180) / Math.PI).toFixed(2);
   mark?.setAttribute(
     "transform",
     `translate(${pose.x.toFixed(2)} ${pose.y.toFixed(2)}) rotate(${deg}) scale(${pose.scale.toFixed(3)})`,
   );
-  caret?.setAttribute(
-    "transform",
-    `translate(${agent.toX.toFixed(2)} ${(agent.toY - 8).toFixed(2)})`,
-  );
-  caret?.setAttribute("opacity", pose.caret.toFixed(3));
   if (ripple instanceof SVGCircleElement) {
     ripple.setAttribute("cx", agent.toX.toFixed(2));
     ripple.setAttribute("cy", agent.toY.toFixed(2));
@@ -97,11 +105,87 @@ function paintNode(
   }
 }
 
-function flashClass(edit: HeroEdit, id: string) {
-  return edit.flash === id ? "dx-hero-flash" : undefined;
+function ChartMarks({
+  kind,
+  shape,
+  points,
+}: {
+  kind: ChartKind;
+  shape: ChartShape;
+  points: ReturnType<typeof layoutSeries>;
+}) {
+  const smooth = shape === "rounded";
+  const dashed = shape === "markers";
+  const radius = shape === "rounded" ? 3.2 : 0;
+  const stroke = shape === "sharp" ? 1.5 : 2.3;
+
+  if (kind === "bars") {
+    return (
+      <>
+        {points.map((point) => (
+          <g key={point.label}>
+            <rect
+              className={`dx-chart-bar${point.value < 0 ? " is-down" : ""}`}
+              x={point.bar.x}
+              y={point.bar.y}
+              width={point.bar.width}
+              height={point.bar.height}
+              rx={radius}
+            />
+            {shape === "markers" ? (
+              <circle
+                className={`dx-chart-mark${point.value < 0 ? " is-down" : ""}`}
+                cx={point.x}
+                cy={point.y}
+                r="3.1"
+              />
+            ) : null}
+          </g>
+        ))}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {kind === "area" ? (
+        <path className="dx-chart-area" d={areaPath(points, smooth)} />
+      ) : null}
+      <path
+        className="dx-chart-series"
+        d={linePath(points, smooth)}
+        strokeWidth={stroke}
+        strokeLinecap={smooth ? "round" : "butt"}
+        strokeLinejoin={smooth ? "round" : "miter"}
+        strokeDasharray={dashed ? "3 3.5" : undefined}
+      />
+      {shape === "markers"
+        ? points.map((point) =>
+            smooth ? (
+              <circle
+                key={point.label}
+                className="dx-chart-mark"
+                cx={point.x}
+                cy={point.y}
+                r="3.1"
+              />
+            ) : (
+              <rect
+                key={point.label}
+                className="dx-chart-mark"
+                x={point.x - 2.6}
+                y={point.y - 2.6}
+                width="5.2"
+                height="5.2"
+              />
+            ),
+          )
+        : null}
+    </>
+  );
 }
 
-export function DeltalytixHero() {
+export function DeltalytixChart() {
   const rootRef = useRef<HTMLElement>(null);
   const stationsRef = useRef<Station[]>([]);
   const nodes = useRef(new Map<number, SVGGElement>());
@@ -110,8 +194,13 @@ export function DeltalytixHero() {
   const nextId = useRef(agentsRef.current.length + 1);
   const editRef = useRef(DEFAULT_EDIT);
   const [agents, setAgents] = useState<AgentSeed[]>(agentsRef.current);
-  const [edit, setEdit] = useState<HeroEdit>(DEFAULT_EDIT);
+  const [edit, setEdit] = useState<ChartEdit>(DEFAULT_EDIT);
   const [size, setSize] = useState({ width: 0, height: 0 });
+
+  const points = useMemo(
+    () => layoutSeries(seriesForKind(edit.kind), edit.shape),
+    [edit.kind, edit.shape],
+  );
 
   useLayoutEffect(() => {
     editRef.current = edit;
@@ -220,96 +309,111 @@ export function DeltalytixHero() {
   return (
     <section
       ref={rootRef}
-      className="dx-hero"
-      aria-label="Deltalytix landing"
+      className="dx-chart"
+      aria-label="Deltalytix chart example"
+      data-kind={edit.kind}
+      data-shape={edit.shape}
+      data-palette={edit.palette}
       onClick={multiply}
     >
-      <div className="dx-hero-inner">
-        <div className="dx-hero-nav" aria-hidden="true">
-          <span className="dx-hero-brand">
-            <DeltalytixIcon />
-            Deltalytix
-          </span>
-          <span className="dx-hero-nav-links">
-            <span>Features</span>
-            <span>Pricing</span>
-            <span>Sign in</span>
-          </span>
-        </div>
-        <h3 data-station="headline" className={`dx-hero-title ${flashClass(edit, "headline") ?? ""}`}>
-          {edit.headline}
-        </h3>
-        <p data-station="sub" className={`dx-hero-sub ${flashClass(edit, "sub") ?? ""}`}>
-          {edit.sub}
-        </p>
-        <div className="dx-hero-actions">
+      <div className="dx-chart-card">
+        <div className="dx-chart-head">
           <a
-            data-station="start"
-            className={`dx-hero-cta${edit.highlight === "start" ? " is-lit" : ""} ${flashClass(edit, "start") ?? ""}`}
+            className="dx-chart-brand"
             href={SITE}
             rel="noopener noreferrer"
             target="_blank"
             onClick={(event) => event.stopPropagation()}
           >
-            <span>Get Started</span>
-            <span aria-hidden="true">→</span>
+            <DeltalytixIcon />
+            Deltalytix
           </a>
-          <a
-            data-station="features"
-            className={`dx-hero-ghost${edit.highlight === "features" ? " is-lit" : ""} ${flashClass(edit, "features") ?? ""}`}
-            href={`${SITE}/en#features`}
-            rel="noopener noreferrer"
-            target="_blank"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <span>Features</span>
-            <span aria-hidden="true">↓</span>
-          </a>
+          <p className="dx-chart-title">{titleForKind(edit.kind)}</p>
         </div>
-      </div>
-      <div className="dx-hero-stage">
-        <div className="dx-hero-card">
-          <div className="dx-hero-card-head">
-            <p className="dx-hero-kicker">AI-powered journaling</p>
-            <p className="dx-hero-card-title">
-              Ask the coach what the journal already knows.
-            </p>
-          </div>
-          <div className="dx-hero-chat">
-            <div className="dx-hero-chat-bar">
-              <span>Chat</span>
-              <span className="dx-hero-chat-meta">
-                127 trades and 18 journal entries connected
-              </span>
-            </div>
-            <div className="dx-hero-bubbles">
-              <p
-                data-station="question"
-                className={`dx-hero-user ${flashClass(edit, "question") ?? ""}`}
-              >
-                {edit.question}
-              </p>
-              <p
-                data-station="stat"
-                className={`dx-hero-bot ${flashClass(edit, "stat") ?? ""}`}
-              >
-                Your journal entries reveal a clear pattern: after 2+ consecutive
-                losses, you increase position size by {edit.size} and abandon your
-                setup criteria. This revenge trading accounts for {edit.revenge} of
-                your largest losses.
-              </p>
-            </div>
-            <div data-station="composer" className="dx-hero-composer">
-              <span>Ask your AI coach anything…</span>
-              <span className="dx-hero-send" aria-hidden="true">↑</span>
+        <div className="dx-chart-tunes">
+          <div
+            data-station="shape"
+            className={`dx-chart-row${edit.flash === "shape" ? " is-flash" : ""}`}
+          >
+            <span className="dx-chart-label">Shapes</span>
+            <div className="dx-chart-chips">
+              {SHAPES.map((shape) => (
+                <span
+                  key={shape}
+                  className={`dx-chart-chip${edit.shape === shape ? " is-on" : ""}`}
+                >
+                  {shape}
+                </span>
+              ))}
             </div>
           </div>
+          <div
+            data-station="color"
+            className={`dx-chart-row${edit.flash === "color" ? " is-flash" : ""}`}
+          >
+            <span className="dx-chart-label">Colors</span>
+            <div className="dx-chart-swatches">
+              {PALETTES.map((palette) => (
+                <span
+                  key={palette}
+                  data-tone={palette}
+                  className={`dx-chart-swatch${edit.palette === palette ? " is-on" : ""}`}
+                />
+              ))}
+            </div>
+          </div>
+          <div
+            data-station="kind"
+            className={`dx-chart-row${edit.flash === "kind" ? " is-flash" : ""}`}
+          >
+            <span className="dx-chart-label">Kinds</span>
+            <div className="dx-chart-chips">
+              {KINDS.map((kind) => (
+                <span
+                  key={kind}
+                  className={`dx-chart-chip${edit.kind === kind ? " is-on" : ""}`}
+                >
+                  {kind === "bars" ? "weekday" : kind}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="dx-chart-plot-wrap">
+          <svg
+            data-station="plot"
+            className={`dx-chart-plot${edit.flash === "plot" ? " is-flash" : ""}`}
+            viewBox={`0 0 ${PLOT.width} ${PLOT.height}`}
+            role="img"
+            aria-label={titleForKind(edit.kind)}
+          >
+            <line
+              className="dx-chart-zero"
+              x1={PLOT.left}
+              x2={PLOT.width - PLOT.right}
+              y1={points[0]?.zeroY ?? 90}
+              y2={points[0]?.zeroY ?? 90}
+            />
+            <ChartMarks kind={edit.kind} shape={edit.shape} points={points} />
+            {points.map((point) => (
+              <text
+                key={point.label}
+                className="dx-chart-axis"
+                x={point.x}
+                y={PLOT.height - 10}
+                textAnchor="middle"
+              >
+                {point.label}
+                {edit.kind === "bars" ? ` ${formatPnl(point.value)}` : ""}
+              </text>
+            ))}
+          </svg>
         </div>
       </div>
       {size.width > 0 ? (
         <svg
           aria-hidden="true"
-          className="dx-hero-agents"
+          className="dx-chart-agents"
           width={size.width}
           height={size.height}
           viewBox={`0 0 ${size.width} ${size.height}`}
@@ -327,22 +431,12 @@ export function DeltalytixHero() {
               }}
               className={
                 agent.kind === "swarm"
-                  ? "dx-hero-pointer is-spawn"
-                  : "dx-hero-pointer"
+                  ? "dx-chart-pointer is-spawn"
+                  : "dx-chart-pointer"
               }
               data-kind={agent.kind}
             >
-              <circle data-ripple="" className="dx-hero-ripple" r="0" opacity="0" />
-              <rect
-                data-caret=""
-                className="dx-hero-caret"
-                x="-0.6"
-                y="0"
-                width="1.2"
-                height="8"
-                rx="0.6"
-                opacity="0"
-              />
+              <circle data-ripple="" className="dx-chart-ripple" r="0" opacity="0" />
               <g data-pointer="">
                 <PointerMark />
               </g>

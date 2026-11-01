@@ -1,0 +1,280 @@
+.dx-chart {
+  --dx-page: hsl(0 0% 96.1%);
+  --dx-ink: hsl(0 0% 9%);
+  --dx-muted: hsl(0 0% 9% / 0.55);
+  --dx-mint: oklch(0.88 0.04 165);
+  --dx-line: hsl(0 0% 9% / 0.1);
+  --dx-up: #16a34a;
+  --dx-down: #dc2626;
+  position: relative;
+  margin-block: 2.5rem !important;
+  margin-inline: -1rem;
+  overflow: hidden;
+  background: var(--dx-mint);
+  color: var(--dx-ink);
+  cursor: default;
+  padding: 0.45rem;
+  border-radius: 0.7rem;
+}
+
+.dx-chart[data-palette="pnl"] {
+  --dx-up: #16a34a;
+  --dx-down: #dc2626;
+}
+
+.dx-chart[data-palette="mint"] {
+  --dx-up: oklch(0.48 0.08 165);
+  --dx-down: oklch(0.38 0.04 200);
+}
+
+.dx-chart[data-palette="ink"] {
+  --dx-up: hsl(0 0% 16%);
+  --dx-down: hsl(0 0% 42%);
+}
+
+.dx-chart[data-palette="amber"] {
+  --dx-up: #d97706;
+  --dx-down: #b45309;
+}
+
+.dx-chart-card {
+  overflow: hidden;
+  border-radius: 0.35rem;
+  background: #fff;
+  box-shadow: 0 16px 36px hsl(0 0% 0% / 0.1);
+  outline: 1px solid hsl(0 0% 0% / 0.06);
+}
+
+.dx-chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem 0.35rem;
+}
+
+.dx-chart-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--dx-ink);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.dx-chart-brand:hover {
+  opacity: 0.7;
+}
+
+.dx-chart-title {
+  margin: 0;
+  color: var(--dx-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.dx-chart-tunes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  padding: 0.15rem 0.95rem 0.45rem;
+}
+
+.dx-chart-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 1.35rem;
+  padding: 0.08rem 0.15rem;
+  border-radius: 0.25rem;
+}
+
+.dx-chart-row.is-flash {
+  animation: dxChartFlash 720ms ease;
+}
+
+.dx-chart-label {
+  width: 2.8rem;
+  color: hsl(0 0% 9% / 0.38);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dx-chart-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.dx-chart-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 1.2rem;
+  padding: 0 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: hsl(0 0% 9% / 0.55);
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.dx-chart-chip.is-on {
+  border-color: hsl(0 0% 9% / 0.16);
+  background: hsl(0 0% 9% / 0.05);
+  color: var(--dx-ink);
+}
+
+.dx-chart-swatches {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.dx-chart-swatch {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px hsl(0 0% 0% / 0.12);
+}
+
+.dx-chart-swatch.is-on {
+  outline: 2px solid var(--dx-ink);
+  outline-offset: 2px;
+}
+
+.dx-chart-swatch[data-tone="pnl"] {
+  background: linear-gradient(90deg, #16a34a 50%, #dc2626 50%);
+}
+
+.dx-chart-swatch[data-tone="mint"] {
+  background: oklch(0.55 0.08 165);
+}
+
+.dx-chart-swatch[data-tone="ink"] {
+  background: hsl(0 0% 16%);
+}
+
+.dx-chart-swatch[data-tone="amber"] {
+  background: #d97706;
+}
+
+.dx-chart-plot-wrap {
+  padding: 0 0.35rem 0.55rem;
+}
+
+.dx-chart-plot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dx-chart-plot.is-flash {
+  animation: dxChartFlash 720ms ease;
+}
+
+.dx-chart-grid {
+  stroke: var(--dx-line);
+  stroke-width: 1;
+}
+
+.dx-chart-zero {
+  stroke: hsl(0 0% 9% / 0.28);
+  stroke-width: 1;
+}
+
+.dx-chart-bar {
+  fill: var(--dx-up);
+  transition:
+    x 280ms ease,
+    y 280ms ease,
+    width 280ms ease,
+    height 280ms ease;
+}
+
+.dx-chart-bar.is-down {
+  fill: var(--dx-down);
+}
+
+.dx-chart-series {
+  fill: none;
+  stroke: var(--dx-up);
+  transition: d 280ms ease;
+}
+
+.dx-chart-area {
+  fill: var(--dx-up);
+  fill-opacity: 0.18;
+  stroke: none;
+}
+
+.dx-chart-mark {
+  fill: #fff;
+  stroke: var(--dx-up);
+  stroke-width: 1.4;
+}
+
+.dx-chart-mark.is-down {
+  stroke: var(--dx-down);
+}
+
+.dx-chart-axis {
+  fill: hsl(0 0% 9% / 0.42);
+  font-size: 8px;
+}
+
+.dx-chart-agents {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.dx-chart-pointer[data-kind="swarm"] {
+  opacity: 0.88;
+}
+
+.dx-chart-pointer.is-spawn .dx-chart-pointer-mark {
+  animation: dxPointerPop 460ms var(--ease-spring) both;
+}
+
+.dx-chart-ripple {
+  fill: none;
+  stroke: #111;
+  stroke-width: 1;
+}
+
+@keyframes dxChartFlash {
+  from {
+    background: oklch(0.88 0.04 165 / 0.45);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+@keyframes dxPointerPop {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dx-chart-bar,
+  .dx-chart-series {
+    transition: none;
+  }
+
+  .dx-chart-row.is-flash,
+  .dx-chart-plot.is-flash,
+  .dx-chart-pointer.is-spawn .dx-chart-pointer-mark {
+    animation: none;
+  }
+}

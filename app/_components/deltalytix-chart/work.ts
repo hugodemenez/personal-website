@@ -1,11 +1,17 @@
 import { createRandom } from "@/lib/seeded-random";
+import type { ChartKind, ChartPalette, ChartShape } from "./series";
 
 export const MAX_AGENTS = 8;
 export const INITIAL_AGENTS = 1;
 export const SPAWN_PER_CLICK = 2;
 
+export const KINDS = ["bars", "line", "area"] as const satisfies readonly ChartKind[];
+export const SHAPES = ["rounded", "sharp", "markers"] as const satisfies readonly ChartShape[];
+export const PALETTES = ["pnl", "mint", "ink", "amber"] as const satisfies readonly ChartPalette[];
+export const TUNE_ORDER = ["shape", "color", "kind"] as const;
+
 export type AgentKind = "lead" | "swarm";
-export type WorkKind = "dart" | "select" | "type" | "click" | "shuffle";
+export type WorkKind = "dart" | "select" | "click" | "shuffle";
 
 export type Station = {
   id: string;
@@ -26,7 +32,6 @@ export type AgentSeed = {
   work: WorkKind;
   elapsed: number;
   duration: number;
-  pecks: number;
   station: number;
   ripple: number;
 };
@@ -36,59 +41,28 @@ export type AgentPose = {
   y: number;
   tilt: number;
   scale: number;
-  caret: number;
   ripple: number;
 };
 
-export type HeroEdit = {
-  headline: string;
-  sub: string;
-  revenge: string;
-  size: string;
-  question: string;
-  highlight: "start" | "features" | null;
+export type ChartEdit = {
+  kind: ChartKind;
+  shape: ChartShape;
+  palette: ChartPalette;
   flash: string | null;
 };
 
-export const HEADLINES = [
-  "One trading journal for every futures account.",
-  "One trading journal for every funded account.",
-  "One journal for every futures account.",
-] as const;
-
-export const SUBS = [
-  "Import your brokers and funded accounts, then read P&L in one place.",
-  "Import your brokers and prop accounts, then read P&L in one place.",
-  "Connect your brokers and funded accounts, then read P&L in one place.",
-] as const;
-
-export const REVENGE = ["73%", "71%", "68%"] as const;
-export const SIZES = ["40%", "35%", "50%"] as const;
-
-export const QUESTIONS = [
-  "What psychological patterns do you see in my losing trades? Are there specific market conditions where I consistently struggle?",
-  "Where do I break my rules after a losing streak?",
-  "What should I change after two losses in a row?",
-] as const;
-
-export const DEFAULT_EDIT: HeroEdit = {
-  headline: HEADLINES[0],
-  sub: SUBS[0],
-  revenge: REVENGE[0],
-  size: SIZES[0],
-  question: QUESTIONS[0],
-  highlight: null,
+export const DEFAULT_EDIT: ChartEdit = {
+  kind: "bars",
+  shape: "rounded",
+  palette: "pnl",
   flash: null,
 };
 
 export const SAMPLE_STATIONS: Station[] = [
-  { id: "headline", x: 80, y: 36 },
-  { id: "sub", x: 72, y: 84 },
-  { id: "start", x: 44, y: 128 },
-  { id: "features", x: 128, y: 128 },
-  { id: "question", x: 120, y: 190 },
-  { id: "stat", x: 96, y: 236 },
-  { id: "composer", x: 110, y: 268 },
+  { id: "shape", x: 72, y: 58 },
+  { id: "color", x: 96, y: 86 },
+  { id: "kind", x: 128, y: 114 },
+  { id: "plot", x: 180, y: 168 },
 ];
 
 export function clamp01(value: number): number {
@@ -105,28 +79,42 @@ export function dartEase(t: number): number {
   return 1.08 - 0.08 * (1 - (1 - p) ** 2);
 }
 
-function pickStation(current: number, count: number, rand: () => number): number {
-  if (count <= 1) return 0;
-  let next = current;
-  for (let i = 0; i < 6 && next === current; i += 1) {
-    next = Math.floor(rand() * count);
-  }
-  return next === current ? (current + 1) % count : next;
+function cycle<T>(list: readonly T[], current: T, rand: () => number): T {
+  const others = list.filter((item) => item !== current);
+  if (others.length === 0) return current;
+  return others[Math.floor(rand() * others.length)] ?? current;
 }
 
-function durationFor(work: WorkKind, rand: () => number): number {
-  switch (work) {
-    case "dart":
-      return 0.24 + rand() * 0.14;
-    case "select":
-      return 0.38 + rand() * 0.28;
-    case "type":
-      return 0.52 + rand() * 0.36;
-    case "click":
-      return 0.34;
-    case "shuffle":
-      return 0.12 + rand() * 0.06;
+export function applyStationEdit(
+  edit: ChartEdit,
+  stationId: string,
+  rand: () => number,
+): ChartEdit {
+  switch (stationId) {
+    case "shape":
+      return { ...edit, shape: cycle(SHAPES, edit.shape, rand), flash: "shape" };
+    case "color":
+      return { ...edit, palette: cycle(PALETTES, edit.palette, rand), flash: "color" };
+    case "kind":
+    case "plot":
+      return { ...edit, kind: cycle(KINDS, edit.kind, rand), flash: stationId === "plot" ? "plot" : "kind" };
+    default:
+      return { ...edit, flash: null };
   }
+}
+
+export function nextTuneStation(
+  currentId: string,
+  stations: Station[],
+  rand: () => number,
+): number {
+  const index = TUNE_ORDER.indexOf(currentId as (typeof TUNE_ORDER)[number]);
+  const nextId =
+    rand() < 0.16
+      ? "plot"
+      : TUNE_ORDER[index === -1 ? 0 : (index + 1) % TUNE_ORDER.length];
+  const found = stations.findIndex((station) => station.id === nextId);
+  return found >= 0 ? found : 0;
 }
 
 export function nextWork(work: WorkKind, rand: () => number): WorkKind {
@@ -134,68 +122,25 @@ export function nextWork(work: WorkKind, rand: () => number): WorkKind {
     case "dart":
       return "select";
     case "select":
-      return rand() < 0.34 ? "click" : "type";
-    case "type":
-      return rand() < 0.4 ? "click" : rand() < 0.4 ? "shuffle" : "dart";
+      return "click";
     case "click":
-      return rand() < 0.3 ? "shuffle" : "dart";
+      return rand() < 0.28 ? "shuffle" : "dart";
     case "shuffle":
       return "select";
   }
 }
 
-function nextCopy(list: readonly string[], current: string, rand: () => number): string {
-  const others = list.filter((item) => item !== current);
-  if (others.length === 0) return current;
-  return others[Math.floor(rand() * others.length)] ?? current;
-}
-
-export function applyStationEdit(
-  edit: HeroEdit,
-  stationId: string,
-  rand: () => number,
-): HeroEdit {
-  switch (stationId) {
-    case "headline":
-      return {
-        ...edit,
-        headline: nextCopy(HEADLINES, edit.headline, rand),
-        highlight: null,
-        flash: "headline",
-      };
-    case "sub":
-      return {
-        ...edit,
-        sub: nextCopy(SUBS, edit.sub, rand),
-        highlight: null,
-        flash: "sub",
-      };
-    case "start":
-      return { ...edit, highlight: "start", flash: "start" };
-    case "features":
-      return { ...edit, highlight: "features", flash: "features" };
-    case "stat":
-      return {
-        ...edit,
-        revenge: nextCopy(REVENGE, edit.revenge, rand),
-        size: nextCopy(SIZES, edit.size, rand),
-        highlight: null,
-        flash: "stat",
-      };
-    case "question":
-      return {
-        ...edit,
-        question: nextCopy(QUESTIONS, edit.question, rand),
-        highlight: null,
-        flash: "question",
-      };
-    default:
-      return { ...edit, highlight: null, flash: null };
+function durationFor(work: WorkKind, rand: () => number): number {
+  switch (work) {
+    case "dart":
+      return 0.26 + rand() * 0.16;
+    case "select":
+      return 0.36 + rand() * 0.22;
+    case "click":
+      return 0.32;
+    case "shuffle":
+      return 0.12 + rand() * 0.06;
   }
-}
-
-export function shouldEmitEdit(work: WorkKind, rand: () => number): boolean {
-  return (work === "type" || work === "click") && rand() < 0.55;
 }
 
 export function createAgent(
@@ -203,23 +148,22 @@ export function createAgent(
   kind: AgentKind,
   stations: Station[] = SAMPLE_STATIONS,
 ): AgentSeed {
-  const rand = createRandom(`hero-agent-${id}-${kind}`);
-  const station = kind === "lead" ? 0 : pickStation(-1, stations.length, rand);
+  const rand = createRandom(`chart-agent-${id}-${kind}`);
+  const station = kind === "lead" ? 0 : nextTuneStation("plot", stations, rand);
   const start = stations[station] ?? SAMPLE_STATIONS[0];
   return {
     id,
     kind,
     size: kind === "swarm" ? 0.78 : 1,
-    x: start.x - 14,
-    y: start.y - 10,
-    fromX: start.x - 14,
-    fromY: start.y - 10,
+    x: start.x - 12,
+    y: start.y - 8,
+    fromX: start.x - 12,
+    fromY: start.y - 8,
     toX: start.x,
     toY: start.y,
     work: "dart",
     elapsed: 0,
     duration: durationFor("dart", rand),
-    pecks: 5 + Math.floor(rand() * 3),
     station,
     ripple: 0,
   };
@@ -276,7 +220,6 @@ export function poseAgent(
       y: parked?.y ?? 0,
       tilt: 0,
       scale: agent.size,
-      caret: 0,
       ripple: 0,
     };
   }
@@ -286,7 +229,6 @@ export function poseAgent(
   let y = agent.y;
   let tilt = 0;
   let scale = agent.size;
-  let caret = 0;
 
   if (agent.work === "dart" || agent.work === "shuffle") {
     const e = agent.work === "dart" ? dartEase(t) : t;
@@ -298,22 +240,14 @@ export function poseAgent(
     x = agent.toX;
     y = agent.toY;
     scale = agent.size * (1 + 0.06 * Math.sin(t * Math.PI));
-    caret = 0.4 + 0.25 * Math.sin(t * Math.PI);
-  } else if (agent.work === "type") {
-    const peck = Math.sin(t * agent.pecks * Math.PI) ** 2;
-    x = agent.toX + peck * 1.6;
-    y = agent.toY + peck * 2.2;
-    scale = agent.size * (1 - 0.05 * peck);
-    caret = 0.25 + 0.55 * peck;
   } else if (agent.work === "click") {
     const press = t < 0.28 ? t / 0.28 : 1 - (t - 0.28) / 0.72;
     x = agent.toX;
     y = agent.toY + Math.max(0, press) * 1.6;
     scale = agent.size * (1 - 0.14 * Math.max(0, press));
-    caret = 0.12;
   }
 
-  return { x, y, tilt, scale, caret, ripple: agent.ripple };
+  return { x, y, tilt, scale, ripple: agent.ripple };
 }
 
 export function stepAgent(
@@ -322,7 +256,7 @@ export function stepAgent(
   still: boolean,
   stations: Station[],
 ): { pose: AgentPose; editStation: string | null } {
-  const rand = createRandom(`hero-tick-${agent.id}-${agent.work}-${agent.station}`);
+  const rand = createRandom(`chart-tick-${agent.id}-${agent.work}-${agent.station}`);
   if (still) {
     const parked = stations[agent.station];
     if (parked) {
@@ -343,9 +277,7 @@ export function stepAgent(
   if (agent.elapsed >= agent.duration) {
     const finished = agent.work;
     const station = stations[agent.station];
-    if (station && shouldEmitEdit(finished, rand)) {
-      editStation = station.id;
-    }
+    if (station && finished === "click") editStation = station.id;
     const pose = poseAgent(agent, false, stations);
     agent.x = pose.x;
     agent.y = pose.y;
@@ -354,7 +286,7 @@ export function stepAgent(
     agent.elapsed = 0;
     agent.duration = durationFor(next, rand);
     if (next === "dart" || next === "shuffle") {
-      agent.station = pickStation(agent.station, stations.length, rand);
+      agent.station = nextTuneStation(station?.id ?? "shape", stations, rand);
       const target = stations[agent.station] ?? station;
       if (target) {
         agent.fromX = agent.x;
@@ -368,7 +300,6 @@ export function stepAgent(
       agent.toX = station.x;
       agent.toY = station.y;
     }
-    if (next === "type") agent.pecks = 4 + Math.floor(rand() * 4);
     if (next === "click") agent.ripple = 0.001;
   } else {
     const pose = poseAgent(agent, false, stations);

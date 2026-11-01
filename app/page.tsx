@@ -1,4 +1,4 @@
-import { DeltalytixHero } from "./_components/deltalytix-hero";
+import { DeltalytixChart } from "./_components/deltalytix-chart";
 import { Flywheel } from "./_components/flywheel/Flywheel";
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
@@ -232,7 +232,7 @@ export default async function Home() {
               agents.
             </p>
           </div>
-          <DeltalytixHero />
+          <DeltalytixChart />
           <div>
             <h2
               data-plane-dock=""
