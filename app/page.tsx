@@ -229,8 +229,8 @@ export default async function Home() {
               data-plane-dock=""
               className="plane-heading font-serif text-3xl tracking-[-0.035em] text-foreground"
             >
+              <span className="plane-heading-text">Why engineering?</span>
               <span data-plane-slot="" className="plane-dock-slot" aria-hidden="true" />
-              Why engineering?
             </h2>
             <p className="mt-3 leading-relaxed">
               A passion for engineering: understanding how things work,

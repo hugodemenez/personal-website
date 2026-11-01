@@ -10,6 +10,7 @@ import {
   PLANE_SPAN_PX,
   rectOnScreen,
   shouldClaimPointer,
+  slotLeavingViewport,
   spanPxFor,
 } from "./pointer";
 
@@ -85,4 +86,12 @@ test("a dock in the view is home; a dock above or below the view is an exit", ()
   const down = homeOrExit(below, view, { x: 180, y: 120 });
   assert.equal(down.kind, "exit");
   assert.equal(down.point.y, 844 + 140);
+});
+
+test("a mid-viewport dock stays planted; a slot crossing the edge is leaving", () => {
+  const view = { height: 844 };
+  assert.equal(slotLeavingViewport({ top: 280, height: 56 }, view), false);
+  assert.equal(slotLeavingViewport({ top: -40, height: 56 }, view), true);
+  assert.equal(slotLeavingViewport({ top: 840, height: 56 }, view), true);
+  assert.equal(slotLeavingViewport(null, view), true);
 });

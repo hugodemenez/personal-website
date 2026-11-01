@@ -110,6 +110,16 @@ export function exitPark(
 
 export type Recall = { kind: "home" | "exit"; point: { x: number; y: number } };
 
+/** True when the planted slot has left, or is about to leave, the viewport. */
+export function slotLeavingViewport(
+  rect: { top: number; height: number } | null,
+  view: { height: number },
+  edge = 16,
+): boolean {
+  if (!rect || rect.height <= 0) return true;
+  return rect.top + rect.height <= edge || rect.top >= view.height - edge;
+}
+
 /** One-shot destination: fly to the dock if it is on-screen, otherwise leave. */
 export function homeOrExit(
   rect: { left: number; top: number; width: number; height: number } | null,

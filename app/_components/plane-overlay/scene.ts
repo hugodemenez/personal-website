@@ -18,6 +18,7 @@ import {
   PLANE_DOCK,
   PLANE_SLOT,
   rectOnScreen,
+  slotLeavingViewport,
   spanPxFor,
   type DragMode,
   type Recall,
@@ -171,6 +172,7 @@ export function mountPlaneScene(
     phase = "planted";
     pendingPlant = false;
     markMode();
+    watchSlot();
     return true;
   };
 
@@ -410,50 +412,55 @@ export function mountPlaneScene(
     if (drag.active) blockPage(event);
   };
 
-  const beginScrollFlight = () => {
-    const dy = window.scrollY - lastScrollY;
-    if (phase === "planted") {
-      // Leave the heading: a planted WebGL canvas still jitters on iOS
-      // if it tries to ride flowing text. Fly out; come home after rest.
-      liftIfPlanted();
-      const pad = 140;
-      recallKind = "exit";
-      target.x = body.pos.x;
-      target.y = dy >= 0 ? -pad : window.innerHeight + pad;
-      phase = "recall";
-      pendingPlant = false;
-      clickKick(body, target);
-      markMode();
-      return;
-    }
+  const switchRecallToExit = () => {
+    const dest = homeOrExit(slotRect(), viewSize(), body.pos);
+    if (dest.kind !== "exit") return;
+    recallKind = "exit";
+    target.x = dest.point.x;
+    target.y = dest.point.y;
+    pendingPlant = false;
+    clickKick(body, target);
+    markMode();
+  };
+
+  const liftFromPlantedIfLeaving = () => {
+    const rect = slotRect();
+    if (rect && !slotLeavingViewport(rect, viewSize())) return;
+    if (scrollArmed) return;
+    scrollArmed = true;
+    scrolling = true;
+    liftIfPlanted();
     aimRecall();
   };
 
-  const endScrollFlight = () => {
+  const onScrollSettled = () => {
     scrolling = false;
     scrollArmed = false;
     if (drag.active) return;
-    if (phase === "planted") {
-      const rect = slotRect();
-      if (rect && !rectOnScreen(rect, viewSize())) return;
-      return;
-    }
+    if (phase === "planted") return;
     aimRecall();
   };
 
   const onScroll = () => {
     if (drag.active) return;
+    lastScrollY = window.scrollY;
+    window.clearTimeout(scrollIdle);
+    scrollIdle = window.setTimeout(onScrollSettled, 180);
+
+    if (phase === "planted") {
+      // Stay in document flow while the title is on-screen. The browser
+      // moves the slot; JS must not re-bind to getBoundingClientRect.
+      liftFromPlantedIfLeaving();
+      return;
+    }
+
     scrolling = true;
     if (!scrollArmed) {
       scrollArmed = true;
-      beginScrollFlight();
-    } else if (phase === "recall" && recallKind === "home") {
-      const rect = slotRect();
-      if (rect && !rectOnScreen(rect, viewSize())) aimRecall();
+      aimRecall();
+      return;
     }
-    lastScrollY = window.scrollY;
-    window.clearTimeout(scrollIdle);
-    scrollIdle = window.setTimeout(endScrollFlight, 180);
+    if (phase === "recall" && recallKind === "home") switchRecallToExit();
   };
 
   const tick = (now: number) => {
@@ -544,6 +551,22 @@ export function mountPlaneScene(
     resize();
   };
 
+  const slotObserver = new IntersectionObserver(
+    (entries) => {
+      if (drag.active || phase !== "planted") return;
+      const entry = entries[0];
+      if (!entry || entry.isIntersecting) return;
+      liftFromPlantedIfLeaving();
+    },
+    { threshold: 0.2 },
+  );
+
+  const watchSlot = () => {
+    slotObserver.disconnect();
+    const slot = dockSlot();
+    if (slot) slotObserver.observe(slot);
+  };
+
   const orphanWatch = new MutationObserver(() => {
     if (!canvas.isConnected) {
       host.appendChild(canvas);
@@ -551,11 +574,14 @@ export function mountPlaneScene(
     } else if (phase === "planted" && !dockSlot()) {
       takeFlight(skyFallback());
       phase = "recall";
+    } else if (phase === "planted") {
+      watchSlot();
     }
   });
   orphanWatch.observe(document.body, { childList: true, subtree: true });
 
   restIdle();
+  watchSlot();
   document.fonts?.ready.then(() => {
     if (phase === "planted" || phase === "recall") restIdle();
   });
@@ -594,6 +620,7 @@ export function mountPlaneScene(
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", onWindowResize);
     window.clearTimeout(scrollIdle);
+    slotObserver.disconnect();
     themeQuery.removeEventListener("change", onTheme);
     if (drag.active) unlockPage();
     else {

@@ -42,20 +42,26 @@ html.plane-dragging * {
 .plane-heading {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.plane-heading-text {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .plane-dock-slot {
   position: relative;
   display: block;
   flex: none;
-  width: 112px;
-  height: 68px;
+  width: 88px;
+  height: 56px;
 }
 
 @media (min-width: 640px) {
   .plane-dock-slot {
-    width: 140px;
-    height: 84px;
+    width: 128px;
+    height: 76px;
   }
 }
