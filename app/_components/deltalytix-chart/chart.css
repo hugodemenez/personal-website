@@ -1,0 +1,216 @@
+.dx-chart {
+  --dx-up: #16a34a;
+  --dx-down: #dc2626;
+  position: relative;
+  margin-block: 2rem !important;
+}
+
+.dx-chart-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1.4rem;
+  row-gap: 1rem;
+}
+
+.dx-chart-cell {
+  --dx-up: #16a34a;
+  --dx-down: #dc2626;
+  min-width: 0;
+}
+
+.dx-chart-cell[data-palette="pnl"] {
+  --dx-up: #16a34a;
+  --dx-down: #dc2626;
+}
+
+.dx-chart-cell[data-palette="mint"] {
+  --dx-up: oklch(0.5 0.07 165);
+  --dx-down: oklch(0.42 0.04 200);
+}
+
+.dx-chart-cell[data-palette="ink"] {
+  --dx-up: currentColor;
+  --dx-down: color-mix(in oklab, currentColor 45%, transparent);
+}
+
+.dx-chart-cell[data-palette="amber"] {
+  --dx-up: #d97706;
+  --dx-down: #b45309;
+}
+
+.dx-chart-cell.is-flash .dx-chart-plot {
+  opacity: 0.72;
+}
+
+.dx-chart-plot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dx-chart-zero {
+  stroke: currentColor;
+  stroke-opacity: 0.18;
+  stroke-width: 0.8;
+}
+
+.dx-chart-bar {
+  fill: var(--dx-up);
+}
+
+.dx-chart-bar.is-down {
+  fill: var(--dx-down);
+}
+
+.dx-chart-series {
+  fill: none;
+  stroke: var(--dx-up);
+}
+
+.dx-chart-area {
+  fill: var(--dx-up);
+  fill-opacity: 0.16;
+  stroke: none;
+}
+
+.dx-chart-mark {
+  fill: transparent;
+  stroke: var(--dx-up);
+  stroke-width: 1;
+}
+
+.dx-chart-mark.is-down {
+  stroke: var(--dx-down);
+}
+
+.dx-chart-slice {
+  fill: var(--dx-up);
+  stroke: var(--background, #fff);
+  stroke-width: 0.7;
+}
+
+.dx-chart-slice.is-down {
+  fill: var(--dx-down);
+}
+
+.dx-chart-cell[data-stroke="soft"] .dx-chart-slice {
+  stroke-width: 1.2;
+}
+
+.dx-chart-cell[data-stroke="bold"] .dx-chart-slice {
+  stroke-width: 1.6;
+}
+
+.dx-chart-label,
+.dx-chart-job {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.01em;
+  opacity: 0.45;
+}
+
+.dx-chart-job {
+  opacity: 0.7;
+}
+
+.dx-chart-lane {
+  position: relative;
+  margin-top: 1rem;
+  min-height: 1.85rem;
+}
+
+.dx-chart-chip {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.28rem 0.72rem 0.32rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, currentColor 8%, transparent);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-wrap: balance;
+  user-select: none;
+  pointer-events: none;
+  animation:
+    dxChipSend 560ms var(--ease-spring) both,
+    dxChipSpawn 420ms var(--ease-spring) 720ms both;
+}
+
+.dx-chart-hide {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.dx-chart-agents {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.dx-chart-ripple {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.dx-chart-pointer.is-spawn .dx-chart-pointer-mark {
+  animation: dxPointerPop 420ms var(--ease-spring) both;
+}
+
+@keyframes dxPointerPop {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dxChipSend {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dxChipSpawn {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 0%, transparent);
+  }
+  40% {
+    box-shadow: 0 0 0 7px color-mix(in oklab, currentColor 10%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 0%, transparent);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .dx-chart-cell[data-palette="pnl"] {
+    --dx-up: #4ade80;
+    --dx-down: #f87171;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dx-chart-pointer.is-spawn .dx-chart-pointer-mark,
+  .dx-chart-chip,
+  .dx-chart-cell.is-flash .dx-chart-plot {
+    animation: none;
+    opacity: 1;
+  }
+}
