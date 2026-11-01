@@ -249,6 +249,7 @@ export function DeltalytixHero() {
             href={SITE}
             rel="noopener noreferrer"
             target="_blank"
+            onClick={(event) => event.stopPropagation()}
           >
             <span>Get Started</span>
             <span aria-hidden="true">→</span>
@@ -259,6 +260,7 @@ export function DeltalytixHero() {
             href={`${SITE}/en#features`}
             rel="noopener noreferrer"
             target="_blank"
+            onClick={(event) => event.stopPropagation()}
           >
             <span>Features</span>
             <span aria-hidden="true">↓</span>
