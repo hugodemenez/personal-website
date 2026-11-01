@@ -234,14 +234,15 @@ export default async function Home() {
               <span data-plane-slot="" className="plane-dock-slot" aria-hidden="true" />
             </h2>
             <p className="mt-3 leading-relaxed">
-              I like knowing how things work. I tinker with code and with
-              machines, and I care most about things built to do their job well:
-              sturdy, lasting, hard to break.
+              As a kid I wandered looking at the sky, asking myself how such
+              machines could stay up there. That question is what pulled me into
+              engineering.
             </p>
             <p className="mt-3 leading-relaxed">
-              Planes are what drew me in. I wondered how machines like that
-              could stay in the sky. A Berkel flywheel is the same idea close
-              up: built to last for decades, slicing ham as fine as dentelle.
+              From there I kept tinkering with code and with machines. I am
+              always drawn to work that lasts and does its job without breaking.
+              A Berkel flywheel is that idea in a smaller form: decades of use,
+              ham sliced as fine as dentelle.
             </p>
             <Flywheel />
           </div>

@@ -85,8 +85,6 @@
 .iso-plate-corner{position:absolute;color:var(--anatomy-muted);font-family:var(--anatomy-mono);font-size:10.5px;line-height:1;letter-spacing:.04em;white-space:nowrap}
 .iso-plate-corner[data-corner="fig"]{top:0;left:0;color:var(--anatomy-text)}
 .iso-plate-corner[data-corner="title"]{top:0;right:0;text-transform:uppercase;letter-spacing:.1em}
-.iso-plate-corner[data-corner="hint"]{bottom:0;left:0;text-transform:uppercase;letter-spacing:.1em}
-.iso-plate-corner[data-corner="readout"]{right:0;bottom:0;color:var(--anatomy-text);font-variant-numeric:tabular-nums}
 .iso-plate .iso-svg{margin:0 auto}
 .iso-legend{display:grid;gap:8px;margin-top:12px;color:var(--anatomy-muted);font-size:13px;line-height:1.55}
 .iso-keys{display:flex;flex-wrap:wrap;gap:6px 18px}
@@ -102,7 +100,7 @@
 .iso-swatch[data-mark="green"] path{stroke:var(--anatomy-green)}
 .iso-swatch[data-mark="blue"] path{stroke:var(--anatomy-blue)}
 .iso-swatch-crease{stroke:var(--anatomy-lo)!important}
-@media (max-width:560px){.iso-plate{padding:48px 12px 70px}.iso-plate-corner[data-corner="hint"]{bottom:18px}}
+@media (max-width:560px){.iso-plate{padding:48px 12px}}
 @media (prefers-reduced-motion:reduce){.iso-line[data-flow],.iso-dots circle[data-pulse]{animation:none}}
 .fw-plane path{vector-effect:non-scaling-stroke}.fw-dot{fill:var(--anatomy-paper);stroke-width:var(--anatomy-weight);vector-effect:non-scaling-stroke}.fw-dot[data-tone="hi"]{stroke:var(--anatomy-hi)}.fw-dot[data-tone="mid"]{stroke:var(--anatomy-mid)}.fw-text{fill:var(--anatomy-lo);font-family:ui-monospace,monospace}.fw-rimtext{fill:var(--anatomy-mid)}
 .fw-meat .iso-fill,.fw-bone .iso-shade{}.fw-meat .iso-shade{opacity:.45}.fw-meat .iso-fill{fill:color-mix(in oklab,var(--anatomy-paper) 15%,#b85a4c)}.fw-bone .iso-fill{fill:color-mix(in oklab,var(--anatomy-paper) 20%,#e3d6b8)}
@@ -146,18 +144,5 @@
   }
   .fw-embed .iso-plate-corner{
     font-size: 10px;
-  }
-  .fw-embed .iso-plate-corner[data-corner="hint"]{
-    left: 0;
-    right: 0;
-    bottom: 28px;
-    text-align: center;
-    white-space: normal;
-  }
-  .fw-embed .iso-plate-corner[data-corner="readout"]{
-    left: 0;
-    right: 0;
-    text-align: center;
-    white-space: normal;
   }
 }
