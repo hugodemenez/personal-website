@@ -2,31 +2,29 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createRandom } from "@/lib/seeded-random";
 import {
+  WINRATE,
   areaPath,
   cumulative,
   layoutSeries,
   linePath,
-  seriesForKind,
+  seriesFor,
   WEEKDAYS,
 } from "./series";
 import {
-  DEFAULT_EDIT,
-  KINDS,
   MAX_AGENTS,
-  PALETTES,
-  SAMPLE_STATIONS,
-  SHAPES,
+  PROMPTS,
   SPAWN_PER_CLICK,
-  TUNE_ORDER,
-  applyStationEdit,
+  applyTileWork,
   createAgent,
-  createInitialAgents,
+  createInitialWork,
   dartEase,
-  nextTuneStation,
   nextWork,
+  pickPrompt,
   poseAgent,
-  spawnAgents,
+  sampleStationsFor,
+  spawnWork,
   stepAgent,
+  tileFromPrompt,
 } from "./work";
 
 test("dart ease overshoots then settles", () => {
@@ -40,111 +38,107 @@ test("work cycle is dart → select → click", () => {
   assert.equal(nextWork("select", () => 0), "click");
 });
 
-test("tune order walks shapes then colors then kinds", () => {
-  assert.deepEqual([...TUNE_ORDER], ["shape", "color", "kind"]);
-  const rand = () => 0.5;
-  assert.equal(
-    SAMPLE_STATIONS[nextTuneStation("shape", SAMPLE_STATIONS, rand)]?.id,
-    "color",
-  );
-  assert.equal(
-    SAMPLE_STATIONS[nextTuneStation("color", SAMPLE_STATIONS, rand)]?.id,
-    "kind",
-  );
-  assert.equal(
-    SAMPLE_STATIONS[nextTuneStation("kind", SAMPLE_STATIONS, rand)]?.id,
-    "shape",
-  );
+test("each spawned agent gets a unique unused prompt and its own tile", () => {
+  let work = createInitialWork();
+  assert.equal(work.agents.length, 1);
+  assert.equal(work.tiles.length, 1);
+  assert.equal(work.agents[0]?.promptId, work.tiles[0]?.promptId);
+  assert.equal(work.tiles[0]?.stage, "done");
+  assert.equal(work.tiles[0]?.label, "weekday P&L");
+
+  const seen = new Set(work.tiles.map((tile) => tile.promptId));
+  while (work.agents.length < MAX_AGENTS) {
+    const next = spawnWork(work);
+    assert.equal(next.agents.length, work.agents.length + SPAWN_PER_CLICK);
+    assert.equal(next.tiles.length, next.agents.length);
+    const added = next.tiles.filter((tile) => !work.tiles.some((old) => old.id === tile.id));
+    for (const tile of added) {
+      assert.equal(seen.has(tile.promptId), false);
+      seen.add(tile.promptId);
+      assert.equal(tile.stage, "blank");
+      assert.equal(
+        next.agents.find((agent) => agent.id === tile.id)?.promptId,
+        tile.promptId,
+      );
+    }
+    work = next;
+  }
+  assert.equal(work.agents.length, MAX_AGENTS);
+  assert.equal(spawnWork(work).agents.length, MAX_AGENTS);
+  assert.equal(seen.size, MAX_AGENTS);
 });
 
-test("station edits cycle shape, palette, and kind", () => {
-  const rand = createRandom("chart-edits");
-  const shape = applyStationEdit(DEFAULT_EDIT, "shape", rand);
-  assert.notEqual(shape.shape, DEFAULT_EDIT.shape);
-  assert.ok((SHAPES as readonly string[]).includes(shape.shape));
-  assert.equal(shape.flash, "shape");
-
-  const color = applyStationEdit(DEFAULT_EDIT, "color", rand);
-  assert.notEqual(color.palette, DEFAULT_EDIT.palette);
-  assert.ok((PALETTES as readonly string[]).includes(color.palette));
-
-  const kind = applyStationEdit(DEFAULT_EDIT, "kind", rand);
-  assert.notEqual(kind.kind, DEFAULT_EDIT.kind);
-  assert.ok((KINDS as readonly string[]).includes(kind.kind));
+test("pickPrompt skips prompts already in use", () => {
+  const first = pickPrompt(["weekday"], 2);
+  assert.notEqual(first.id, "weekday");
+  const used = PROMPTS.map((prompt) => prompt.id);
+  assert.ok(used.includes(pickPrompt(used, 9).id));
 });
 
-test("weekday series stays signed; cumulative climbs from it", () => {
-  assert.ok(WEEKDAYS.some((day) => day.pnl < 0));
-  assert.ok(WEEKDAYS.some((day) => day.pnl > 0));
-  const run = cumulative();
-  assert.equal(run[0]?.pnl, WEEKDAYS[0]?.pnl);
-  assert.equal(
-    run[run.length - 1]?.pnl,
-    WEEKDAYS.reduce((sum, day) => sum + day.pnl, 0),
-  );
-  assert.equal(seriesForKind("bars")[1]?.pnl, WEEKDAYS[1]?.pnl);
-  assert.notEqual(seriesForKind("line")[1]?.pnl, WEEKDAYS[1]?.pnl);
+test("tile work builds blank → kind → shape → color → done, then tunes inside the lock", () => {
+  const rand = createRandom("tile-build");
+  let tile = tileFromPrompt(2, PROMPTS[3], "blank");
+  assert.equal(tile.stage, "blank");
+  tile = applyTileWork(tile, rand);
+  assert.equal(tile.stage, "kind");
+  assert.equal(tile.kind, PROMPTS[3].kind);
+  tile = applyTileWork(tile, rand);
+  assert.equal(tile.stage, "shape");
+  tile = applyTileWork(tile, rand);
+  assert.equal(tile.stage, "color");
+  assert.equal(tile.palette, PROMPTS[3].palette);
+  tile = applyTileWork(tile, rand);
+  assert.equal(tile.stage, "done");
+
+  const locked = applyTileWork(tile, rand);
+  assert.equal(locked.palette, tile.palette);
+  assert.ok(locked.shape !== tile.shape || locked.kind !== tile.kind);
 });
 
-test("layout keeps a zero line and finite bar geometry", () => {
-  const points = layoutSeries(WEEKDAYS, "rounded");
-  assert.equal(points.length, 5);
-  assert.ok(points.every((point) => Number.isFinite(point.bar.height)));
-  assert.ok(points[0] && points[0].zeroY > points[0].y);
+test("an agent only steps between stations on its own tile", () => {
+  const mine = sampleStationsFor(3);
+  const other = sampleStationsFor(4);
+  assert.ok(mine.every((station) => station.tileId === 3));
+  assert.ok(other.every((station) => station.tileId === 4));
+  const agent = createAgent(3, "swarm", PROMPTS[2], mine);
+  agent.station = 1;
+  agent.work = "click";
+  agent.elapsed = 0;
+  agent.duration = 0.3;
+  agent.toX = mine[1]?.x ?? 0;
+  agent.toY = mine[1]?.y ?? 0;
+  let edited = false;
+  for (let i = 0; i < 40; i += 1) {
+    const step = stepAgent(agent, 1 / 30, false, mine);
+    if (step.edit) edited = true;
+    const station = mine[agent.station];
+    assert.equal(station?.tileId, 3);
+  }
+  assert.equal(edited, true);
 });
 
-test("line and area paths are drawable", () => {
-  const points = layoutSeries(seriesForKind("line"), "sharp");
-  assert.match(linePath(points, false), /^M /);
-  assert.match(areaPath(points, true), /Z$/);
-});
-
-test("reduced motion parks the pointer; live click squashes", () => {
-  const agent = createAgent(1, "lead");
+test("reduced motion parks the pointer on its own tile", () => {
+  const stations = sampleStationsFor(1);
+  const agent = createAgent(1, "lead", PROMPTS[0], stations);
   agent.work = "click";
   agent.elapsed = 0.08;
-  agent.duration = 0.32;
-  agent.toX = 72;
-  agent.toY = 58;
-  const live = poseAgent(agent, false, SAMPLE_STATIONS);
-  const still = poseAgent(agent, true, SAMPLE_STATIONS);
+  agent.duration = 0.3;
+  agent.toX = stations[1]?.x ?? 0;
+  agent.toY = stations[1]?.y ?? 0;
+  const live = poseAgent(agent, false, stations);
+  const still = poseAgent(agent, true, stations);
   assert.ok(live.scale < agent.size);
-  assert.equal(still.x, SAMPLE_STATIONS[0].x);
-  assert.equal(still.y, SAMPLE_STATIONS[0].y);
+  assert.equal(still.x, stations[agent.station]?.x);
   assert.equal(still.ripple, 0);
 });
 
-test("stepping a click can emit a station edit", () => {
-  const agent = createAgent(2, "lead");
-  agent.work = "click";
-  agent.elapsed = 0;
-  agent.duration = 0.32;
-  agent.ripple = 0.001;
-  let emitted = false;
-  for (let i = 0; i < 24; i += 1) {
-    const step = stepAgent(agent, 1 / 30, false, SAMPLE_STATIONS);
-    if (step.editStation) emitted = true;
-  }
-  assert.equal(emitted, true);
-  assert.ok(Number.isFinite(agent.x) && Number.isFinite(agent.y));
-});
-
-test("spawn starts with one lead pointer and caps the fleet", () => {
-  const initial = createInitialAgents();
-  assert.equal(initial.length, 1);
-  assert.equal(initial[0].kind, "lead");
-  let agents = initial;
-  let nextId = 2;
-  const first = spawnAgents(agents, nextId);
-  assert.equal(first.agents.length, 1 + SPAWN_PER_CLICK);
-  agents = first.agents;
-  nextId = first.nextId;
-  while (agents.length < MAX_AGENTS) {
-    const step = spawnAgents(agents, nextId);
-    if (step.agents.length === agents.length) break;
-    agents = step.agents;
-    nextId = step.nextId;
-  }
-  assert.equal(agents.length, MAX_AGENTS);
-  assert.equal(spawnAgents(agents, nextId).agents.length, MAX_AGENTS);
+test("weekday, equity, and win rate series stay distinct", () => {
+  assert.ok(WEEKDAYS.some((day) => day.pnl < 0));
+  assert.ok(WINRATE.every((day) => day.pnl > 0));
+  assert.notEqual(seriesFor("equity")[1]?.pnl, WEEKDAYS[1]?.pnl);
+  assert.equal(cumulative()[0]?.pnl, WEEKDAYS[0]?.pnl);
+  const points = layoutSeries(WEEKDAYS, "rounded");
+  assert.equal(points.length, 5);
+  assert.match(linePath(points, false), /^M /);
+  assert.match(areaPath(points, true), /Z$/);
 });

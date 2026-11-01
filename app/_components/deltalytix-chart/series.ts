@@ -3,6 +3,11 @@ export type DayPoint = {
   pnl: number;
 };
 
+export type ChartKind = "bars" | "line" | "area";
+export type ChartShape = "rounded" | "sharp" | "markers";
+export type ChartPalette = "pnl" | "mint" | "ink" | "amber";
+export type SeriesId = "weekday" | "equity" | "winrate" | "drawdown";
+
 /** A compact futures week: mid-week strength, Tuesday fade, Friday give-back. */
 export const WEEKDAYS: DayPoint[] = [
   { label: "Mon", pnl: 1840 },
@@ -12,18 +17,32 @@ export const WEEKDAYS: DayPoint[] = [
   { label: "Fri", pnl: -180 },
 ];
 
-export const PLOT = {
-  width: 360,
-  height: 188,
-  left: 36,
-  right: 14,
-  top: 16,
-  bottom: 28,
+export const WINRATE: DayPoint[] = [
+  { label: "Mon", pnl: 62 },
+  { label: "Tue", pnl: 38 },
+  { label: "Wed", pnl: 71 },
+  { label: "Thu", pnl: 55 },
+  { label: "Fri", pnl: 44 },
+];
+
+export const DRAWDOWN: DayPoint[] = [
+  { label: "Mon", pnl: 0 },
+  { label: "Tue", pnl: -8 },
+  { label: "Wed", pnl: -18 },
+  { label: "Thu", pnl: -11 },
+  { label: "Fri", pnl: -4 },
+];
+
+export const TILE_PLOT = {
+  width: 168,
+  height: 78,
+  left: 8,
+  right: 8,
+  top: 8,
+  bottom: 12,
 };
 
-export type ChartKind = "bars" | "line" | "area";
-export type ChartShape = "rounded" | "sharp" | "markers";
-export type ChartPalette = "pnl" | "mint" | "ink" | "amber";
+export type Plot = typeof TILE_PLOT;
 
 export type PlotPoint = {
   label: string;
@@ -42,18 +61,16 @@ export function cumulative(days: DayPoint[] = WEEKDAYS): DayPoint[] {
   });
 }
 
-export function seriesForKind(kind: ChartKind): DayPoint[] {
-  return kind === "bars" ? WEEKDAYS : cumulative(WEEKDAYS);
-}
-
-export function titleForKind(kind: ChartKind): string {
-  switch (kind) {
-    case "bars":
-      return "P&L by weekday";
-    case "line":
-      return "Cumulative P&L";
-    case "area":
-      return "Equity";
+export function seriesFor(id: SeriesId): DayPoint[] {
+  switch (id) {
+    case "weekday":
+      return WEEKDAYS;
+    case "equity":
+      return cumulative(WEEKDAYS);
+    case "winrate":
+      return WINRATE;
+    case "drawdown":
+      return DRAWDOWN;
   }
 }
 
@@ -67,14 +84,15 @@ function domain(values: number[]): { min: number; max: number } {
 export function layoutSeries(
   days: DayPoint[],
   shape: ChartShape,
+  plot: Plot = TILE_PLOT,
 ): PlotPoint[] {
-  const { width, height, left, right, top, bottom } = PLOT;
+  const { width, height, left, right, top, bottom } = plot;
   const innerW = width - left - right;
   const innerH = height - top - bottom;
   const { min, max } = domain(days.map((day) => day.pnl));
   const span = max - min || 1;
   const zeroY = top + ((max - 0) / span) * innerH;
-  const slot = innerW / days.length;
+  const slot = innerW / Math.max(days.length, 1);
   const slim = shape === "markers";
   const barW = slot * (slim ? 0.22 : 0.46);
 
