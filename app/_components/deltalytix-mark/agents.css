@@ -14,15 +14,27 @@
 
 .deltalytix-agent {
   color: inherit;
-  transform-box: fill-box;
-  transform-origin: center;
 }
 
-.deltalytix-agent[data-kind="swarm"] {
-  opacity: 0.82;
+.cursor-agent-chip {
+  fill: #26251e;
 }
 
-.deltalytix-agent.is-spawn .deltalytix-agent-mark {
+.cursor-agent-cube {
+  fill: #edecec;
+}
+
+.cursor-agent-caret {
+  fill: currentColor;
+}
+
+.cursor-agent-ripple {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.9;
+}
+
+.deltalytix-agent.is-spawn .cursor-agent-mark {
   animation: deltalytixAgentPop 480ms var(--ease-spring) both;
 }
 
@@ -37,8 +49,15 @@
   }
 }
 
+@media (prefers-color-scheme: dark) {
+  .cursor-agent-chip {
+    stroke: rgba(237, 236, 236, 0.22);
+    stroke-width: 0.55;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .deltalytix-agent.is-spawn .deltalytix-agent-mark {
+  .deltalytix-agent.is-spawn .cursor-agent-mark {
     animation: none;
   }
 }
