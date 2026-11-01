@@ -14,11 +14,9 @@ type Drag = { from: number; t: number };
 
 export function Flywheel() {
   const stageRef = useRef<HTMLDivElement>(null);
-  const readoutRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const stage = stageRef.current;
-    const readout = readoutRef.current;
     if (!stage) return;
     const svg = stage.querySelector("svg");
     if (!svg) return;
@@ -89,9 +87,6 @@ export function Flywheel() {
         fly.setAttribute("opacity", "0");
       }
       const deg = ((Math.round(angle) % 360) + 360) % 360;
-      const mm = Math.round((link.slide - rest.slide) * 2.2);
-      const text = `${deg}° · carriage ${mm > 0 ? "+" : ""}${mm} mm · 1 turn → 1 slice`;
-      if (readout && readout.textContent !== text) readout.textContent = text;
       stage.setAttribute("aria-valuenow", String(deg));
     };
 
@@ -205,24 +200,13 @@ export function Flywheel() {
             <span className="iso-plate-corner" data-corner="title">
               Berkel volano
             </span>
-            <span className="iso-plate-corner" data-corner="hint">
-              Drag the wheel to slice
-            </span>
-            <span
-              ref={readoutRef}
-              className="iso-plate-corner"
-              data-corner="readout"
-              data-readout=""
-            >
-              0° · carriage 0 mm · 1 turn → 1 slice
-            </span>
           </div>
           <div
             ref={stageRef}
             className="iso-stage"
             tabIndex={0}
             role="slider"
-            aria-label="Berkel flywheel: drag or use arrow keys to turn it"
+            aria-label="Berkel volano"
             aria-valuemin={0}
             aria-valuemax={359}
             aria-valuenow={0}
