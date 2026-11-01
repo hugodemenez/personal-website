@@ -1,4 +1,4 @@
-import { DeltalytixMark } from "./_components/deltalytix-mark";
+import { DeltalytixHero } from "./_components/deltalytix-hero";
 import { Flywheel } from "./_components/flywheel/Flywheel";
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
@@ -69,6 +69,27 @@ const CANDLE_CYCLE = [
 const CANDLE_PITCH = 4;
 const VISIBLE_CANDLES = 3;
 const CANDLE_STEP_SECONDS = 1.5;
+
+function DeltalytixIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="size-3 shrink-0 fill-current"
+      viewBox="0 0 255 255"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M159 63L127.5 0V255H255L236.5 218H159V63Z"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M0 255L127.5 0V255H0ZM64 217L121 104V217H64Z"
+      />
+    </svg>
+  );
+}
 
 function TradingCandlestickIcon() {
   /* Three slots are on screen at once, so the strip carries the cycle plus two
@@ -178,7 +199,15 @@ export default async function Home() {
               I work as a backend engineer full time. I have been trading
               <TradingCandlestickIcon />
               for almost a decade. What I learned there led me to build{" "}
-              <DeltalytixMark className={socialLinkClass} />{" "}
+              <a
+                className={socialLinkClass}
+                href="https://deltalytix.app"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <DeltalytixIcon />
+                Deltalytix
+              </a>{" "}
               in{" "}
               <a
                 className={socialLinkClass}
@@ -203,6 +232,7 @@ export default async function Home() {
               agents.
             </p>
           </div>
+          <DeltalytixHero />
           <div>
             <h2
               data-plane-dock=""
