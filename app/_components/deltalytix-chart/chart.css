@@ -1,144 +1,79 @@
 .dx-chart {
-  --dx-ink: hsl(0 0% 9%);
-  --dx-muted: hsl(0 0% 9% / 0.55);
-  --dx-mint: oklch(0.88 0.04 165);
   --dx-up: #16a34a;
   --dx-down: #dc2626;
   position: relative;
-  margin-block: 2.5rem !important;
-  margin-inline: -1rem;
-  overflow: hidden;
-  background: var(--dx-mint);
-  color: var(--dx-ink);
-  cursor: default;
-  padding: 0.45rem;
-  border-radius: 0.7rem;
-}
-
-.dx-chart-shell {
-  overflow: hidden;
-  border-radius: 0.35rem;
-  background: #fff;
-  box-shadow: 0 16px 36px hsl(0 0% 0% / 0.1);
-  outline: 1px solid hsl(0 0% 0% / 0.06);
+  margin-block: 2rem !important;
 }
 
 .dx-chart-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.7rem 0.8rem 0.2rem;
+  justify-content: flex-end;
+  margin-bottom: 0.55rem;
 }
 
 .dx-chart-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--dx-ink);
-  font-size: 0.72rem;
-  font-weight: 500;
+  color: inherit;
+  font-size: 0.68rem;
+  opacity: 0.45;
   text-decoration: none;
 }
 
 .dx-chart-brand:hover {
-  opacity: 0.7;
-}
-
-.dx-chart-count {
-  margin: 0;
-  color: var(--dx-muted);
-  font-size: 0.62rem;
+  opacity: 0.8;
 }
 
 .dx-chart-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.4rem;
-  padding: 0.45rem 0.5rem 0.55rem;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1.4rem;
+  row-gap: 0.85rem;
 }
 
-@media (min-width: 420px) {
-  .dx-chart-grid[data-count]:not([data-count="1"]) {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.dx-chart-tile {
+.dx-chart-cell {
   --dx-up: #16a34a;
   --dx-down: #dc2626;
-  position: relative;
-  min-height: 6.4rem;
-  padding: 0.4rem 0.45rem 0.3rem;
-  border: 1px solid hsl(0 0% 9% / 0.08);
-  border-radius: 0.3rem;
-  background: hsl(0 0% 99%);
+  min-width: 0;
 }
 
-.dx-chart-tile[data-palette="pnl"] {
+.dx-chart-cell[data-palette="pnl"] {
   --dx-up: #16a34a;
   --dx-down: #dc2626;
 }
 
-.dx-chart-tile[data-palette="mint"] {
-  --dx-up: oklch(0.48 0.08 165);
-  --dx-down: oklch(0.38 0.04 200);
+.dx-chart-cell[data-palette="mint"] {
+  --dx-up: oklch(0.5 0.07 165);
+  --dx-down: oklch(0.42 0.04 200);
 }
 
-.dx-chart-tile[data-palette="ink"] {
-  --dx-up: hsl(0 0% 16%);
-  --dx-down: hsl(0 0% 42%);
+.dx-chart-cell[data-palette="ink"] {
+  --dx-up: currentColor;
+  --dx-down: color-mix(in oklab, currentColor 45%, transparent);
 }
 
-.dx-chart-tile[data-palette="amber"] {
+.dx-chart-cell[data-palette="amber"] {
   --dx-up: #d97706;
   --dx-down: #b45309;
 }
 
-.dx-chart-tile.is-spawn {
-  animation: dxTilePop 420ms var(--ease-spring) both;
-}
-
-.dx-chart-tile.is-flash {
-  animation: dxChartFlash 720ms ease;
-}
-
-.dx-chart-prompt {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  height: 1.15rem;
-  padding: 0 0.4rem;
-  overflow: hidden;
-  border-radius: 999px;
-  background: hsl(0 0% 9% / 0.06);
-  color: hsl(0 0% 9% / 0.7);
-  font-size: 0.58rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.dx-chart-cell.is-flash .dx-chart-plot {
+  opacity: 0.72;
 }
 
 .dx-chart-plot {
   display: block;
   width: 100%;
+  max-width: 6.75rem;
   height: auto;
-  margin-top: 0.2rem;
 }
 
 .dx-chart-zero {
-  stroke: hsl(0 0% 9% / 0.22);
-  stroke-width: 1;
+  stroke: currentColor;
+  stroke-opacity: 0.18;
+  stroke-width: 0.8;
 }
 
 .dx-chart-bar {
   fill: var(--dx-up);
-  transition:
-    x 280ms ease,
-    y 280ms ease,
-    width 280ms ease,
-    height 280ms ease;
 }
 
 .dx-chart-bar.is-down {
@@ -152,28 +87,83 @@
 
 .dx-chart-area {
   fill: var(--dx-up);
-  fill-opacity: 0.18;
+  fill-opacity: 0.16;
   stroke: none;
 }
 
 .dx-chart-mark {
-  fill: #fff;
+  fill: transparent;
   stroke: var(--dx-up);
-  stroke-width: 1.2;
+  stroke-width: 1;
 }
 
 .dx-chart-mark.is-down {
   stroke: var(--dx-down);
 }
 
-.dx-chart-axis {
-  fill: hsl(0 0% 9% / 0.38);
-  font-size: 7px;
+.dx-chart-label,
+.dx-chart-job {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.01em;
+  opacity: 0.45;
 }
 
-.dx-chart-empty {
-  fill: hsl(0 0% 9% / 0.22);
-  font-size: 8px;
+.dx-chart-job {
+  opacity: 0.7;
+}
+
+.dx-chart-box {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.dx-chart-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.15rem 0 0.28rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in oklab, currentColor 18%, transparent);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.86rem;
+  outline: none;
+}
+
+.dx-chart-input::placeholder {
+  color: inherit;
+  opacity: 0.35;
+}
+
+.dx-chart-input:focus {
+  border-bottom-color: color-mix(in oklab, currentColor 45%, transparent);
+}
+
+.dx-chart-go {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.45;
+  cursor: pointer;
+}
+
+.dx-chart-go:hover {
+  opacity: 0.85;
+}
+
+.dx-chart-hide {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 
 .dx-chart-agents {
@@ -183,38 +173,14 @@
   pointer-events: none;
 }
 
-.dx-chart-pointer[data-kind="swarm"] {
-  opacity: 0.88;
-}
-
-.dx-chart-pointer.is-spawn .dx-chart-pointer-mark {
-  animation: dxPointerPop 460ms var(--ease-spring) both;
-}
-
 .dx-chart-ripple {
   fill: none;
-  stroke: #111;
+  stroke: currentColor;
   stroke-width: 1;
 }
 
-@keyframes dxChartFlash {
-  from {
-    background: oklch(0.88 0.04 165 / 0.45);
-  }
-  to {
-    background: hsl(0 0% 99%);
-  }
-}
-
-@keyframes dxTilePop {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.dx-chart-pointer.is-spawn .dx-chart-pointer-mark {
+  animation: dxPointerPop 420ms var(--ease-spring) both;
 }
 
 @keyframes dxPointerPop {
@@ -228,15 +194,17 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .dx-chart-bar,
-  .dx-chart-series {
-    transition: none;
+@media (prefers-color-scheme: dark) {
+  .dx-chart-cell[data-palette="pnl"] {
+    --dx-up: #4ade80;
+    --dx-down: #f87171;
   }
+}
 
-  .dx-chart-tile.is-flash,
-  .dx-chart-tile.is-spawn,
-  .dx-chart-pointer.is-spawn .dx-chart-pointer-mark {
+@media (prefers-reduced-motion: reduce) {
+  .dx-chart-pointer.is-spawn .dx-chart-pointer-mark,
+  .dx-chart-cell.is-flash .dx-chart-plot {
     animation: none;
+    opacity: 1;
   }
 }

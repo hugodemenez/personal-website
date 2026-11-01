@@ -6,115 +6,44 @@ import type {
   SeriesId,
 } from "./series";
 
-export const MAX_AGENTS = 8;
-export const INITIAL_AGENTS = 1;
-export const SPAWN_PER_CLICK = 1;
+export const CELL_COUNT = 4;
+export const MAX_AGENTS = 4;
 
 export const KINDS = ["bars", "line", "area"] as const satisfies readonly ChartKind[];
 export const SHAPES = ["rounded", "sharp", "markers"] as const satisfies readonly ChartShape[];
 export const PALETTES = ["pnl", "mint", "ink", "amber"] as const satisfies readonly ChartPalette[];
 
-export type AgentKind = "lead" | "swarm";
-export type WorkKind = "dart" | "select" | "click" | "shuffle";
-export type BuildStage = "blank" | "kind" | "shape" | "color" | "done";
-export type TuneLock = "series" | "kind" | "shape" | "palette";
+export type WorkKind = "dart" | "select" | "click" | "idle";
 
-export type PromptSpec = {
+export type Tweak = {
+  kind?: ChartKind;
+  shape?: ChartShape;
+  palette?: ChartPalette;
+};
+
+export type Station = {
   id: string;
+  cellId: number;
+  x: number;
+  y: number;
+};
+
+export type CellState = {
+  id: number;
   label: string;
   series: SeriesId;
   kind: ChartKind;
   shape: ChartShape;
   palette: ChartPalette;
-  lock: TuneLock;
-};
-
-export const PROMPTS: readonly PromptSpec[] = [
-  {
-    id: "weekday",
-    label: "weekday P&L",
-    series: "weekday",
-    kind: "bars",
-    shape: "rounded",
-    palette: "pnl",
-    lock: "series",
-  },
-  {
-    id: "equity",
-    label: "equity curve",
-    series: "equity",
-    kind: "area",
-    shape: "rounded",
-    palette: "mint",
-    lock: "series",
-  },
-  {
-    id: "winrate",
-    label: "win rate",
-    series: "winrate",
-    kind: "bars",
-    shape: "sharp",
-    palette: "ink",
-    lock: "series",
-  },
-  {
-    id: "colors-mint",
-    label: "colors: mint",
-    series: "weekday",
-    kind: "bars",
-    shape: "rounded",
-    palette: "mint",
-    lock: "palette",
-  },
-  {
-    id: "kind-area",
-    label: "kind: area",
-    series: "equity",
-    kind: "area",
-    shape: "sharp",
-    palette: "pnl",
-    lock: "kind",
-  },
-  {
-    id: "kind-line",
-    label: "kind: line",
-    series: "equity",
-    kind: "line",
-    shape: "markers",
-    palette: "amber",
-    lock: "kind",
-  },
-  {
-    id: "shapes-round",
-    label: "shapes: rounded",
-    series: "weekday",
-    kind: "bars",
-    shape: "rounded",
-    palette: "amber",
-    lock: "shape",
-  },
-  {
-    id: "drawdown",
-    label: "drawdown",
-    series: "drawdown",
-    kind: "area",
-    shape: "sharp",
-    palette: "ink",
-    lock: "series",
-  },
-];
-
-export type Station = {
-  id: string;
-  tileId: number;
-  x: number;
-  y: number;
+  job: string | null;
+  flash: boolean;
 };
 
 export type AgentSeed = {
   id: number;
-  kind: AgentKind;
-  promptId: string;
+  cellId: number;
+  prompt: string;
+  tweak: Tweak;
   size: number;
   x: number;
   y: number;
@@ -127,6 +56,7 @@ export type AgentSeed = {
   duration: number;
   station: number;
   ripple: number;
+  tweaksLeft: number;
 };
 
 export type AgentPose = {
@@ -137,24 +67,55 @@ export type AgentPose = {
   ripple: number;
 };
 
-export type TileState = {
-  id: number;
-  promptId: string;
-  label: string;
-  series: SeriesId;
-  kind: ChartKind;
-  shape: ChartShape;
-  palette: ChartPalette;
-  lock: TuneLock;
-  stage: BuildStage;
-  flash: boolean;
+export type ChartWork = {
+  cells: CellState[];
+  agents: AgentSeed[];
+  nextId: number;
+  cursor: number;
 };
 
-export type ChartWork = {
-  agents: AgentSeed[];
-  tiles: TileState[];
-  nextId: number;
-};
+export const INITIAL_CELLS: CellState[] = [
+  {
+    id: 1,
+    label: "weekday",
+    series: "weekday",
+    kind: "bars",
+    shape: "rounded",
+    palette: "pnl",
+    job: null,
+    flash: false,
+  },
+  {
+    id: 2,
+    label: "equity",
+    series: "equity",
+    kind: "area",
+    shape: "rounded",
+    palette: "mint",
+    job: null,
+    flash: false,
+  },
+  {
+    id: 3,
+    label: "win rate",
+    series: "winrate",
+    kind: "bars",
+    shape: "sharp",
+    palette: "ink",
+    job: null,
+    flash: false,
+  },
+  {
+    id: 4,
+    label: "drawdown",
+    series: "drawdown",
+    kind: "area",
+    shape: "sharp",
+    palette: "ink",
+    job: null,
+    flash: false,
+  },
+];
 
 export function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -162,186 +123,148 @@ export function clamp01(value: number): number {
 
 export function dartEase(t: number): number {
   const u = clamp01(t);
-  if (u < 0.78) {
-    const p = u / 0.78;
-    return 1.08 * (1 - (1 - p) ** 3);
-  }
-  const p = (u - 0.78) / 0.22;
-  return 1.08 - 0.08 * (1 - (1 - p) ** 2);
+  if (u < 0.78) return 1.08 * (1 - (1 - u / 0.78) ** 3);
+  return 1.08 - 0.08 * (1 - (1 - (u - 0.78) / 0.22) ** 2);
 }
 
-export function sampleStationsFor(tileId: number): Station[] {
-  const col = (tileId - 1) % 2;
-  const row = Math.floor((tileId - 1) / 2);
-  const ox = 28 + col * 176;
-  const oy = 64 + row * 118;
-  return [
-    { id: "prompt", tileId, x: ox + 36, y: oy + 10 },
-    { id: "plot", tileId, x: ox + 84, y: oy + 48 },
-  ];
-}
-
-export function pickPrompt(used: readonly string[], id: number): PromptSpec {
-  const free = PROMPTS.filter((prompt) => !used.includes(prompt.id));
-  const pool = free.length > 0 ? free : PROMPTS;
-  return pool[(id - 1) % pool.length] ?? PROMPTS[0];
-}
-
-export function tileFromPrompt(
-  id: number,
-  prompt: PromptSpec,
-  stage: BuildStage,
-): TileState {
-  const built = stage === "done";
-  return {
-    id,
-    promptId: prompt.id,
-    label: prompt.label,
-    series: prompt.series,
-    kind: built ? prompt.kind : "bars",
-    shape: built ? prompt.shape : "sharp",
-    palette: built ? prompt.palette : "ink",
-    lock: prompt.lock,
-    stage,
-    flash: false,
-  };
+export function parsePrompt(text: string): Tweak {
+  const value = text.trim().toLowerCase();
+  const tweak: Tweak = {};
+  if (/\barea\b/.test(value)) tweak.kind = "area";
+  else if (/\bline\b|\bequity\b/.test(value)) tweak.kind = "line";
+  else if (/\bbar\b|\bweekday\b|\bwin\b/.test(value)) tweak.kind = "bars";
+  if (/\bmint\b|\bsage\b/.test(value)) tweak.palette = "mint";
+  else if (/\bamber\b|\bgold\b|\bwarm\b/.test(value)) tweak.palette = "amber";
+  else if (/\bink\b|\bmono\b|\bblack\b/.test(value)) tweak.palette = "ink";
+  else if (/\bpnl\b|\bgreen\b|\bred\b/.test(value)) tweak.palette = "pnl";
+  if (/\bround/.test(value)) tweak.shape = "rounded";
+  else if (/\bsharp\b|\bsquare\b/.test(value)) tweak.shape = "sharp";
+  else if (/\bmark\b|\bdot\b/.test(value)) tweak.shape = "markers";
+  return tweak;
 }
 
 function cycle<T>(list: readonly T[], current: T, rand: () => number): T {
   const others = list.filter((item) => item !== current);
-  if (others.length === 0) return current;
   return others[Math.floor(rand() * others.length)] ?? current;
 }
 
-export function applyTileWork(tile: TileState, rand: () => number): TileState {
-  const prompt = PROMPTS.find((item) => item.id === tile.promptId) ?? PROMPTS[0];
-  if (tile.stage === "blank") {
-    return { ...tile, stage: "kind", kind: prompt.kind, series: prompt.series, flash: true };
+export function applyTweak(
+  cell: CellState,
+  tweak: Tweak,
+  rand: () => number,
+): CellState {
+  if (tweak.palette && cell.palette !== tweak.palette) {
+    return { ...cell, palette: tweak.palette, flash: true };
   }
-  if (tile.stage === "kind") {
-    return { ...tile, stage: "shape", shape: prompt.shape, flash: true };
+  if (tweak.kind && cell.kind !== tweak.kind) {
+    return { ...cell, kind: tweak.kind, flash: true };
   }
-  if (tile.stage === "shape") {
-    return { ...tile, stage: "color", palette: prompt.palette, flash: true };
+  if (tweak.shape && cell.shape !== tweak.shape) {
+    return { ...cell, shape: tweak.shape, flash: true };
   }
-  if (tile.stage === "color") {
-    return { ...tile, stage: "done", flash: true };
-  }
-
-  if (tile.lock === "kind") {
-    return rand() < 0.5
-      ? { ...tile, shape: cycle(SHAPES, tile.shape, rand), flash: true }
-      : { ...tile, palette: cycle(PALETTES, tile.palette, rand), flash: true };
-  }
-  if (tile.lock === "shape") {
-    return rand() < 0.5
-      ? { ...tile, kind: cycle(KINDS, tile.kind, rand), flash: true }
-      : { ...tile, palette: cycle(PALETTES, tile.palette, rand), flash: true };
-  }
-  if (tile.lock === "palette") {
-    return rand() < 0.5
-      ? { ...tile, kind: cycle(KINDS, tile.kind, rand), flash: true }
-      : { ...tile, shape: cycle(SHAPES, tile.shape, rand), flash: true };
-  }
-  return rand() < 0.5
-    ? { ...tile, shape: cycle(SHAPES, tile.shape, rand), flash: true }
-    : { ...tile, palette: cycle(PALETTES, tile.palette, rand), flash: true };
+  const dim = Math.floor(rand() * 3);
+  if (dim === 0) return { ...cell, kind: cycle(KINDS, cell.kind, rand), flash: true };
+  if (dim === 1) return { ...cell, shape: cycle(SHAPES, cell.shape, rand), flash: true };
+  return { ...cell, palette: cycle(PALETTES, cell.palette, rand), flash: true };
 }
 
-export function nextWork(work: WorkKind, rand: () => number): WorkKind {
-  switch (work) {
-    case "dart":
-      return "select";
-    case "select":
-      return "click";
-    case "click":
-      return rand() < 0.3 ? "shuffle" : "dart";
-    case "shuffle":
-      return "select";
+export function nextFreeCell(busy: readonly number[], cursor: number): number {
+  for (let offset = 0; offset < CELL_COUNT; offset += 1) {
+    const id = ((cursor - 1 + offset) % CELL_COUNT) + 1;
+    if (!busy.includes(id)) return id;
   }
+  return ((cursor - 1) % CELL_COUNT) + 1;
+}
+
+export function sampleStations(cellId: number): Station[] {
+  const col = (cellId - 1) % 2;
+  const row = Math.floor((cellId - 1) / 2);
+  return [
+    { id: "composer", cellId: 0, x: 120, y: 118 },
+    { id: "plot", cellId, x: 36 + col * 110, y: 22 + row * 44 },
+  ];
 }
 
 function durationFor(work: WorkKind, rand: () => number): number {
   switch (work) {
     case "dart":
-      return 0.28 + rand() * 0.16;
+      return 0.28 + rand() * 0.12;
     case "select":
-      return 0.34 + rand() * 0.2;
+      return 0.28 + rand() * 0.16;
     case "click":
-      return 0.3;
-    case "shuffle":
-      return 0.12 + rand() * 0.06;
+      return 0.28;
+    case "idle":
+      return 1;
   }
-}
-
-function pickOwnStation(current: number, count: number, rand: () => number): number {
-  if (count <= 1) return 0;
-  let next = current;
-  for (let i = 0; i < 6 && next === current; i += 1) {
-    next = Math.floor(rand() * count);
-  }
-  return next === current ? (current + 1) % count : next;
-}
-
-export function createAgent(
-  id: number,
-  kind: AgentKind,
-  prompt: PromptSpec,
-  stations: Station[] = sampleStationsFor(id),
-): AgentSeed {
-  const rand = createRandom(`chart-agent-${id}-${kind}`);
-  const station = kind === "lead" ? Math.min(1, stations.length - 1) : 0;
-  const start = stations[station] ?? sampleStationsFor(id)[0];
-  return {
-    id,
-    kind,
-    promptId: prompt.id,
-    size: kind === "swarm" ? 0.78 : 1,
-    x: start.x - 10,
-    y: start.y - 8,
-    fromX: start.x - 10,
-    fromY: start.y - 8,
-    toX: start.x,
-    toY: start.y,
-    work: "dart",
-    elapsed: 0,
-    duration: durationFor("dart", rand) + (id % 4) * 0.05,
-    station,
-    ripple: 0,
-  };
 }
 
 export function createInitialWork(): ChartWork {
-  const prompt = PROMPTS[0];
-  const tile = tileFromPrompt(1, prompt, "done");
-  const agent = createAgent(1, "lead", prompt);
-  return { agents: [agent], tiles: [tile], nextId: 2 };
+  return {
+    cells: INITIAL_CELLS.map((cell) => ({ ...cell })),
+    agents: [],
+    nextId: 1,
+    cursor: 1,
+  };
 }
 
-export function spawnWork(current: ChartWork): ChartWork {
-  const room = Math.max(0, MAX_AGENTS - current.agents.length);
-  const n = Math.min(SPAWN_PER_CLICK, room);
-  const agents = [...current.agents];
-  const tiles = [...current.tiles];
-  let id = current.nextId;
-  const used = tiles.map((tile) => tile.promptId);
-  for (let i = 0; i < n; i += 1) {
-    const prompt = pickPrompt(used, id);
-    used.push(prompt.id);
-    tiles.push(tileFromPrompt(id, prompt, "blank"));
-    agents.push(createAgent(id, "swarm", prompt, sampleStationsFor(id)));
-    id += 1;
-  }
-  return { agents, tiles, nextId: id };
+export function submitPrompt(
+  current: ChartWork,
+  text: string,
+  composer: Station = { id: "composer", cellId: 0, x: 120, y: 118 },
+): ChartWork {
+  const prompt = text.trim();
+  if (!prompt) return current;
+  const tweak = parsePrompt(prompt);
+  const busy = current.agents
+    .filter((agent) => agent.work !== "idle")
+    .map((agent) => agent.cellId);
+  const cellId = nextFreeCell(busy, current.cursor);
+  const stations = sampleStations(cellId);
+  const plot = stations[1] ?? stations[0];
+  const existing = current.agents.find((agent) => agent.cellId === cellId);
+  const rand = createRandom(`prompt-${current.nextId}-${prompt}`);
+  const agent: AgentSeed = {
+    id: existing?.id ?? current.nextId,
+    cellId,
+    prompt,
+    tweak,
+    size: 0.72,
+    x: composer.x,
+    y: composer.y,
+    fromX: composer.x,
+    fromY: composer.y,
+    toX: plot.x,
+    toY: plot.y,
+    work: "dart",
+    elapsed: 0,
+    duration: durationFor("dart", rand),
+    station: 1,
+    ripple: 0,
+    tweaksLeft: 2,
+  };
+  const agents = existing
+    ? current.agents.map((item) => (item.cellId === cellId ? agent : item))
+    : [...current.agents, agent].slice(-MAX_AGENTS);
+  const cells = current.cells.map((cell) =>
+    cell.id === cellId ? { ...cell, job: prompt, flash: false } : cell,
+  );
+  return {
+    cells,
+    agents,
+    nextId: existing ? current.nextId : current.nextId + 1,
+    cursor: (cellId % CELL_COUNT) + 1,
+  };
 }
 
 export function relocateAgents(
   agents: AgentSeed[],
-  stationsByTile: Map<number, Station[]>,
+  stationsByCell: Map<number, Station[]>,
+  composer?: Station,
 ) {
   for (const agent of agents) {
-    const stations = stationsByTile.get(agent.id) ?? [];
-    const next = stations[agent.station] ?? stations[0];
+    const own = stationsByCell.get(agent.cellId) ?? [];
+    const stations = composer ? [composer, ...own] : own;
+    const next = stations[agent.station] ?? own[0] ?? composer;
     if (!next) continue;
     const dx = next.x - agent.toX;
     const dy = next.y - agent.toY;
@@ -359,11 +282,11 @@ export function poseAgent(
   still: boolean,
   stations: Station[],
 ): AgentPose {
-  const parked = stations[agent.station] ?? stations[0];
-  if (still || !parked) {
+  const parked = stations[agent.station] ?? stations[stations.length - 1];
+  if (still || !parked || agent.work === "idle") {
     return {
-      x: parked?.x ?? 0,
-      y: parked?.y ?? 0,
+      x: parked?.x ?? agent.x,
+      y: parked?.y ?? agent.y,
       tilt: 0,
       scale: agent.size,
       ripple: 0,
@@ -376,8 +299,8 @@ export function poseAgent(
   let tilt = 0;
   let scale = agent.size;
 
-  if (agent.work === "dart" || agent.work === "shuffle") {
-    const e = agent.work === "dart" ? dartEase(t) : t;
+  if (agent.work === "dart") {
+    const e = dartEase(t);
     x = agent.fromX + (agent.toX - agent.fromX) * e;
     y = agent.fromY + (agent.toY - agent.fromY) * e;
     tilt = Math.atan2(agent.toY - agent.fromY, agent.toX - agent.fromX) * 0.12;
@@ -385,12 +308,12 @@ export function poseAgent(
   } else if (agent.work === "select") {
     x = agent.toX;
     y = agent.toY;
-    scale = agent.size * (1 + 0.06 * Math.sin(t * Math.PI));
+    scale = agent.size * (1 + 0.05 * Math.sin(t * Math.PI));
   } else if (agent.work === "click") {
     const press = t < 0.28 ? t / 0.28 : 1 - (t - 0.28) / 0.72;
     x = agent.toX;
-    y = agent.toY + Math.max(0, press) * 1.6;
-    scale = agent.size * (1 - 0.14 * Math.max(0, press));
+    y = agent.toY + Math.max(0, press) * 1.4;
+    scale = agent.size * (1 - 0.12 * Math.max(0, press));
   }
 
   return { x, y, tilt, scale, ripple: agent.ripple };
@@ -402,15 +325,20 @@ export function stepAgent(
   still: boolean,
   stations: Station[],
 ): { pose: AgentPose; edit: boolean } {
-  const rand = createRandom(`chart-tick-${agent.id}-${agent.work}-${agent.station}`);
+  const rand = createRandom(`chart-tick-${agent.id}-${agent.work}-${agent.tweaksLeft}`);
   if (still) {
-    const parked = stations[agent.station];
+    const parked = stations[agent.station] ?? stations[stations.length - 1];
     if (parked) {
       agent.x = parked.x;
       agent.y = parked.y;
     }
+    agent.work = "idle";
     agent.ripple = 0;
     return { pose: poseAgent(agent, true, stations), edit: false };
+  }
+
+  if (agent.work === "idle") {
+    return { pose: poseAgent(agent, false, stations), edit: false };
   }
 
   agent.elapsed += dt;
@@ -423,24 +351,25 @@ export function stepAgent(
   if (agent.elapsed >= agent.duration) {
     const finished = agent.work;
     const station = stations[agent.station];
-    if (station && finished === "click" && station.id === "plot") edit = true;
+    if (station?.id === "plot" && finished === "click" && agent.tweaksLeft > 0) {
+      edit = true;
+      agent.tweaksLeft -= 1;
+    }
     const pose = poseAgent(agent, false, stations);
     agent.x = pose.x;
     agent.y = pose.y;
-    const next = nextWork(finished, rand);
+    const next: WorkKind =
+      finished === "dart"
+        ? "select"
+        : finished === "select"
+          ? "click"
+          : agent.tweaksLeft > 0
+            ? "select"
+            : "idle";
     agent.work = next;
     agent.elapsed = 0;
     agent.duration = durationFor(next, rand);
-    if (next === "dart" || next === "shuffle") {
-      agent.station = pickOwnStation(agent.station, stations.length, rand);
-      const target = stations[agent.station] ?? station;
-      if (target) {
-        agent.fromX = agent.x;
-        agent.fromY = agent.y;
-        agent.toX = target.x;
-        agent.toY = target.y;
-      }
-    } else if (station) {
+    if (station) {
       agent.fromX = agent.x;
       agent.fromY = agent.y;
       agent.toX = station.x;

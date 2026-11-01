@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { createRandom } from "@/lib/seeded-random";
 import {
   TILE_PLOT,
@@ -13,14 +13,14 @@ import {
 } from "./series";
 import {
   type AgentSeed,
+  type CellState,
   type Station,
-  type TileState,
-  applyTileWork,
+  applyTweak,
   createInitialWork,
   poseAgent,
   relocateAgents,
-  spawnWork,
   stepAgent,
+  submitPrompt,
 } from "./work";
 import "./chart.css";
 
@@ -54,8 +54,8 @@ function PointerMark() {
     <g className="dx-chart-pointer-mark">
       <path
         d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.941l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.941.063z"
-        fill="#111"
-        stroke="#fff"
+        fill="currentColor"
+        stroke="var(--background, #fff)"
         strokeLinejoin="round"
         strokeWidth="1.35"
         transform="translate(-4.2 -4.2)"
@@ -64,25 +64,45 @@ function PointerMark() {
   );
 }
 
-function measureStations(root: HTMLElement): Map<number, Station[]> {
+function measureComposer(root: HTMLElement): Station {
   const box = root.getBoundingClientRect();
-  const byTile = new Map<number, Station[]>();
-  for (const tile of root.querySelectorAll<HTMLElement>("[data-tile]")) {
-    const tileId = Number(tile.dataset.tile);
-    const stations: Station[] = [...tile.querySelectorAll<HTMLElement>("[data-station]")].map(
+  const node = root.querySelector<HTMLElement>("[data-station='composer']");
+  const rect = node?.getBoundingClientRect();
+  return {
+    id: "composer",
+    cellId: 0,
+    x: rect ? rect.left - box.left + Math.min(rect.width * 0.12, 28) : 24,
+    y: rect ? rect.top - box.top + rect.height * 0.45 : 120,
+  };
+}
+
+function measureCells(root: HTMLElement): Map<number, Station[]> {
+  const box = root.getBoundingClientRect();
+  const byCell = new Map<number, Station[]>();
+  for (const cell of root.querySelectorAll<HTMLElement>("[data-cell]")) {
+    const cellId = Number(cell.dataset.cell);
+    const stations = [...cell.querySelectorAll<HTMLElement>("[data-station]")].map(
       (node) => {
         const rect = node.getBoundingClientRect();
         return {
           id: node.dataset.station ?? "plot",
-          tileId,
-          x: rect.left - box.left + Math.min(rect.width * 0.45, 48),
-          y: rect.top - box.top + Math.min(rect.height * 0.5, 14),
+          cellId,
+          x: rect.left - box.left + Math.min(rect.width * 0.55, 36),
+          y: rect.top - box.top + Math.min(rect.height * 0.45, 10),
         };
       },
     );
-    byTile.set(tileId, stations);
+    byCell.set(cellId, stations);
   }
-  return byTile;
+  return byCell;
+}
+
+function stationsFor(
+  agent: AgentSeed,
+  cells: Map<number, Station[]>,
+  composer: Station,
+): Station[] {
+  return [composer, ...(cells.get(agent.cellId) ?? [])];
 }
 
 function paintNode(
@@ -100,131 +120,36 @@ function paintNode(
   if (ripple instanceof SVGCircleElement) {
     ripple.setAttribute("cx", agent.toX.toFixed(2));
     ripple.setAttribute("cy", agent.toY.toFixed(2));
-    ripple.setAttribute("r", (4 + pose.ripple * 14).toFixed(2));
+    ripple.setAttribute("r", (3 + pose.ripple * 10).toFixed(2));
     ripple.setAttribute(
       "opacity",
-      pose.ripple > 0 ? (0.4 * (1 - pose.ripple)).toFixed(3) : "0",
+      pose.ripple > 0 ? (0.35 * (1 - pose.ripple)).toFixed(3) : "0",
     );
   }
 }
 
-function ChartMarks({
+function Spark({
   kind,
   shape,
-  points,
+  series,
+  label,
 }: {
   kind: ChartKind;
   shape: ChartShape;
-  points: ReturnType<typeof layoutSeries>;
+  series: CellState["series"];
+  label: string;
 }) {
+  const points = layoutSeries(seriesFor(series), shape);
   const smooth = shape === "rounded";
   const dashed = shape === "markers";
-  const radius = shape === "rounded" ? 2.2 : 0;
-  const stroke = shape === "sharp" ? 1.3 : 1.9;
-
-  if (kind === "bars") {
-    return (
-      <>
-        {points.map((point) => (
-          <g key={point.label}>
-            <rect
-              className={`dx-chart-bar${point.value < 0 ? " is-down" : ""}`}
-              x={point.bar.x}
-              y={point.bar.y}
-              width={point.bar.width}
-              height={point.bar.height}
-              rx={radius}
-            />
-            {shape === "markers" ? (
-              <circle
-                className={`dx-chart-mark${point.value < 0 ? " is-down" : ""}`}
-                cx={point.x}
-                cy={point.y}
-                r="2.2"
-              />
-            ) : null}
-          </g>
-        ))}
-      </>
-    );
-  }
-
-  return (
-    <>
-      {kind === "area" ? (
-        <path className="dx-chart-area" d={areaPath(points, smooth)} />
-      ) : null}
-      <path
-        className="dx-chart-series"
-        d={linePath(points, smooth)}
-        strokeWidth={stroke}
-        strokeLinecap={smooth ? "round" : "butt"}
-        strokeLinejoin={smooth ? "round" : "miter"}
-        strokeDasharray={dashed ? "2.5 3" : undefined}
-      />
-      {shape === "markers"
-        ? points.map((point) =>
-            smooth ? (
-              <circle
-                key={point.label}
-                className="dx-chart-mark"
-                cx={point.x}
-                cy={point.y}
-                r="2.2"
-              />
-            ) : (
-              <rect
-                key={point.label}
-                className="dx-chart-mark"
-                x={point.x - 1.8}
-                y={point.y - 1.8}
-                width="3.6"
-                height="3.6"
-              />
-            ),
-          )
-        : null}
-    </>
-  );
-}
-
-function MiniChart({ tile }: { tile: TileState }) {
-  if (tile.stage === "blank") {
-    return (
-      <svg
-        data-station="plot"
-        className="dx-chart-plot"
-        viewBox={`0 0 ${TILE_PLOT.width} ${TILE_PLOT.height}`}
-        role="img"
-        aria-label={`${tile.label}, waiting`}
-      >
-        <line
-          className="dx-chart-zero"
-          x1={TILE_PLOT.left}
-          x2={TILE_PLOT.width - TILE_PLOT.right}
-          y1={TILE_PLOT.height / 2}
-          y2={TILE_PLOT.height / 2}
-        />
-        <text
-          className="dx-chart-empty"
-          x={TILE_PLOT.width / 2}
-          y={TILE_PLOT.height / 2 + 12}
-          textAnchor="middle"
-        >
-          reading prompt
-        </text>
-      </svg>
-    );
-  }
-
-  const points = layoutSeries(seriesFor(tile.series), tile.shape);
+  const radius = shape === "rounded" ? 1.2 : 0;
   return (
     <svg
       data-station="plot"
       className="dx-chart-plot"
       viewBox={`0 0 ${TILE_PLOT.width} ${TILE_PLOT.height}`}
       role="img"
-      aria-label={tile.label}
+      aria-label={label}
     >
       <line
         className="dx-chart-zero"
@@ -233,37 +158,63 @@ function MiniChart({ tile }: { tile: TileState }) {
         y1={points[0]?.zeroY ?? TILE_PLOT.height / 2}
         y2={points[0]?.zeroY ?? TILE_PLOT.height / 2}
       />
-      <ChartMarks kind={tile.kind} shape={tile.shape} points={points} />
-      {points.map((point) => (
-        <text
-          key={point.label}
-          className="dx-chart-axis"
-          x={point.x}
-          y={TILE_PLOT.height - 3}
-          textAnchor="middle"
-        >
-          {point.label.slice(0, 1)}
-        </text>
-      ))}
+      {kind === "bars"
+        ? points.map((point) => (
+            <g key={point.label}>
+              <rect
+                className={`dx-chart-bar${point.value < 0 ? " is-down" : ""}`}
+                x={point.bar.x}
+                y={point.bar.y}
+                width={point.bar.width}
+                height={point.bar.height}
+                rx={radius}
+              />
+              {shape === "markers" ? (
+                <circle
+                  className={`dx-chart-mark${point.value < 0 ? " is-down" : ""}`}
+                  cx={point.x}
+                  cy={point.y}
+                  r="1.3"
+                />
+              ) : null}
+            </g>
+          ))
+        : (
+            <>
+              {kind === "area" ? (
+                <path className="dx-chart-area" d={areaPath(points, smooth)} />
+              ) : null}
+              <path
+                className="dx-chart-series"
+                d={linePath(points, smooth)}
+                strokeWidth={smooth ? 1.5 : 1.1}
+                strokeLinecap={smooth ? "round" : "butt"}
+                strokeDasharray={dashed ? "1.6 2" : undefined}
+              />
+            </>
+          )}
     </svg>
   );
 }
 
 export function DeltalytixChart() {
   const rootRef = useRef<HTMLElement>(null);
-  const stationsRef = useRef(new Map<number, Station[]>());
+  const cellsRef = useRef(new Map<number, Station[]>());
+  const composerRef = useRef<Station>({ id: "composer", cellId: 0, x: 24, y: 120 });
   const nodes = useRef(new Map<number, SVGGElement>());
   const workRef = useRef(createInitialWork());
   const paintRef = useRef<(still: boolean) => void>(() => {});
   const [work, setWork] = useState(workRef.current);
+  const [draft, setDraft] = useState("");
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    stationsRef.current = measureStations(root);
-    relocateAgents(workRef.current.agents, stationsRef.current);
-  }, [work.tiles]);
+    composerRef.current = measureComposer(root);
+    cellsRef.current = measureCells(root);
+    relocateAgents(workRef.current.agents, cellsRef.current, composerRef.current);
+  }, [work.cells, work.agents.length]);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -272,8 +223,9 @@ export function DeltalytixChart() {
 
     const sync = () => {
       const rect = root.getBoundingClientRect();
-      stationsRef.current = measureStations(root);
-      relocateAgents(workRef.current.agents, stationsRef.current);
+      composerRef.current = measureComposer(root);
+      cellsRef.current = measureCells(root);
+      relocateAgents(workRef.current.agents, cellsRef.current, composerRef.current);
       setSize({ width: rect.width, height: rect.height });
     };
 
@@ -281,12 +233,18 @@ export function DeltalytixChart() {
       for (const agent of workRef.current.agents) {
         const node = nodes.current.get(agent.id);
         if (!node) continue;
-        const stations = stationsRef.current.get(agent.id) ?? [];
-        paintNode(node, agent, poseAgent(agent, reduced, stations));
+        paintNode(
+          node,
+          agent,
+          poseAgent(
+            agent,
+            reduced,
+            stationsFor(agent, cellsRef.current, composerRef.current),
+          ),
+        );
       }
     };
     paintRef.current = paint;
-
     sync();
     paint(still.matches);
 
@@ -304,23 +262,31 @@ export function DeltalytixChart() {
       last = seconds;
       if (!still.matches && dt > 0) {
         let changed = false;
-        const nextTiles = workRef.current.tiles.map((tile) => ({ ...tile, flash: false }));
+        const nextCells = workRef.current.cells.map((cell) => ({
+          ...cell,
+          flash: false,
+        }));
         for (const agent of workRef.current.agents) {
-          const stations = stationsRef.current.get(agent.id) ?? [];
-          const { edit } = stepAgent(agent, dt, false, stations);
+          const { edit } = stepAgent(
+            agent,
+            dt,
+            false,
+            stationsFor(agent, cellsRef.current, composerRef.current),
+          );
           if (edit) {
-            const index = nextTiles.findIndex((tile) => tile.id === agent.id);
-            if (index >= 0 && nextTiles[index]) {
-              nextTiles[index] = applyTileWork(
-                nextTiles[index],
-                createRandom(`edit-${agent.id}-${agent.elapsed}`),
+            const index = nextCells.findIndex((cell) => cell.id === agent.cellId);
+            if (index >= 0 && nextCells[index]) {
+              nextCells[index] = applyTweak(
+                { ...nextCells[index], job: agent.prompt },
+                agent.tweak,
+                createRandom(`edit-${agent.id}-${agent.tweaksLeft}`),
               );
               changed = true;
             }
           }
         }
         if (changed) {
-          workRef.current = { ...workRef.current, tiles: nextTiles };
+          workRef.current = { ...workRef.current, cells: nextCells };
           setWork(workRef.current);
         }
       }
@@ -346,7 +312,6 @@ export function DeltalytixChart() {
       else start();
     };
     still.addEventListener("change", onMotion);
-
     return () => {
       observer.disconnect();
       still.removeEventListener("change", onMotion);
@@ -354,54 +319,81 @@ export function DeltalytixChart() {
     };
   }, []);
 
-  const multiply = () => {
-    const next = spawnWork(workRef.current);
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const next = submitPrompt(workRef.current, draft, composerRef.current);
+    if (next === workRef.current) return;
+    const still = window.matchMedia(QUERY);
+    if (still.matches) {
+      next.cells = next.cells.map((cell) => {
+        const agent = next.agents.find((item) => item.cellId === cell.id);
+        if (!agent || cell.id !== next.agents.at(-1)?.cellId) return cell;
+        return applyTweak({ ...cell, job: agent.prompt }, agent.tweak, () => 0.2);
+      });
+      for (const agent of next.agents) agent.work = "idle";
+    }
     workRef.current = next;
     setWork(next);
+    setDraft("");
   };
 
   return (
     <section
       ref={rootRef}
       className="dx-chart"
-      aria-label="Deltalytix chart fleet"
-      data-count={work.tiles.length}
-      onClick={multiply}
+      aria-label="Deltalytix chart sketches"
+      data-count={work.agents.length}
     >
-      <div className="dx-chart-shell">
-        <div className="dx-chart-head">
-          <a
-            className="dx-chart-brand"
-            href={SITE}
-            rel="noopener noreferrer"
-            target="_blank"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <DeltalytixIcon />
-            Deltalytix
-          </a>
-          <p className="dx-chart-count">
-            {work.tiles.length} {work.tiles.length === 1 ? "prompt" : "prompts"}
-          </p>
-        </div>
-        <div className="dx-chart-grid" data-count={work.tiles.length}>
-          {work.tiles.map((tile) => (
-            <article
-              key={tile.id}
-              data-tile={tile.id}
-              data-prompt={tile.promptId}
-              data-stage={tile.stage}
-              data-palette={tile.palette}
-              className={`dx-chart-tile${tile.id > 1 ? " is-spawn" : ""}${tile.flash ? " is-flash" : ""}`}
-            >
-              <span data-station="prompt" className="dx-chart-prompt">
-                {tile.label}
-              </span>
-              <MiniChart tile={tile} />
-            </article>
-          ))}
-        </div>
+      <div className="dx-chart-head">
+        <a
+          className="dx-chart-brand"
+          href={SITE}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <DeltalytixIcon />
+          Deltalytix
+        </a>
       </div>
+      <div className="dx-chart-grid">
+        {work.cells.map((cell) => (
+          <article
+            key={cell.id}
+            data-cell={cell.id}
+            data-kind={cell.kind}
+            data-shape={cell.shape}
+            data-palette={cell.palette}
+            className={`dx-chart-cell${cell.flash ? " is-flash" : ""}`}
+          >
+            <Spark
+              kind={cell.kind}
+              shape={cell.shape}
+              series={cell.series}
+              label={cell.label}
+            />
+            <span className={cell.job ? "dx-chart-job" : "dx-chart-label"}>
+              {cell.job ?? cell.label}
+            </span>
+          </article>
+        ))}
+      </div>
+      <form className="dx-chart-box" onSubmit={onSubmit}>
+        <label className="dx-chart-hide" htmlFor="dx-chart-prompt">
+          Chart prompt
+        </label>
+        <input
+          id="dx-chart-prompt"
+          data-station="composer"
+          className="dx-chart-input"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="a small tweak…"
+          autoComplete="off"
+        />
+        <button className="dx-chart-go" type="submit" aria-label="Go to work">
+          →
+        </button>
+      </form>
       {size.width > 0 ? (
         <svg
           aria-hidden="true"
@@ -421,13 +413,9 @@ export function DeltalytixChart() {
                   nodes.current.delete(agent.id);
                 }
               }}
-              className={
-                agent.kind === "swarm"
-                  ? "dx-chart-pointer is-spawn"
-                  : "dx-chart-pointer"
-              }
-              data-kind={agent.kind}
-              data-prompt={agent.promptId}
+              className="dx-chart-pointer is-spawn"
+              data-cell={agent.cellId}
+              data-prompt={agent.prompt}
             >
               <circle
                 data-ripple=""

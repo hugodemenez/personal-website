@@ -8,7 +8,6 @@ export type ChartShape = "rounded" | "sharp" | "markers";
 export type ChartPalette = "pnl" | "mint" | "ink" | "amber";
 export type SeriesId = "weekday" | "equity" | "winrate" | "drawdown";
 
-/** A compact futures week: mid-week strength, Tuesday fade, Friday give-back. */
 export const WEEKDAYS: DayPoint[] = [
   { label: "Mon", pnl: 1840 },
   { label: "Tue", pnl: -620 },
@@ -34,12 +33,12 @@ export const DRAWDOWN: DayPoint[] = [
 ];
 
 export const TILE_PLOT = {
-  width: 168,
-  height: 78,
-  left: 8,
-  right: 8,
-  top: 8,
-  bottom: 12,
+  width: 88,
+  height: 32,
+  left: 2,
+  right: 2,
+  top: 3,
+  bottom: 3,
 };
 
 export type Plot = typeof TILE_PLOT;
@@ -78,7 +77,7 @@ function domain(values: number[]): { min: number; max: number } {
   const min = Math.min(0, ...values);
   const max = Math.max(0, ...values);
   const span = Math.max(max - min, 1);
-  return { min: min - span * 0.08, max: max + span * 0.14 };
+  return { min: min - span * 0.06, max: max + span * 0.1 };
 }
 
 export function layoutSeries(
@@ -94,12 +93,11 @@ export function layoutSeries(
   const zeroY = top + ((max - 0) / span) * innerH;
   const slot = innerW / Math.max(days.length, 1);
   const slim = shape === "markers";
-  const barW = slot * (slim ? 0.22 : 0.46);
+  const barW = slot * (slim ? 0.28 : 0.5);
 
   return days.map((day, index) => {
     const x = left + slot * index + slot / 2;
     const y = top + ((max - day.pnl) / span) * innerH;
-    const barHeight = Math.max(2, Math.abs(y - zeroY));
     return {
       label: day.label,
       value: day.pnl,
@@ -110,7 +108,7 @@ export function layoutSeries(
         x: x - barW / 2,
         y: day.pnl >= 0 ? y : zeroY,
         width: barW,
-        height: barHeight,
+        height: Math.max(1.4, Math.abs(y - zeroY)),
       },
     };
   });
@@ -130,19 +128,14 @@ export function linePath(points: PlotPoint[], smooth: boolean): string {
     const p1 = points[index];
     const p2 = points[index + 1];
     const p3 = points[index + 2] ?? p2;
-    const c1x = p1.x + (p2.x - p0.x) / 6;
-    const c1y = p1.y + (p2.y - p0.y) / 6;
-    const c2x = p2.x - (p3.x - p1.x) / 6;
-    const c2y = p2.y - (p3.y - p1.y) / 6;
-    path += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
+    path += ` C ${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6} ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6} ${p2.x} ${p2.y}`;
   }
   return path;
 }
 
 export function areaPath(points: PlotPoint[], smooth: boolean): string {
   if (points.length === 0) return "";
-  const line = linePath(points, smooth);
   const first = points[0];
   const last = points[points.length - 1];
-  return `${line} L ${last.x} ${last.zeroY} L ${first.x} ${first.zeroY} Z`;
+  return `${linePath(points, smooth)} L ${last.x} ${last.zeroY} L ${first.x} ${first.zeroY} Z`;
 }
