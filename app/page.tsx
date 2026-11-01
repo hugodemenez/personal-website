@@ -239,8 +239,8 @@ export default async function Home() {
             </p>
             <p className="mt-3 leading-relaxed">
               Planes are what drew me in. I wondered how machines like that
-              could stay in the sky. The flywheel on a Berkel ham slicer is the
-              same idea in a smaller form.
+              could stay in the sky. A Berkel flywheel is the same idea close
+              up: built to last for decades, slicing ham as fine as dentelle.
             </p>
           </div>
           {track ? (
