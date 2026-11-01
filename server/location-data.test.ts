@@ -4,10 +4,13 @@ import {
   applyLocationVisit,
   createGlobalConfigReadRequest,
   createGlobalConfigWriteRequest,
+  globalConfigApiEnvironment,
   hasValidBearerToken,
   parseLocationUpdate,
   parseStoredLocation,
   parseStoredLocationResponse,
+  readStoredLocationViaApi,
+  resolveGlobalConfigConnection,
   samePlace,
   sameUtcCalendarDay,
   toVisitedPlaces,
@@ -430,4 +433,84 @@ test("checks bearer tokens and produces authenticated read and write requests", 
       },
     ],
   });
+});
+
+test("prefers GLOBAL_CONFIG and still accepts a leftover EDGE_CONFIG connection", () => {
+  assert.equal(
+    resolveGlobalConfigConnection({
+      GLOBAL_CONFIG: " https://global-config.vercel.com/new ",
+      EDGE_CONFIG: "https://edge-config.vercel.com/old",
+    }),
+    "https://global-config.vercel.com/new"
+  );
+  assert.equal(
+    resolveGlobalConfigConnection({
+      EDGE_CONFIG: "https://edge-config.vercel.com/old",
+    }),
+    "https://edge-config.vercel.com/old"
+  );
+  assert.equal(resolveGlobalConfigConnection({}), undefined);
+  assert.deepEqual(
+    globalConfigApiEnvironment({
+      GLOBAL_CONFIG_ID: "ecfg_test",
+      GLOBAL_CONFIG_WRITE_TOKEN: "write-token",
+      GLOBAL_CONFIG_TEAM_ID: "team_test",
+    }),
+    {
+      GLOBAL_CONFIG_ID: "ecfg_test",
+      GLOBAL_CONFIG_WRITE_TOKEN: "write-token",
+      GLOBAL_CONFIG_TEAM_ID: "team_test",
+    }
+  );
+});
+
+test("reads a stored location through the same Global Config API the update route uses", async () => {
+  const stored = applyLocationVisit(
+    null,
+    parseLocationUpdate(
+      { country: "France", latitude: 48.8566, longitude: 2.3522 },
+      now
+    )!
+  );
+  const originalFetch = globalThis.fetch;
+  const calls: string[] = [];
+
+  globalThis.fetch = async (input) => {
+    calls.push(String(input));
+    return new Response(JSON.stringify({ value: stored }), { status: 200 });
+  };
+
+  try {
+    assert.equal(await readStoredLocationViaApi({}), null);
+    assert.deepEqual(
+      await readStoredLocationViaApi({
+        GLOBAL_CONFIG_ID: "ecfg_test",
+        GLOBAL_CONFIG_WRITE_TOKEN: "write-token",
+        GLOBAL_CONFIG_TEAM_ID: "team_test",
+      }),
+      stored
+    );
+    assert.deepEqual(calls, [
+      "https://api.vercel.com/v1/edge-config/ecfg_test/item/current_location?teamId=team_test",
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("treats a missing Global Config item as no saved location", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(null, { status: 404 });
+
+  try {
+    assert.equal(
+      await readStoredLocationViaApi({
+        GLOBAL_CONFIG_ID: "ecfg_test",
+        GLOBAL_CONFIG_WRITE_TOKEN: "write-token",
+      }),
+      null
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

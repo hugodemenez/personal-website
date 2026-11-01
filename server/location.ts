@@ -3,7 +3,10 @@ import { cacheLife, cacheTag } from "next/cache";
 import {
   CURRENT_LOCATION_KEY,
   LOCATION_CACHE_TAG,
+  globalConfigApiEnvironment,
   parseStoredLocation,
+  readStoredLocationViaApi,
+  resolveGlobalConfigConnection,
   toVisitedPlaces,
   type StoredLocation,
   type VisitedPlace,
@@ -73,14 +76,24 @@ async function readCurrentLocation(): Promise<StoredLocation | null> {
   cacheLife("location");
   cacheTag(LOCATION_CACHE_TAG);
 
-  if (!process.env.GLOBAL_CONFIG) return null;
+  const connection = resolveGlobalConfigConnection();
+  if (connection) {
+    try {
+      const globalConfig = createClient(connection, {
+        cache: "no-store",
+        disableDevelopmentCache: true,
+      });
+      const parsed = parseStoredLocation(
+        await globalConfig.get(CURRENT_LOCATION_KEY)
+      );
+      if (parsed) return parsed;
+    } catch {
+      console.error("Unable to read the current location from Global Config");
+    }
+  }
 
   try {
-    const globalConfig = createClient(process.env.GLOBAL_CONFIG, {
-      cache: "no-store",
-      disableDevelopmentCache: true,
-    });
-    return parseStoredLocation(await globalConfig.get(CURRENT_LOCATION_KEY));
+    return await readStoredLocationViaApi(globalConfigApiEnvironment());
   } catch {
     console.error("Unable to read the current location from Global Config");
     return null;
