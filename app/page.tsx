@@ -1,3 +1,4 @@
+import { DeltalytixMark } from "./_components/deltalytix-mark";
 import { Flywheel } from "./_components/flywheel/Flywheel";
 import LocationPill from "./_components/location-pill";
 import { PlacesMap } from "./_components/places-map-frame";
@@ -149,27 +150,6 @@ function TradingCandlestickIcon() {
   );
 }
 
-function DeltalytixIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-3 shrink-0 fill-current"
-      viewBox="0 0 255 255"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M159 63L127.5 0V255H255L236.5 218H159V63Z"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M0 255L127.5 0V255H0ZM64 217L121 104V217H64Z"
-      />
-    </svg>
-  );
-}
-
 const socialLinkClass =
   "inline-flex items-center gap-1 align-baseline font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-accent";
 const musicLinkClass =
@@ -190,41 +170,39 @@ export default async function Home() {
               Hugo Demenez
             </h1>
           </div>
-          <p className="leading-relaxed">
-            I have been trading
-            <TradingCandlestickIcon />
-            for almost a decade. What I learned there led me to build{" "}
-            <a
-              className={socialLinkClass}
-              href="https://deltalytix.app"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <DeltalytixIcon />
-              Deltalytix
-            </a>{" "}
-            in{" "}
-            <a
-              className={socialLinkClass}
-              href="https://github.com/hugodemenez/deltalytix"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              public
-            </a>{" "}
-            on{" "}
-            <a
-              className={socialLinkClass}
-              href="https://github.com/hugodemenez"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <GitHubIcon />
-              GitHub
-            </a>
-            : a tool to track my daily progress, and to turn that data into a
-            systematic process.
-          </p>
+          <div>
+            <h2 className="font-serif text-3xl tracking-[-0.035em] text-foreground">
+              My work
+            </h2>
+            <p className="mt-3 leading-relaxed">
+              I work as a backend engineer full time. I have been trading
+              <TradingCandlestickIcon />
+              for almost a decade. What I learned there led me to build{" "}
+              <DeltalytixMark className={socialLinkClass} />{" "}
+              in{" "}
+              <a
+                className={socialLinkClass}
+                href="https://github.com/hugodemenez/deltalytix"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                public
+              </a>{" "}
+              on{" "}
+              <a
+                className={socialLinkClass}
+                href="https://github.com/hugodemenez"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <GitHubIcon />
+                GitHub
+              </a>
+              : a tool to track my daily progress, and to turn that data into a
+              systematic process. I still run it myself, now with a fleet of
+              agents.
+            </p>
+          </div>
           <div>
             <h2
               data-plane-dock=""

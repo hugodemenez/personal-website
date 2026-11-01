@@ -1,0 +1,44 @@
+.deltalytix-word {
+  position: relative;
+  display: inline-block;
+}
+
+.deltalytix-agents {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  overflow: visible;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.deltalytix-agent {
+  color: inherit;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.deltalytix-agent[data-kind="swarm"] {
+  opacity: 0.82;
+}
+
+.deltalytix-agent.is-spawn .deltalytix-agent-mark {
+  animation: deltalytixAgentPop 480ms var(--ease-spring) both;
+}
+
+@keyframes deltalytixAgentPop {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deltalytix-agent.is-spawn .deltalytix-agent-mark {
+    animation: none;
+  }
+}
