@@ -233,11 +233,14 @@ export default async function Home() {
               <span data-plane-slot="" className="plane-dock-slot" aria-hidden="true" />
             </h2>
             <p className="mt-3 leading-relaxed">
-              A passion for engineering: understanding how things work,
-              tinkering all the time — programmatic and mechanical. I like
-              practical engineering, the multipurpose things optimized to do
-              their job to perfection. The volano (flywheel) from a Berkel ham
-              slicer is a mechanism in that spirit.
+              I like knowing how things work. I tinker with code and with
+              machines, and I care most about things built to do their job well:
+              sturdy, lasting, hard to break.
+            </p>
+            <p className="mt-3 leading-relaxed">
+              Planes are what drew me in. I wondered how machines like that
+              could stay in the sky. The flywheel on a Berkel ham slicer is the
+              same idea in a smaller form.
             </p>
           </div>
           {track ? (
