@@ -5,30 +5,12 @@
   margin-block: 2rem !important;
 }
 
-.dx-chart-head {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.55rem;
-}
-
-.dx-chart-brand {
-  color: inherit;
-  font-size: 0.68rem;
-  opacity: 0.45;
-  text-decoration: none;
-}
-
-.dx-chart-brand:hover {
-  opacity: 0.8;
-}
-
 .dx-chart-grid {
   display: grid;
-  width: max-content;
-  max-width: 100%;
-  grid-template-columns: repeat(2, 7rem);
-  column-gap: 1.6rem;
-  row-gap: 0.85rem;
+  width: 100%;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1.4rem;
+  row-gap: 1rem;
 }
 
 .dx-chart-cell {
@@ -64,8 +46,11 @@
 .dx-chart-plot {
   display: block;
   width: 100%;
-  max-width: 6.75rem;
   height: auto;
+}
+
+.dx-chart-hit {
+  fill: transparent;
 }
 
 .dx-chart-zero {
@@ -101,6 +86,20 @@
 
 .dx-chart-mark.is-down {
   stroke: var(--dx-down);
+}
+
+.dx-chart-cell.has-focus .dx-chart-bar:not(.is-focus) {
+  opacity: 0.34;
+}
+
+.dx-chart-mark.is-focus {
+  fill: var(--dx-up);
+  stroke: var(--background, #fff);
+  stroke-width: 1;
+}
+
+.dx-chart-mark.is-focus.is-down {
+  fill: var(--dx-down);
 }
 
 .dx-chart-label,

@@ -33,13 +33,48 @@ export const DRAWDOWN: DayPoint[] = [
 ];
 
 export const TILE_PLOT = {
-  width: 88,
-  height: 32,
-  left: 2,
-  right: 2,
-  top: 3,
-  bottom: 3,
+  width: 168,
+  height: 46,
+  left: 3,
+  right: 3,
+  top: 4,
+  bottom: 4,
 };
+
+export function cloneDays(days: DayPoint[]): DayPoint[] {
+  return days.map((day) => ({ ...day }));
+}
+
+export function nudgeDay(
+  days: DayPoint[],
+  label: string,
+  delta: number,
+): DayPoint[] {
+  return days.map((day) =>
+    day.label === label ? { ...day, pnl: day.pnl + delta } : day,
+  );
+}
+
+export function smoothDays(days: DayPoint[]): DayPoint[] {
+  return days.map((day, index, all) => {
+    if (index === 0 || index === all.length - 1) return { ...day };
+    const prev = all[index - 1];
+    const next = all[index + 1];
+    if (!prev || !next) return { ...day };
+    return { ...day, pnl: (prev.pnl + day.pnl + next.pnl) / 3 };
+  });
+}
+
+export function raiseDays(
+  days: DayPoint[],
+  amount: number,
+  cap = 100,
+): DayPoint[] {
+  return days.map((day) => ({
+    ...day,
+    pnl: Math.min(cap, day.pnl + amount),
+  }));
+}
 
 export type Plot = typeof TILE_PLOT;
 

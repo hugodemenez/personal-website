@@ -1,21 +1,19 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { createRandom } from "@/lib/seeded-random";
 import {
   TILE_PLOT,
   areaPath,
   layoutSeries,
   linePath,
-  seriesFor,
   type ChartKind,
   type ChartShape,
+  type DayPoint,
 } from "./series";
 import {
   type AgentSeed,
-  type CellState,
   type Station,
-  applyTweak,
+  applyAction,
   createInitialWork,
   createReducedWork,
   poseAgent,
@@ -26,28 +24,6 @@ import {
 import "./chart.css";
 
 const QUERY = "(prefers-reduced-motion: reduce)";
-const SITE = "https://deltalytix.app";
-
-function DeltalytixIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-3 shrink-0 fill-current"
-      viewBox="0 0 255 255"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M159 63L127.5 0V255H255L236.5 218H159V63Z"
-      />
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M0 255L127.5 0V255H0ZM64 217L121 104V217H64Z"
-      />
-    </svg>
-  );
-}
 
 /** Lucide MousePointer2, filled — OS cursor, not the cube. */
 function PointerMark() {
@@ -90,8 +66,8 @@ function measureCells(root: HTMLElement): Map<number, Station[]> {
         return {
           id: node.dataset.station ?? "plot",
           cellId,
-          x: rect.left - box.left + Math.min(rect.width * 0.55, 36),
-          y: rect.top - box.top + Math.min(rect.height * 0.45, 10),
+          x: rect.left - box.left + rect.width / 2,
+          y: rect.top - box.top + rect.height / 2,
         };
       },
     );
@@ -134,18 +110,20 @@ function paintNode(
 function Spark({
   kind,
   shape,
-  series,
+  days,
+  focus,
   label,
 }: {
   kind: ChartKind;
   shape: ChartShape;
-  series: CellState["series"];
+  days: DayPoint[];
+  focus: string | null;
   label: string;
 }) {
-  const points = layoutSeries(seriesFor(series), shape);
+  const points = layoutSeries(days, shape);
   const smooth = shape === "rounded";
   const dashed = shape === "markers";
-  const radius = shape === "rounded" ? 1.2 : 0;
+  const radius = shape === "rounded" ? 1.4 : 0;
   return (
     <svg
       data-station="plot"
@@ -165,19 +143,23 @@ function Spark({
         ? points.map((point) => (
             <g key={point.label}>
               <rect
-                className={`dx-chart-bar${point.value < 0 ? " is-down" : ""}`}
+                className={`dx-chart-bar${point.value < 0 ? " is-down" : ""}${
+                  focus === point.label ? " is-focus" : ""
+                }`}
                 x={point.bar.x}
                 y={point.bar.y}
                 width={point.bar.width}
                 height={point.bar.height}
                 rx={radius}
               />
-              {shape === "markers" ? (
+              {shape === "markers" || focus === point.label ? (
                 <circle
-                  className={`dx-chart-mark${point.value < 0 ? " is-down" : ""}`}
+                  className={`dx-chart-mark${point.value < 0 ? " is-down" : ""}${
+                    focus === point.label ? " is-focus" : ""
+                  }`}
                   cx={point.x}
                   cy={point.y}
-                  r="1.3"
+                  r={focus === point.label ? 2.1 : 1.3}
                 />
               ) : null}
             </g>
@@ -190,12 +172,35 @@ function Spark({
               <path
                 className="dx-chart-series"
                 d={linePath(points, smooth)}
-                strokeWidth={smooth ? 1.5 : 1.1}
+                strokeWidth={smooth ? 1.7 : 1.2}
                 strokeLinecap={smooth ? "round" : "butt"}
                 strokeDasharray={dashed ? "1.6 2" : undefined}
               />
+              {points.map((point) =>
+                focus === point.label ? (
+                  <circle
+                    key={`focus-${point.label}`}
+                    className={`dx-chart-mark is-focus${
+                      point.value < 0 ? " is-down" : ""
+                    }`}
+                    cx={point.x}
+                    cy={point.y}
+                    r="2.2"
+                  />
+                ) : null,
+              )}
             </>
           )}
+      {points.map((point) => (
+        <circle
+          key={`hit-${point.label}`}
+          data-station={point.label}
+          className="dx-chart-hit"
+          cx={point.x}
+          cy={point.y}
+          r="4"
+        />
+      ))}
     </svg>
   );
 }
@@ -285,10 +290,9 @@ export function DeltalytixChart() {
           if (edit) {
             const index = nextCells.findIndex((cell) => cell.id === agent.cellId);
             if (index >= 0 && nextCells[index]) {
-              nextCells[index] = applyTweak(
+              nextCells[index] = applyAction(
                 { ...nextCells[index], job: agent.prompt },
-                agent.tweak,
-                createRandom(`edit-${agent.id}-${agent.tweaksLeft}`),
+                agent.action,
               );
               edited = true;
             }
@@ -338,17 +342,6 @@ export function DeltalytixChart() {
       data-count={work.agents.length}
       data-play={work.phase}
     >
-      <div className="dx-chart-head">
-        <a
-          className="dx-chart-brand"
-          href={SITE}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          <DeltalytixIcon />
-          Deltalytix
-        </a>
-      </div>
       <div className="dx-chart-grid">
         {work.cells.map((cell) => (
           <article
@@ -357,12 +350,18 @@ export function DeltalytixChart() {
             data-kind={cell.kind}
             data-shape={cell.shape}
             data-palette={cell.palette}
-            className={`dx-chart-cell${cell.flash ? " is-flash" : ""}`}
+            data-series={cell.series}
+            data-focus={cell.focus ?? undefined}
+            data-job={cell.job ?? undefined}
+            className={`dx-chart-cell${cell.flash ? " is-flash" : ""}${
+              cell.focus ? " has-focus" : ""
+            }`}
           >
             <Spark
               kind={cell.kind}
               shape={cell.shape}
-              series={cell.series}
+              days={cell.days}
+              focus={cell.focus}
               label={cell.label}
             />
             <span className={cell.job ? "dx-chart-job" : "dx-chart-label"}>
