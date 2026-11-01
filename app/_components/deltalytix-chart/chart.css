@@ -24,8 +24,10 @@
 
 .dx-chart-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 1.4rem;
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: repeat(2, 7rem);
+  column-gap: 1.6rem;
   row-gap: 0.85rem;
 }
 

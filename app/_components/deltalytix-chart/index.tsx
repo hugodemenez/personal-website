@@ -79,7 +79,7 @@ function measureComposer(root: HTMLElement): Station {
 function measureCells(root: HTMLElement): Map<number, Station[]> {
   const box = root.getBoundingClientRect();
   const byCell = new Map<number, Station[]>();
-  for (const cell of root.querySelectorAll<HTMLElement>("[data-cell]")) {
+  for (const cell of root.querySelectorAll<HTMLElement>("article[data-cell]")) {
     const cellId = Number(cell.dataset.cell);
     const stations = [...cell.querySelectorAll<HTMLElement>("[data-station]")].map(
       (node) => {
@@ -414,7 +414,7 @@ export function DeltalytixChart() {
                 }
               }}
               className="dx-chart-pointer is-spawn"
-              data-cell={agent.cellId}
+              data-agent-cell={agent.cellId}
               data-prompt={agent.prompt}
             >
               <circle
