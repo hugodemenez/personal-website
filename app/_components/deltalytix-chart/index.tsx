@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { createRandom } from "@/lib/seeded-random";
 import {
   TILE_PLOT,
@@ -17,10 +17,11 @@ import {
   type Station,
   applyTweak,
   createInitialWork,
+  createReducedWork,
   poseAgent,
   relocateAgents,
   stepAgent,
-  submitPrompt,
+  tickPlay,
 } from "./work";
 import "./chart.css";
 
@@ -66,13 +67,15 @@ function PointerMark() {
 
 function measureComposer(root: HTMLElement): Station {
   const box = root.getBoundingClientRect();
-  const node = root.querySelector<HTMLElement>("[data-station='composer']");
+  const chip = root.querySelector<HTMLElement>("[data-chip]");
+  const lane = root.querySelector<HTMLElement>("[data-station='composer']");
+  const node = chip ?? lane;
   const rect = node?.getBoundingClientRect();
   return {
     id: "composer",
     cellId: 0,
-    x: rect ? rect.left - box.left + Math.min(rect.width * 0.12, 28) : 24,
-    y: rect ? rect.top - box.top + rect.height * 0.45 : 120,
+    x: rect ? rect.left - box.left + rect.width * (chip ? 0.82 : 0.12) : 24,
+    y: rect ? rect.top - box.top + rect.height * 0.55 : 120,
   };
 }
 
@@ -205,7 +208,6 @@ export function DeltalytixChart() {
   const workRef = useRef(createInitialWork());
   const paintRef = useRef<(still: boolean) => void>(() => {});
   const [work, setWork] = useState(workRef.current);
-  const [draft, setDraft] = useState("");
   const [size, setSize] = useState({ width: 0, height: 0 });
 
   useLayoutEffect(() => {
@@ -214,7 +216,7 @@ export function DeltalytixChart() {
     composerRef.current = measureComposer(root);
     cellsRef.current = measureCells(root);
     relocateAgents(workRef.current.agents, cellsRef.current, composerRef.current);
-  }, [work.cells, work.agents.length]);
+  }, [work.cells, work.agents.length, work.outgoing, work.phase]);
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -245,6 +247,10 @@ export function DeltalytixChart() {
       }
     };
     paintRef.current = paint;
+    if (still.matches) {
+      workRef.current = createReducedWork();
+      setWork(workRef.current);
+    }
     sync();
     paint(still.matches);
 
@@ -261,12 +267,15 @@ export function DeltalytixChart() {
       const dt = last === 0 ? 0 : Math.min(0.05, seconds - last);
       last = seconds;
       if (!still.matches && dt > 0) {
-        let changed = false;
-        const nextCells = workRef.current.cells.map((cell) => ({
+        const played = tickPlay(workRef.current, dt, composerRef.current);
+        let changed = played !== workRef.current;
+        let next = played;
+        const nextCells = next.cells.map((cell) => ({
           ...cell,
           flash: false,
         }));
-        for (const agent of workRef.current.agents) {
+        let edited = false;
+        for (const agent of next.agents) {
           const { edit } = stepAgent(
             agent,
             dt,
@@ -281,14 +290,16 @@ export function DeltalytixChart() {
                 agent.tweak,
                 createRandom(`edit-${agent.id}-${agent.tweaksLeft}`),
               );
-              changed = true;
+              edited = true;
             }
           }
         }
-        if (changed) {
-          workRef.current = { ...workRef.current, cells: nextCells };
-          setWork(workRef.current);
+        if (edited) {
+          next = { ...next, cells: nextCells };
+          changed = true;
         }
+        workRef.current = next;
+        if (changed) setWork(next);
       }
       paint(still.matches);
       frame = requestAnimationFrame(tick);
@@ -319,30 +330,13 @@ export function DeltalytixChart() {
     };
   }, []);
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const next = submitPrompt(workRef.current, draft, composerRef.current);
-    if (next === workRef.current) return;
-    const still = window.matchMedia(QUERY);
-    if (still.matches) {
-      next.cells = next.cells.map((cell) => {
-        const agent = next.agents.find((item) => item.cellId === cell.id);
-        if (!agent || cell.id !== next.agents.at(-1)?.cellId) return cell;
-        return applyTweak({ ...cell, job: agent.prompt }, agent.tweak, () => 0.2);
-      });
-      for (const agent of next.agents) agent.work = "idle";
-    }
-    workRef.current = next;
-    setWork(next);
-    setDraft("");
-  };
-
   return (
     <section
       ref={rootRef}
       className="dx-chart"
-      aria-label="Deltalytix chart sketches"
+      aria-label="Agents receiving a message and editing Deltalytix chart sketches"
       data-count={work.agents.length}
+      data-play={work.phase}
     >
       <div className="dx-chart-head">
         <a
@@ -377,23 +371,21 @@ export function DeltalytixChart() {
           </article>
         ))}
       </div>
-      <form className="dx-chart-box" onSubmit={onSubmit}>
-        <label className="dx-chart-hide" htmlFor="dx-chart-prompt">
-          Chart prompt
-        </label>
-        <input
-          id="dx-chart-prompt"
-          data-station="composer"
-          className="dx-chart-input"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="a small tweak…"
-          autoComplete="off"
-        />
-        <button className="dx-chart-go" type="submit" aria-label="Go to work">
-          →
-        </button>
-      </form>
+      <div className="dx-chart-lane" data-station="composer">
+        <p className="dx-chart-hide" aria-live="polite">
+          {work.outgoing ? `Sent ${work.outgoing}` : ""}
+        </p>
+        {work.outgoing ? (
+          <p
+            key={`${work.beat}-${work.outgoing}`}
+            data-chip=""
+            data-phase={work.phase}
+            className="dx-chart-chip"
+          >
+            {work.outgoing}
+          </p>
+        ) : null}
+      </div>
       {size.width > 0 ? (
         <svg
           aria-hidden="true"

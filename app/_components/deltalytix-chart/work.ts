@@ -67,11 +67,28 @@ export type AgentPose = {
   ripple: number;
 };
 
+export type PlayPhase = "gap" | "send" | "work";
+
+export const SCRIPT = [
+  "colors: mint",
+  "kind: line",
+  "shapes: rounded",
+  "kind: area",
+] as const;
+
+export const SEND_HOLD = 0.72;
+export const GAP_HOLD = 0.55;
+export const WORK_HOLD = 2.5;
+
 export type ChartWork = {
   cells: CellState[];
   agents: AgentSeed[];
   nextId: number;
   cursor: number;
+  beat: number;
+  phase: PlayPhase;
+  phaseElapsed: number;
+  outgoing: string | null;
 };
 
 export const INITIAL_CELLS: CellState[] = [
@@ -204,6 +221,66 @@ export function createInitialWork(): ChartWork {
     agents: [],
     nextId: 1,
     cursor: 1,
+    beat: 0,
+    phase: "gap",
+    phaseElapsed: 0,
+    outgoing: null,
+  };
+}
+
+export function createReducedWork(): ChartWork {
+  const sent = submitPrompt(createInitialWork(), SCRIPT[0]);
+  const agent = sent.agents[0];
+  return {
+    ...sent,
+    phase: "work",
+    phaseElapsed: 0,
+    outgoing: SCRIPT[0],
+    cells: sent.cells.map((cell) => {
+      if (!agent || cell.id !== agent.cellId) return cell;
+      return applyTweak({ ...cell, job: agent.prompt }, agent.tweak, () => 0.2);
+    }),
+    agents: sent.agents.map((item) => ({ ...item, work: "idle" as const })),
+  };
+}
+
+export function tickPlay(
+  current: ChartWork,
+  dt: number,
+  composer: Station,
+): ChartWork {
+  current.phaseElapsed += dt;
+  if (current.phase === "gap") {
+    if (current.phaseElapsed < GAP_HOLD) return current;
+    const text = SCRIPT[current.beat % SCRIPT.length] ?? SCRIPT[0];
+    return {
+      ...current,
+      phase: "send",
+      phaseElapsed: 0,
+      outgoing: text,
+    };
+  }
+  if (current.phase === "send") {
+    if (current.phaseElapsed < SEND_HOLD) return current;
+    const text = current.outgoing ?? SCRIPT[current.beat % SCRIPT.length] ?? SCRIPT[0];
+    const spawned = submitPrompt(current, text, composer);
+    return {
+      ...spawned,
+      phase: "work",
+      phaseElapsed: 0,
+      outgoing: text,
+      beat: current.beat,
+    };
+  }
+  const busy = current.agents.some((agent) => agent.work !== "idle");
+  if (busy && current.phaseElapsed < WORK_HOLD) return current;
+  if (!busy && current.phaseElapsed < 0.28) return current;
+  return {
+    ...current,
+    phase: "gap",
+    phaseElapsed: 0,
+    beat: current.beat + 1,
+    outgoing: null,
   };
 }
 
@@ -224,7 +301,7 @@ export function submitPrompt(
   const existing = current.agents.find((agent) => agent.cellId === cellId);
   const rand = createRandom(`prompt-${current.nextId}-${prompt}`);
   const agent: AgentSeed = {
-    id: existing?.id ?? current.nextId,
+    id: current.nextId,
     cellId,
     prompt,
     tweak,
@@ -249,9 +326,10 @@ export function submitPrompt(
     cell.id === cellId ? { ...cell, job: prompt, flash: false } : cell,
   );
   return {
+    ...current,
     cells,
     agents,
-    nextId: existing ? current.nextId : current.nextId + 1,
+    nextId: current.nextId + 1,
     cursor: (cellId % CELL_COUNT) + 1,
   };
 }

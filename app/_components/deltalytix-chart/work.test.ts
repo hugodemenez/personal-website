@@ -12,9 +12,14 @@ import {
 } from "./series";
 import {
   CELL_COUNT,
+  GAP_HOLD,
   MAX_AGENTS,
+  SCRIPT,
+  SEND_HOLD,
+  WORK_HOLD,
   applyTweak,
   createInitialWork,
+  createReducedWork,
   dartEase,
   nextFreeCell,
   parsePrompt,
@@ -22,6 +27,7 @@ import {
   sampleStations,
   stepAgent,
   submitPrompt,
+  tickPlay,
 } from "./work";
 
 test("dart ease overshoots then settles", () => {
@@ -109,6 +115,54 @@ test("reduced motion parks the pointer", () => {
   const still = poseAgent(agent, true, stations);
   assert.equal(still.ripple, 0);
   assert.equal(still.x, stations[1]?.x);
+});
+
+test("autoplay sends a chip then spawns a pointer onto a free cell", () => {
+  const composer = { id: "composer", cellId: 0, x: 16, y: 90 };
+  let work = createInitialWork();
+  assert.equal(work.phase, "gap");
+  assert.equal(work.outgoing, null);
+
+  work = tickPlay(work, GAP_HOLD, composer);
+  assert.equal(work.phase, "send");
+  assert.equal(work.outgoing, SCRIPT[0]);
+  assert.equal(work.agents.length, 0);
+
+  work = tickPlay(work, SEND_HOLD, composer);
+  assert.equal(work.phase, "work");
+  assert.equal(work.outgoing, SCRIPT[0]);
+  assert.equal(work.agents.length, 1);
+  assert.equal(work.agents[0]?.cellId, 1);
+  assert.equal(work.agents[0]?.prompt, SCRIPT[0]);
+  assert.equal(work.agents[0]?.work, "dart");
+  assert.equal(work.agents[0]?.fromX, composer.x);
+});
+
+test("autoplay sequences later messages onto other cells", () => {
+  const composer = { id: "composer", cellId: 0, x: 16, y: 90 };
+  let work = createInitialWork();
+  const seen = new Set<number>();
+  for (let beat = 0; beat < SCRIPT.length; beat += 1) {
+    work = tickPlay(work, GAP_HOLD, composer);
+    work = tickPlay(work, SEND_HOLD, composer);
+    const agent = work.agents.at(-1);
+    if (agent) seen.add(agent.cellId);
+    for (const item of work.agents) item.work = "idle";
+    work = tickPlay(work, WORK_HOLD, composer);
+    work = tickPlay(work, 0.3, composer);
+  }
+  assert.deepEqual([...seen].sort(), [1, 2, 3, 4]);
+  assert.equal(work.beat, SCRIPT.length);
+});
+
+test("reduced motion parks the first sent message and pointer", () => {
+  const work = createReducedWork();
+  assert.equal(work.outgoing, SCRIPT[0]);
+  assert.equal(work.phase, "work");
+  assert.equal(work.agents.length, 1);
+  assert.equal(work.agents[0]?.work, "idle");
+  assert.equal(work.cells[0]?.palette, "mint");
+  assert.equal(work.cells[0]?.job, SCRIPT[0]);
 });
 
 test("tiny layouts stay drawable", () => {
