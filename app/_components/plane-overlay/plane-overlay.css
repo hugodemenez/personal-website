@@ -16,7 +16,7 @@
   height: 100%;
 }
 
-/* Dragged (or no dock): full-viewport overlay, not tied to flowing text. */
+/* After the user moves it: fixed overlay. Scroll leaves this canvas where it is. */
 .plane-overlay.is-flying {
   position: fixed;
   inset: 0;

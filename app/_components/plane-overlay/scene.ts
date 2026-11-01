@@ -4,7 +4,6 @@ import {
   clickKick,
   collideBounds,
   createBody,
-  settled,
   snap,
   stepSpring,
   type FlightMode,
@@ -13,15 +12,11 @@ import {
   clientToNdc,
   dockPark,
   dragModeFor,
-  homeOrExit,
   pixelBounds,
   PLANE_DOCK,
   PLANE_SLOT,
-  rectOnScreen,
-  slotLeavingViewport,
   spanPxFor,
   type DragMode,
-  type Recall,
 } from "./pointer";
 
 const EDGE = 72;
@@ -104,13 +99,7 @@ export function mountPlaneScene(
   let propSpeed = 0;
   let hoverHit = false;
   let flying = false;
-  let phase: "planted" | "parked" | "recall" = "planted";
-  let scrolling = false;
-  let recallKind: Recall["kind"] = "home";
-  let pendingPlant = false;
-  let scrollIdle = 0;
-  let scrollArmed = false;
-  let lastScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+  let phase: "planted" | "parked" = "planted";
 
   const drag = {
     active: false,
@@ -130,8 +119,8 @@ export function mountPlaneScene(
 
   const markMode = () => {
     canvas.dataset.docked = phase === "planted" ? "1" : "0";
-    canvas.dataset.mode = phase === "planted" ? "planted" : flying ? "flying" : "planted";
-    canvas.dataset.recall = phase === "recall" ? recallKind : "";
+    canvas.dataset.mode = phase;
+    canvas.dataset.recall = "";
   };
 
   const dockSlot = () => {
@@ -170,9 +159,7 @@ export function mountPlaneScene(
     target.x = body.pos.x;
     target.y = body.pos.y;
     phase = "planted";
-    pendingPlant = false;
     markMode();
-    watchSlot();
     return true;
   };
 
@@ -191,15 +178,8 @@ export function mountPlaneScene(
     markMode();
   };
 
-  const viewSize = () => ({ width: window.innerWidth, height: window.innerHeight });
-
-  const slotRect = () => {
-    const slot = dockSlot();
-    return slot ? slot.getBoundingClientRect() : null;
-  };
-
   const skyFallback = () =>
-    dockPark(null, viewSize(), spanPxFor(window.innerWidth), EDGE);
+    dockPark(null, { width: window.innerWidth, height: window.innerHeight }, spanPxFor(window.innerWidth), EDGE);
 
   const liftIfPlanted = () => {
     if (flying) return;
@@ -210,36 +190,9 @@ export function mountPlaneScene(
     });
   };
 
-  const aimRecall = () => {
-    liftIfPlanted();
-    const dest = homeOrExit(slotRect(), viewSize(), body.pos);
-    recallKind = dest.kind;
-    target.x = dest.point.x;
-    target.y = dest.point.y;
-    phase = "recall";
-    pendingPlant = dest.kind === "home" && !scrolling;
-    clickKick(body, target);
-    markMode();
-  };
-
   const restIdle = () => {
     if (phase === "parked" || drag.active) return;
-    if (scrolling) return;
-    const rect = slotRect();
-    if (rect && rectOnScreen(rect, viewSize())) {
-      if (!plantInSlot()) takeFlight(skyFallback());
-      return;
-    }
-    if (!flying) liftIfPlanted();
-    if (flying) {
-      const dest = homeOrExit(rect, viewSize(), body.pos);
-      recallKind = dest.kind;
-      target.x = dest.point.x;
-      target.y = dest.point.y;
-      phase = "recall";
-      pendingPlant = false;
-      markMode();
-    }
+    if (!plantInSlot()) takeFlight(skyFallback());
   };
 
   let lockY = 0;
@@ -264,7 +217,6 @@ export function mountPlaneScene(
     document.body.style.touchAction = "";
     document.documentElement.style.cursor = "";
     window.scrollTo(0, lockY);
-    lastScrollY = lockY;
   };
 
   const blockPage = (event: Event) => {
@@ -279,12 +231,12 @@ export function mountPlaneScene(
 
   const resize = () => {
     if (drag.active) return;
-    if (phase === "planted" || (phase !== "parked" && !scrolling)) {
+    if (phase === "planted") {
       restIdle();
       return;
     }
     applyCanvasBox(window.innerWidth, window.innerHeight);
-    if (recallKind !== "exit") collideBounds(body, pixelBounds(size.w, size.h, EDGE));
+    collideBounds(body, pixelBounds(size.w, size.h, EDGE));
   };
 
   const pixelFromWorld = (x: number, y: number, z = 0) => {
@@ -339,7 +291,6 @@ export function mountPlaneScene(
     blockPage(event);
     liftIfPlanted();
     phase = "parked";
-    pendingPlant = false;
     markMode();
     drag.active = true;
     drag.id = event.pointerId;
@@ -412,71 +363,13 @@ export function mountPlaneScene(
     if (drag.active) blockPage(event);
   };
 
-  const switchRecallToExit = () => {
-    const dest = homeOrExit(slotRect(), viewSize(), body.pos);
-    if (dest.kind !== "exit") return;
-    recallKind = "exit";
-    target.x = dest.point.x;
-    target.y = dest.point.y;
-    pendingPlant = false;
-    clickKick(body, target);
-    markMode();
-  };
-
-  const liftFromPlantedIfLeaving = () => {
-    const rect = slotRect();
-    if (rect && !slotLeavingViewport(rect, viewSize())) return;
-    if (scrollArmed) return;
-    scrollArmed = true;
-    scrolling = true;
-    liftIfPlanted();
-    aimRecall();
-  };
-
-  const onScrollSettled = () => {
-    scrolling = false;
-    scrollArmed = false;
-    if (drag.active) return;
-    if (phase === "planted") return;
-    aimRecall();
-  };
-
-  const onScroll = () => {
-    if (drag.active) return;
-    lastScrollY = window.scrollY;
-    window.clearTimeout(scrollIdle);
-    scrollIdle = window.setTimeout(onScrollSettled, 180);
-
-    if (phase === "planted") {
-      // Stay in document flow while the title is on-screen. The browser
-      // moves the slot; JS must not re-bind to getBoundingClientRect.
-      liftFromPlantedIfLeaving();
-      return;
-    }
-
-    scrolling = true;
-    if (!scrollArmed) {
-      scrollArmed = true;
-      aimRecall();
-      return;
-    }
-    if (phase === "recall" && recallKind === "home") switchRecallToExit();
-  };
-
   const tick = (now: number) => {
     const dt = last ? Math.min((now - last) / 1000, LONGEST) : 1 / 60;
     last = now;
     const still = stillRef.current;
 
     if (still) {
-      if (phase === "planted") {
-        // Stay planted — do not re-measure the heading on a timer.
-      } else if (phase === "recall") {
-        snap(body, target);
-        if (pendingPlant && !scrolling) plantInSlot();
-      } else {
-        snap(body, target);
-      }
+      if (phase !== "planted") snap(body, target);
       yaw = 0;
       pitch = 0;
       roll = 0;
@@ -511,12 +404,7 @@ export function mountPlaneScene(
     }
 
     stepSpring(body, target, dt);
-    if (recallKind !== "exit" || phase !== "recall") {
-      collideBounds(body, pixelBounds(size.w, size.h, EDGE));
-    }
-    if (phase === "recall" && pendingPlant && !scrolling && settled(body, target, 10, 40)) {
-      plantInSlot();
-    }
+    collideBounds(body, pixelBounds(size.w, size.h, EDGE));
 
     const desiredYaw = clamp(body.vel.x * 0.0016, -0.9, 0.9);
     const desiredPitch = clamp(-body.vel.y * 0.0014, -0.45, 0.45);
@@ -551,39 +439,20 @@ export function mountPlaneScene(
     resize();
   };
 
-  const slotObserver = new IntersectionObserver(
-    (entries) => {
-      if (drag.active || phase !== "planted") return;
-      const entry = entries[0];
-      if (!entry || entry.isIntersecting) return;
-      liftFromPlantedIfLeaving();
-    },
-    { threshold: 0.2 },
-  );
-
-  const watchSlot = () => {
-    slotObserver.disconnect();
-    const slot = dockSlot();
-    if (slot) slotObserver.observe(slot);
-  };
-
   const orphanWatch = new MutationObserver(() => {
     if (!canvas.isConnected) {
       host.appendChild(canvas);
       if (phase !== "parked") restIdle();
-    } else if (phase === "planted" && !dockSlot()) {
-      takeFlight(skyFallback());
-      phase = "recall";
-    } else if (phase === "planted") {
-      watchSlot();
+      return;
     }
+    const slot = dockSlot();
+    if (phase === "planted" && slot && canvas.parentElement !== slot) restIdle();
   });
   orphanWatch.observe(document.body, { childList: true, subtree: true });
 
   restIdle();
-  watchSlot();
   document.fonts?.ready.then(() => {
-    if (phase === "planted" || phase === "recall") restIdle();
+    if (phase === "planted") restIdle();
   });
   setFlight("flight");
   applyPose();
@@ -602,7 +471,6 @@ export function mountPlaneScene(
   window.addEventListener("touchstart", onTouchStart, optsClaim);
   window.addEventListener("touchmove", onTouchMove, optsClaim);
   window.addEventListener("wheel", onWheel, optsClaim);
-  window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onWindowResize);
   frame = requestAnimationFrame(tick);
 
@@ -617,10 +485,7 @@ export function mountPlaneScene(
     window.removeEventListener("touchstart", onTouchStart, optsClaim);
     window.removeEventListener("touchmove", onTouchMove, optsClaim);
     window.removeEventListener("wheel", onWheel, optsClaim);
-    window.removeEventListener("scroll", onScroll);
     window.removeEventListener("resize", onWindowResize);
-    window.clearTimeout(scrollIdle);
-    slotObserver.disconnect();
     themeQuery.removeEventListener("change", onTheme);
     if (drag.active) unlockPage();
     else {
