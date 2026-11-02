@@ -192,6 +192,57 @@ export function decodePolyline(encoded: string): Array<[number, number]> {
   return coordinates;
 }
 
+function encodeSigned(value: number): string {
+  let encoded = value < 0 ? ~(value << 1) : value << 1;
+  let chunk = "";
+
+  while (encoded >= 0x20) {
+    chunk += String.fromCharCode((0x20 | (encoded & 0x1f)) + 63);
+    encoded >>= 5;
+  }
+
+  return chunk + String.fromCharCode(encoded + 63);
+}
+
+export function encodePolyline(points: Array<[number, number]>): string {
+  let lastLat = 0;
+  let lastLng = 0;
+  let result = "";
+
+  for (const [lat, lng] of points) {
+    const nextLat = Math.round(lat * 1e5);
+    const nextLng = Math.round(lng * 1e5);
+    result += encodeSigned(nextLat - lastLat);
+    result += encodeSigned(nextLng - lastLng);
+    lastLat = nextLat;
+    lastLng = nextLng;
+  }
+
+  return result;
+}
+
+export function hasUsableMap(activity: ShapeActivity): boolean {
+  return typeof activity.map === "string" && activity.map.length > 0;
+}
+
+export function encodedMapFromGps(lat: unknown, lng: unknown): string | null {
+  if (!Array.isArray(lat) || !Array.isArray(lng)) return null;
+
+  const count = Math.min(lat.length, lng.length);
+  const points: Array<[number, number]> = [];
+
+  for (let i = 0; i < count; i += 1) {
+    const latitude = lat[i];
+    const longitude = lng[i];
+    if (typeof latitude !== "number" || typeof longitude !== "number") continue;
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+    points.push([latitude, longitude]);
+  }
+
+  if (points.length < 2) return null;
+  return encodePolyline(points);
+}
+
 function downsample<T>(items: T[], limit: number): T[] {
   if (items.length <= limit) return items;
   const lastIndex = items.length - 1;
@@ -539,7 +590,7 @@ export function buildRouteHeatmap(
   activities: ShapeActivity[]
 ): RouteHeatmap | null {
   const routes = selectRecentRuns(activities, Number.POSITIVE_INFINITY)
-    .filter((activity) => activity.map)
+    .filter(hasUsableMap)
     .map((activity) => decodePolyline(activity.map as string))
     .filter((points) => points.length >= 2);
 
@@ -551,7 +602,7 @@ export function selectDistinctPaths(
   limit = DISTINCT_PATH_LIMIT
 ): DistinctPath[] {
   const mapped = selectRecentRuns(activities, Number.POSITIVE_INFINITY).filter(
-    (activity) => activity.map
+    hasUsableMap
   );
   const paths: DistinctPath[] = [];
 
@@ -574,7 +625,7 @@ export function selectDistinctPaths(
 
 function activityScore(activity: ShapeActivity): number {
   return (
-    (activity.map ? 4 : 0) +
+    (hasUsableMap(activity) ? 4 : 0) +
     (typeof activity.heartRate === "number" ? 2 : 0) +
     (activity.source === "strava" ? 1 : 0)
   );
@@ -605,6 +656,58 @@ export function selectRecentRuns(
   return [...chosen.values()]
     .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
     .slice(0, limit);
+}
+
+export function activitiesNeedingMapEnrichment(
+  activities: ShapeActivity[],
+  limit = DISTINCT_PATH_LIMIT
+): ShapeActivity[] {
+  const recent = selectRecentRuns(activities, Number.POSITIVE_INFINITY);
+  const needed: ShapeActivity[] = [];
+  let filled = 0;
+
+  for (const activity of recent) {
+    if (filled >= limit) break;
+    if (hasUsableMap(activity)) {
+      filled += 1;
+      continue;
+    }
+    needed.push(activity);
+    filled += 1;
+  }
+
+  return needed;
+}
+
+export async function enrichActivitiesWithMaps(
+  activities: ShapeActivity[],
+  loadMap: (id: string) => Promise<string | null>,
+  limit = DISTINCT_PATH_LIMIT
+): Promise<ShapeActivity[]> {
+  const needed = activitiesNeedingMapEnrichment(activities, limit);
+  if (needed.length === 0) return activities;
+
+  const maps = new Map<string, string>();
+  await Promise.all(
+    needed.map(async (activity) => {
+      try {
+        const encoded = await loadMap(activity.id);
+        if (typeof encoded === "string" && encoded.length > 0) {
+          maps.set(activity.id, encoded);
+        }
+      } catch {
+        // Leave the activity unmapped; selectDistinctPaths skips it.
+      }
+    })
+  );
+
+  if (maps.size === 0) return activities;
+
+  return activities.map((activity) => {
+    if (hasUsableMap(activity)) return activity;
+    const map = maps.get(activity.id);
+    return map ? { ...activity, map } : activity;
+  });
 }
 
 export function toRecentRun(activity: ShapeActivity): RecentRun {

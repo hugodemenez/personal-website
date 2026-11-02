@@ -3,6 +3,9 @@ import test from "node:test";
 import {
   calendarDate,
   decodePolyline,
+  encodePolyline,
+  encodedMapFromGps,
+  enrichActivitiesWithMaps,
   polylineToSvgPath,
   formatDistance,
   formatDuration,
@@ -21,34 +24,6 @@ import {
   RECENT_RUN_LIMIT,
   type ShapeActivity,
 } from "./shape-runs";
-
-function encodePolyline(points: Array<[number, number]>): string {
-  let lastLat = 0;
-  let lastLng = 0;
-  let result = "";
-
-  const encode = (value: number) => {
-    let encoded = value < 0 ? ~(value << 1) : value << 1;
-    let chunk = "";
-    while (encoded >= 0x20) {
-      chunk += String.fromCharCode((0x20 | (encoded & 0x1f)) + 63);
-      encoded >>= 5;
-    }
-    chunk += String.fromCharCode(encoded + 63);
-    return chunk;
-  };
-
-  for (const [lat, lng] of points) {
-    const nextLat = Math.round(lat * 1e5);
-    const nextLng = Math.round(lng * 1e5);
-    result += encode(nextLat - lastLat);
-    result += encode(nextLng - lastLng);
-    lastLat = nextLat;
-    lastLng = nextLng;
-  }
-
-  return result;
-}
 
 const PORTUGAL_LOOP: Array<[number, number]> = [
   [38.553, -9.018],
@@ -154,6 +129,165 @@ test("decodes a Google encoded polyline", () => {
     [40.7, -120.95],
     [43.252, -126.453],
   ]);
+});
+
+test("encodePolyline round-trips with decodePolyline", () => {
+  const points: Array<[number, number]> = [
+    [38.5, -120.2],
+    [40.7, -120.95],
+    [43.252, -126.453],
+  ];
+
+  assert.deepEqual(decodePolyline(encodePolyline(points)), points);
+  assert.deepEqual(decodePolyline(encodePolyline(PORTUGAL_LOOP)), PORTUGAL_LOOP);
+});
+
+test("encodedMapFromGps skips samples without usable GPS", () => {
+  assert.equal(encodedMapFromGps(undefined, undefined), null);
+  assert.equal(encodedMapFromGps([], []), null);
+  assert.equal(encodedMapFromGps([50.63], [3.06]), null);
+  assert.equal(encodedMapFromGps([50.63, null], [3.06, 3.07]), null);
+  assert.equal(encodedMapFromGps("lat", [3.06, 3.07]), null);
+  assert.equal(
+    encodedMapFromGps([50.63, Number.NaN], [3.06, Number.POSITIVE_INFINITY]),
+    null
+  );
+
+  const encoded = encodedMapFromGps(
+    [null, 50.63, 50.64, Number.NaN],
+    [3.05, 3.06, 3.07, 3.08]
+  );
+  assert.equal(encoded, encodePolyline([
+    [50.63, 3.06],
+    [50.64, 3.07],
+  ]));
+});
+
+test("enrichActivitiesWithMaps keeps an existing map and skips GPS-less rows", async () => {
+  const existing = "_p~iF~ps|U_ulLnnqC_mqNvxq`@";
+  const requested: string[] = [];
+  const healthkitMap = encodePolyline(FRANCE_LOOP);
+  const enriched = await enrichActivitiesWithMaps(
+    [
+      activity({
+        id: "strava",
+        map: existing,
+      }),
+      activity({
+        id: "healthkit",
+        date: "2026-10-25T10:13:40.355Z",
+        title: "Running",
+        source: "healthkit",
+        externalId: "health-marathon",
+        distance: 43798,
+        duration: 20532,
+        map: null,
+      }),
+      activity({
+        id: "treadmill",
+        date: "2026-10-21T05:31:28.967Z",
+        title: "Taper Two Miler",
+        source: "healthkit",
+        distance: 4391,
+        duration: 1591,
+        map: "",
+      }),
+    ],
+    async (id) => {
+      requested.push(id);
+      if (id === "healthkit") return healthkitMap;
+      return null;
+    }
+  );
+
+  assert.deepEqual(requested.sort(), ["healthkit", "treadmill"]);
+  assert.equal(enriched.find((run) => run.id === "strava")?.map, existing);
+  assert.equal(enriched.find((run) => run.id === "healthkit")?.map, healthkitMap);
+  assert.equal(enriched.find((run) => run.id === "treadmill")?.map, "");
+});
+
+test("enrichActivitiesWithMaps only loads maps for homepage candidates", async () => {
+  const requested: string[] = [];
+  const many = Array.from({ length: DISTINCT_PATH_LIMIT + 3 }, (_, index) =>
+    activity({
+      id: `run-${index}`,
+      date: `2026-10-${String(25 - index).padStart(2, "0")}T07:00:00Z`,
+      title: `Run ${index}`,
+      source: "healthkit",
+      map: null,
+      distance: 5000 + index * 100,
+    })
+  );
+
+  const enriched = await enrichActivitiesWithMaps(many, async (id) => {
+    requested.push(id);
+    return encodePolyline(PORTUGAL_LOOP);
+  });
+
+  assert.deepEqual(
+    requested,
+    many.slice(0, DISTINCT_PATH_LIMIT).map((run) => run.id)
+  );
+  assert.equal(
+    enriched.filter((run) => run.map === encodePolyline(PORTUGAL_LOOP)).length,
+    DISTINCT_PATH_LIMIT
+  );
+  assert.equal(enriched[DISTINCT_PATH_LIMIT].map, null);
+});
+
+test("enrichActivitiesWithMaps does not fetch when newest runs already have maps", async () => {
+  const requested: string[] = [];
+  const mapped = Array.from({ length: DISTINCT_PATH_LIMIT }, (_, index) =>
+    activity({
+      id: `mapped-${index}`,
+      date: `2026-10-${String(25 - index).padStart(2, "0")}T07:00:00Z`,
+      map: encodePolyline(PORTUGAL_LOOP),
+    })
+  );
+  const older = activity({
+    id: "older-healthkit",
+    date: "2026-09-01T07:00:00Z",
+    source: "healthkit",
+    map: null,
+    distance: 8000,
+  });
+
+  const enriched = await enrichActivitiesWithMaps(
+    [...mapped, older],
+    async (id) => {
+      requested.push(id);
+      return encodePolyline(FRANCE_LOOP);
+    }
+  );
+
+  assert.deepEqual(requested, []);
+  assert.equal(enriched.find((run) => run.id === "older-healthkit")?.map, null);
+});
+
+test("selectDistinctPaths draws HealthKit routes after map enrichment", async () => {
+  const healthkit = activity({
+    id: "f7ef731d-0d5f-442e-93cf-4cda890e7d79",
+    date: "2026-10-25T10:13:40.355Z",
+    title: "Running",
+    source: "healthkit",
+    externalId: "health-marathon",
+    distance: 43798,
+    duration: 20532,
+    heartRate: 162,
+    map: null,
+  });
+
+  assert.equal(selectDistinctPaths([healthkit]).length, 0);
+
+  const enriched = await enrichActivitiesWithMaps([healthkit], async () =>
+    encodePolyline(FRANCE_LOOP)
+  );
+  const paths = selectDistinctPaths(enriched);
+
+  assert.equal(paths.length, 1);
+  assert.equal(paths[0].run.id, healthkit.id);
+  assert.equal(paths[0].run.distanceLabel, "43.8 km");
+  assert.ok(paths[0].sketch?.path);
 });
 
 test("turns a polyline into an SVG path", () => {
