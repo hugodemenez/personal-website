@@ -7,7 +7,7 @@ import {
   isMappedResumePlace,
 } from "./resume-places";
 
-test("keeps the Places table title and column headers", () => {
+test("keeps the Places title and carousel field headers", () => {
   assert.equal(RESUME_PLACES_TITLE, "Places");
   assert.deepEqual(
     RESUME_PLACE_COLUMNS.map((column) => column.header),

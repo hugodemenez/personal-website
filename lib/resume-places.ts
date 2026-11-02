@@ -1,5 +1,5 @@
 /**
- * Homepage Places: table copy plus map marks.
+ * Homepage Places: carousel copy plus map marks.
  * Shake-approved wording lives here so it can change without JSX edits.
  * Map geography is the previous Places marks; EDH has no map location.
  */
@@ -20,7 +20,7 @@ export interface ResumePlace {
   role: string;
   what: string;
   year: string;
-  /** Stable key for the map loop and table highlight. */
+  /** Stable key for the map loop and carousel. */
   label: string;
   country?: string | null;
   latitude?: number;

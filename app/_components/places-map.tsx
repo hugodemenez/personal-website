@@ -1,7 +1,7 @@
 "use client";
 
 import { useDrawReplayToken } from "./draw-replay";
-import { PlacesTable } from "./places";
+import { PlacesCarousel } from "./places";
 import { PlacesMapSvg } from "./places-map-svg";
 import { useEffect, useMemo, useState, type PointerEvent } from "react";
 import type { VisitedPlace } from "@/server/location-data";
@@ -214,8 +214,8 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
   }
 
   return (
-    <>
-      <PlacesMapSvg>
+    <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-5">
+      <PlacesMapSvg className="w-full min-w-0 text-muted sm:flex-[1.4]">
         <g filter="url(#places-map-circles)">
           <rect
             fill="transparent"
@@ -283,10 +283,12 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
         </g>
       </PlacesMapSvg>
 
-      <PlacesTable
-        activeKey={activeKey}
-        onSelect={(key) => playResume(key, true)}
-      />
-    </>
+      <div className="min-w-0 sm:flex-1">
+        <PlacesCarousel
+          activeKey={activeKey}
+          onSelect={(key) => playResume(key, true)}
+        />
+      </div>
+    </div>
   );
 }

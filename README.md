@@ -33,8 +33,8 @@ Deployed on [Vercel](https://vercel.com).
 
 The location pill reads a `current_location` record from Vercel Global Config
 (formerly Edge Config) and combines it with current conditions from Open-Meteo.
-The homepage also draws a rough world map from the same record, with a role
-table under it. Global Config must stay small, so the store keeps the current
+The homepage also draws a rough world map from the same record, with a
+carousel of roles beside it. Global Config must stay small, so the store keeps the current
 country plus at most two earlier countries (three distinct stays). A fourth new
 country drops the least-used older stay; the next write also trims any oversized
 record already in the store. Day counts stay on those few entries; the map keeps

@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   isResumeLoopKey,
   nextResumeIndex,
+  previousResumeIndex,
   resumeListItems,
   resumeLoopKeys,
   resumeLoopStepMs,
@@ -11,7 +12,7 @@ import {
 } from "./resume-list";
 import { RESUME_PLACES } from "./resume-places";
 
-test("lists resume beats in table order, including EDH", () => {
+test("lists resume beats in carousel order, including EDH", () => {
   const items = resumeListItems();
   assert.deepEqual(
     items.map((item) => item.key),
@@ -84,4 +85,13 @@ test("advances the resume loop one beat at a time and wraps", () => {
   assert.equal(nextResumeIndex(0, 0), 0);
   assert.equal(resumeLoopStepMs(640), RESUME_RESTART_MS + 640 + RESUME_HOLD_MS);
   assert.ok(resumeLoopStepMs(640) > 640);
+});
+
+test("steps the resume loop backward and wraps", () => {
+  assert.equal(previousResumeIndex(5, -1), 4);
+  assert.equal(previousResumeIndex(5, 0), 4);
+  assert.equal(previousResumeIndex(5, 1), 0);
+  assert.equal(previousResumeIndex(5, 4), 3);
+  assert.equal(previousResumeIndex(1, 0), 0);
+  assert.equal(previousResumeIndex(0, 0), 0);
 });

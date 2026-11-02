@@ -44,6 +44,13 @@ export function nextResumeIndex(count: number, index: number): number {
   return (index + 1) % count;
 }
 
+/** Step backward. `index` of `-1` starts at the last item. */
+export function previousResumeIndex(count: number, index: number): number {
+  if (count <= 0) return 0;
+  if (!Number.isFinite(index) || index < 0) return count - 1;
+  return (index - 1 + count) % count;
+}
+
 export function resumeLoopStepMs(drawMs: number): number {
   return RESUME_RESTART_MS + drawMs + RESUME_HOLD_MS;
 }
