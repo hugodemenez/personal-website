@@ -3,13 +3,12 @@ import test from "node:test";
 import {
   RESUME_PLACE_COLUMNS,
   RESUME_PLACES,
-  RESUME_PLACES_SUBTITLE,
   RESUME_PLACES_TITLE,
+  isMappedResumePlace,
 } from "./resume-places";
 
 test("keeps the Places table title and column headers", () => {
   assert.equal(RESUME_PLACES_TITLE, "Places");
-  assert.equal(RESUME_PLACES_SUBTITLE.length > 0, true);
   assert.deepEqual(
     RESUME_PLACE_COLUMNS.map((column) => column.header),
     ["Place", "Role", "What", "Year"]
@@ -59,10 +58,23 @@ test("lists Shake-approved roles in a stable order", () => {
   );
 });
 
-test("does not invent a year for the EDH collaboration", () => {
+test("does not invent a year or map mark for the EDH collaboration", () => {
   const edh = RESUME_PLACES.find((row) => row.place.includes("EDH"));
   assert.ok(edh);
   assert.match(edh.place, /Rothschild & Co/);
   assert.equal(edh.year, "—");
   assert.equal(/\d/.test(edh.year), false);
+  assert.equal(isMappedResumePlace(edh), false);
+});
+
+test("keeps map marks for the original Places stops", () => {
+  const mapped = RESUME_PLACES.filter(isMappedResumePlace);
+  assert.deepEqual(
+    mapped.map((place) => place.label),
+    ["France", "Portugal", "Harvard", "Foundever"]
+  );
+  assert.equal(
+    mapped.find((place) => place.label === "Foundever")?.span,
+    "global"
+  );
 });
