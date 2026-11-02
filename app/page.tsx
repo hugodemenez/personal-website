@@ -1,7 +1,7 @@
 import { DeltalytixChart } from "./_components/deltalytix-chart";
 import { Flywheel } from "./_components/flywheel/Flywheel";
 import LocationPill from "./_components/location-pill";
-import { PlacesMap } from "./_components/places-map-frame";
+import { Places } from "./_components/places";
 import RecentRuns from "./_components/recent-runs";
 import { getLocationPageData } from "@/server/location";
 import { getSpotifyData } from "@/server/spotify";
@@ -283,7 +283,7 @@ export default async function Home() {
             for the latest in AI and design.
           </p>
         </section>
-        <PlacesMap />
+        <Places />
       </main>
       <RecentRuns />
     </>

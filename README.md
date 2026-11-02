@@ -33,15 +33,11 @@ Deployed on [Vercel](https://vercel.com).
 
 The location pill reads a `current_location` record from Vercel Global Config
 (formerly Edge Config) and combines it with current conditions from Open-Meteo.
-The homepage also draws a rough world map from the same record. Global
-Config must stay small, so the store keeps the current country plus at most
+Global Config must stay small, so the store keeps the current country plus at most
 two earlier countries (three distinct stays). A fourth new country drops the
 least-used older stay; the next write also trims any oversized record
-already in the store. Day counts stay on those few entries; the map keeps
-the whole world in view and circles regions by hand — most of the time,
-casual, and a couple still ahead — rather than pins or numbers. San
-Francisco and Canada sit on the map as places I'd like to go, in a
-complementary blue; they are not part of the location store.
+already in the store. Day counts stay on those few entries; nearby runs are
+labelled from the same stay list.
 Location and the composed pill stay in the static shell, the same way recent
 runs do: the last known country is prerendered into the page, then refreshed in
 the background about once a minute. The cache is only discarded after a week

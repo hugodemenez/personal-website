@@ -1,52 +1,54 @@
 /**
- * Geographic beats from `app/posts/cv/page.mdx`, plus Foundever (global).
- * Circles on the map and the resume list under it share `label` as the key.
+ * Homepage Places table. Copy lives here so wording can change without JSX edits.
  */
+export const RESUME_PLACES_TITLE = "Places";
+export const RESUME_PLACES_SUBTITLE = "What I did at each stop.";
+
+export const RESUME_PLACE_COLUMNS = [
+  { key: "place", header: "Place" },
+  { key: "role", header: "Role" },
+  { key: "what", header: "What" },
+  { key: "year", header: "Year" },
+] as const;
+
+export type ResumePlaceField = (typeof RESUME_PLACE_COLUMNS)[number]["key"];
+
 export interface ResumePlace {
-  country: string | null;
-  detail: string;
-  label: string;
-  latitude: number;
-  longitude: number;
-  span: "city" | "region" | "global";
-  title: string;
+  place: string;
+  role: string;
+  what: string;
+  year: string;
 }
 
 export const RESUME_PLACES: readonly ResumePlace[] = [
   {
-    country: "France",
-    detail: "Engineering degree · Lille, quantitative finance",
-    label: "France",
-    latitude: 50.63,
-    longitude: 3.06,
-    span: "region",
-    title: "ISEN",
+    place: "ISEN",
+    role: "Engineering degree",
+    what: "Computer science and quantitative finance, Lille",
+    year: "2018-2023",
   },
   {
-    country: "Portugal",
-    detail: "Fullstack developer, 2022",
-    label: "Portugal",
-    latitude: 41.15,
-    longitude: -8.61,
-    span: "city",
-    title: "Cofidis",
+    place: "Cofidis",
+    role: "Fullstack developer",
+    what: "Fraud detection and customer chatbot, Lisbon",
+    year: "2022",
   },
   {
-    country: "United States",
-    detail: "Design thinking and innovation",
-    label: "Harvard",
-    latitude: 42.37,
-    longitude: -71.12,
-    span: "city",
-    title: "Harvard Business School Online",
+    place: "Harvard Business School Online",
+    role: "Certificate",
+    what: "Design thinking and innovation",
+    year: "2023",
   },
   {
-    country: null,
-    detail: "Globally",
-    label: "Foundever",
-    latitude: 12,
-    longitude: -28,
-    span: "global",
-    title: "Foundever",
+    place: "Foundever",
+    role: "Backend engineer",
+    what: "Global",
+    year: "Present",
+  },
+  {
+    place: "EDH with Rothschild & Co",
+    role: "BI analytics",
+    what: "Business intelligence collaboration",
+    year: "—",
   },
 ];
