@@ -135,8 +135,12 @@ static tree, so Next prerenders it during `next build` and the first
 Shape fetch happens there. Later requests reuse that HTML and refresh
 in the background. The server loads the last 180 days, drops walks
 and HealthKit/Strava duplicates, then shows each mapped run as its
-own row (capped at six). Each row is a smooth polyline of that run
-beside the activity title and compact stats. The list is captioned
+own row (capped at six). Apple HealthKit rows often omit Shape's
+encoded `map` even when GPS exists; those homepage candidates get
+lat/lng samples from `/activities/:id/details` and are encoded into
+the same Google polyline the sketches already draw. Existing Strava
+maps are kept. Each row is a smooth polyline of that run beside the
+activity title and compact stats. The list is captioned
 “Recent mapped runs.” Shape has no country field, so a row shows a
 country only when the run sits near one of the few stays in
 `current_location` (within 15 km). Otherwise the name is omitted.

@@ -5,6 +5,8 @@ import {
   stayAreasFromPlaces,
 } from "@/lib/run-areas";
 import {
+  encodedMapFromGps,
+  enrichActivitiesWithMaps,
   selectDistinctPaths,
   type DistinctPath,
   type ShapeActivity,
@@ -13,6 +15,14 @@ import { getStayRunAreas } from "@/server/location";
 
 const SHAPE_API_BASE = "https://shapecalendar.com/api/v1";
 const LOOKBACK_DAYS = 180;
+const MAP_DETAIL_POINTS = 500;
+
+interface ShapeActivityDetailsResponse {
+  channels?: {
+    lat?: unknown;
+    lng?: unknown;
+  };
+}
 
 interface ShapeActivitiesResponse {
   activities?: ShapeActivity[];
@@ -34,6 +44,38 @@ export function resolveRunningPaths(
   return paths.length > 0
     ? paths
     : selectDistinctPaths(FALLBACK_SHAPE_ACTIVITIES);
+}
+
+export async function fetchActivityGpsMap(
+  id: string,
+  token: string,
+  fetcher: typeof fetch = fetch
+): Promise<string | null> {
+  const params = new URLSearchParams({
+    channels: "lat,lng",
+    points: String(MAP_DETAIL_POINTS),
+    includeLaps: "false",
+    includeZones: "false",
+    includeLengths: "false",
+  });
+
+  try {
+    const response = await fetcher(
+      `${SHAPE_API_BASE}/activities/${encodeURIComponent(id)}/details?${params}`,
+      {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as ShapeActivityDetailsResponse;
+    return encodedMapFromGps(data.channels?.lat, data.channels?.lng);
+  } catch {
+    return null;
+  }
 }
 
 async function nameResolvedPaths(
@@ -75,10 +117,13 @@ export const loadRunningSection = cache(
         throw new Error(data.error ?? `Shape API failed (${response.status})`);
       }
 
+      const activities = await enrichActivitiesWithMaps(
+        data.activities ?? [],
+        (id) => fetchActivityGpsMap(id, token)
+      );
+
       return {
-        paths: await nameResolvedPaths(
-          resolveRunningPaths(data.activities ?? [])
-        ),
+        paths: await nameResolvedPaths(resolveRunningPaths(activities)),
       };
     } catch (error) {
       console.error("Unable to load recent runs from Shape", error);
