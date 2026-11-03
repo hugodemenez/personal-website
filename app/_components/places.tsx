@@ -19,34 +19,14 @@ import {
 const SWIPE_PX = 40;
 const SLIDE_MS = 420;
 const SLIDE_EASE = "cubic-bezier(0.3,0.7,0.4,1)";
+/** Visible sliver of the upcoming card. */
+const PEEK = "1.75rem";
+const GAP = "0.75rem";
 
 function prefersReducedMotion(): boolean {
   return (
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-function Chevron({ direction }: { direction: "prev" | "next" }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-3.5"
-      fill="none"
-      viewBox="0 0 16 16"
-    >
-      <path
-        d={
-          direction === "prev"
-            ? "M10.25 3.5 5.75 8l4.5 4.5"
-            : "M5.75 3.5 10.25 8l-4.5 4.5"
-        }
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.25"
-      />
-    </svg>
   );
 }
 
@@ -180,15 +160,23 @@ export function PlacesCarousel({
     const dx = start && start.id === event.pointerId ? event.clientX - start.x : 0;
     const dragged = draggingRef.current;
     draggingRef.current = false;
-    if (!dragged) return;
-    setAnimate(false);
-    setDragPx(0);
-    if (Math.abs(dx) < SWIPE_PX) return;
-    go(
-      dx < 0
-        ? nextResumeIndex(count, displayIndex)
-        : previousResumeIndex(count, displayIndex)
-    );
+    if (dragged) {
+      setAnimate(false);
+      setDragPx(0);
+      if (Math.abs(dx) < SWIPE_PX) return;
+      go(
+        dx < 0
+          ? nextResumeIndex(count, displayIndex)
+          : previousResumeIndex(count, displayIndex)
+      );
+      return;
+    }
+
+    const slide = (event.target as Element | null)?.closest?.("[data-places-index]");
+    if (!(slide instanceof HTMLElement)) return;
+    const index = Number(slide.dataset.placesIndex);
+    if (!Number.isFinite(index)) return;
+    go(realIndexFromTrack(index, count));
   }
 
   function onTransitionEnd() {
@@ -205,7 +193,7 @@ export function PlacesCarousel({
     <div
       aria-label="Places"
       aria-roledescription="carousel"
-      className="min-w-0 select-none"
+      className="min-w-0 select-none outline-none"
       onKeyDown={(event) => {
         if (event.key === "ArrowRight") {
           event.preventDefault();
@@ -216,6 +204,7 @@ export function PlacesCarousel({
         }
       }}
       role="group"
+      tabIndex={0}
     >
       <div
         className="w-full overflow-hidden touch-pan-y"
@@ -233,7 +222,8 @@ export function PlacesCarousel({
           data-places-track
           onTransitionEnd={onTransitionEnd}
           style={{
-            transform: `translate3d(calc(${-trackIndex * 100}% + ${dragPx}px), 0, 0)`,
+            gap: GAP,
+            transform: `translate3d(calc(${-trackIndex} * (100% - ${PEEK}) + ${dragPx}px), 0, 0)`,
             transition:
               dragPx !== 0 || reduceMotion
                 ? "none"
@@ -246,51 +236,22 @@ export function PlacesCarousel({
             return (
               <div
                 aria-hidden={clone || !selected ? true : undefined}
-                className="box-border w-full min-w-full shrink-0 basis-full"
+                className={`box-border min-w-0 shrink-0 cursor-pointer ${
+                  selected ? "opacity-100" : "opacity-40"
+                }`}
+                data-places-index={index}
                 data-places-slide={place.place}
                 key={`${place.label}-${index}`}
+                style={{
+                  flexBasis: `calc(100% - ${PEEK} - ${GAP})`,
+                  width: `calc(100% - ${PEEK} - ${GAP})`,
+                }}
               >
                 <PlaceSlide place={place} />
               </div>
             );
           })}
         </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <button
-          aria-label="Previous place"
-          className="relative inline-flex size-8 shrink-0 cursor-pointer items-center justify-center text-muted/70 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-          onClick={() => go(previousResumeIndex(count, displayIndex))}
-          type="button"
-        >
-          <Chevron direction="prev" />
-        </button>
-        <div className="flex items-center gap-1.5">
-          {RESUME_PLACES.map((place, index) => {
-            const selected = index === displayIndex;
-            return (
-              <button
-                aria-current={selected ? "true" : undefined}
-                aria-label={`${place.place}, ${index + 1} of ${count}`}
-                className={`size-1.5 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
-                  selected ? "bg-accent" : "bg-border hover:bg-muted/50"
-                }`}
-                key={place.label}
-                onClick={() => go(index)}
-                type="button"
-              />
-            );
-          })}
-        </div>
-        <button
-          aria-label="Next place"
-          className="relative inline-flex size-8 shrink-0 cursor-pointer items-center justify-center text-muted/70 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-          onClick={() => go(nextResumeIndex(count, displayIndex))}
-          type="button"
-        >
-          <Chevron direction="next" />
-        </button>
       </div>
     </div>
   );
