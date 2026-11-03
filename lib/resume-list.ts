@@ -1,7 +1,6 @@
 import { RESUME_PLACES, type ResumePlace } from "@/lib/resume-places";
 
 export interface ResumeListItem {
-  detail: string;
   key: string;
   title: string;
 }
@@ -15,11 +14,10 @@ export function resumeListItems(
   places: readonly ResumePlace[] = RESUME_PLACES
 ): ResumeListItem[] {
   return places
-    .filter((place) => place.detail.trim().length > 0)
+    .filter((place) => place.place.trim().length > 0 && place.label.trim().length > 0)
     .map((place) => ({
-      detail: place.detail,
       key: place.label,
-      title: place.title,
+      title: place.place,
     }));
 }
 
@@ -44,6 +42,13 @@ export function nextResumeIndex(count: number, index: number): number {
   if (count <= 0) return 0;
   if (!Number.isFinite(index) || index < 0) return 0;
   return (index + 1) % count;
+}
+
+/** Step backward. `index` of `-1` starts at the last item. */
+export function previousResumeIndex(count: number, index: number): number {
+  if (count <= 0) return 0;
+  if (!Number.isFinite(index) || index < 0) return count - 1;
+  return (index - 1 + count) % count;
 }
 
 export function resumeLoopStepMs(drawMs: number): number {

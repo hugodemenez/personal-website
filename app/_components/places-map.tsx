@@ -1,6 +1,7 @@
 "use client";
 
 import { useDrawReplayToken } from "./draw-replay";
+import { PlacesCarousel } from "./places";
 import { PlacesMapSvg } from "./places-map-svg";
 import { useEffect, useMemo, useState, type PointerEvent } from "react";
 import type { VisitedPlace } from "@/server/location-data";
@@ -213,8 +214,8 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
   }
 
   return (
-    <>
-      <PlacesMapSvg>
+    <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-5">
+      <PlacesMapSvg className="w-full min-w-0 text-muted sm:flex-[1.4]">
         <g filter="url(#places-map-circles)">
           <rect
             fill="transparent"
@@ -282,34 +283,12 @@ export default function PlacesBlock({ places }: PlacesBlockProps) {
         </g>
       </PlacesMapSvg>
 
-      <ul
-        aria-label="Resume places"
-        className="mt-5 space-y-1.5 text-sm leading-snug"
-      >
-        {resumeItems.map((item) => {
-          const active = activeKey === item.key;
-          return (
-            <li key={item.key}>
-              <button
-                aria-current={active ? "true" : undefined}
-                className={`-ml-2 block w-full rounded-sm border-l-2 py-0.5 pl-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
-                  active
-                    ? "border-accent text-foreground"
-                    : "border-transparent text-muted hover:text-foreground"
-                }`}
-                onClick={() => playResume(item.key, true)}
-                type="button"
-              >
-                <span className="font-medium">{item.title}</span>
-                <span className={active ? "text-foreground/70" : ""}>
-                  {" — "}
-                  {item.detail}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </>
+      <div className="min-w-0 sm:flex-1">
+        <PlacesCarousel
+          activeKey={activeKey}
+          onSelect={(key) => playResume(key, true)}
+        />
+      </div>
+    </div>
   );
 }

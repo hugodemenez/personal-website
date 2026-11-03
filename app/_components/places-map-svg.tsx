@@ -9,12 +9,18 @@ import {
 const VIEW_WIDTH = MAP_WIDTH + MAP_PADDING * 2;
 const VIEW_HEIGHT = MAP_HEIGHT + MAP_PADDING * 2;
 
-export function PlacesMapSvg({ children }: { children?: ReactNode }) {
+export function PlacesMapSvg({
+  children,
+  className,
+}: {
+  children?: ReactNode;
+  className?: string;
+}) {
   const continents = continentPaths();
 
   return (
     <div
-      className="mt-5 w-full text-muted"
+      className={className ?? "mt-5 w-full text-muted"}
       style={{ aspectRatio: `${VIEW_WIDTH} / ${VIEW_HEIGHT}` }}
     >
       <svg

@@ -198,12 +198,14 @@ test("hides CV beats on the map and folds them into matching stays", () => {
   const portugalMark = merged.find((circle) => circle.label === "Portugal");
   const franceMark = merged.find((circle) => circle.label === "France");
   assert.equal(portugalMark?.kind, "habitual");
-  assert.equal(portugalMark?.detail, RESUME_PLACES.find((place) => place.country === "Portugal")?.detail);
+  assert.equal(portugalMark?.detail, RESUME_PLACES.find((place) => place.country === "Portugal")?.what);
   assert.equal(franceMark?.kind, "casual");
-  assert.equal(franceMark?.detail, RESUME_PLACES.find((place) => place.country === "France")?.detail);
+  assert.equal(franceMark?.detail, RESUME_PLACES.find((place) => place.country === "France")?.what);
   assert.equal(merged.filter((circle) => circle.label === "Portugal").length, 1);
   assert.ok(merged.some((circle) => circle.label === "Harvard"));
   assert.ok(merged.some((circle) => circle.label === "Foundever"));
+  assert.ok(!merged.some((circle) => circle.label === "EDH"));
+  assert.ok(!resumeCircles().some((circle) => circle.label === "EDH"));
 });
 
 test("draws the global resume mark as a scribble around the whole map", () => {

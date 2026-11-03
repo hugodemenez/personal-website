@@ -1,5 +1,10 @@
 import type { VisitedPlace } from "@/server/location-data";
-import { RESUME_PLACES, type ResumePlace } from "@/lib/resume-places";
+import {
+  RESUME_PLACES,
+  isMappedResumePlace,
+  type ResumePlace,
+  type ResumePlaceSpan,
+} from "@/lib/resume-places";
 
 export const MAP_WIDTH = 900;
 export const MAP_HEIGHT = 450;
@@ -579,7 +584,7 @@ export function wantedCircles(
   });
 }
 
-export function resumeRadius(span: ResumePlace["span"]): number {
+export function resumeRadius(span: ResumePlaceSpan): number {
   if (span === "global") return GLOBAL_MARK.radiusX;
   if (span === "region") return 28;
   return 22;
@@ -588,14 +593,14 @@ export function resumeRadius(span: ResumePlace["span"]): number {
 export function resumeCircles(
   places: readonly ResumePlace[] = RESUME_PLACES
 ): ZoneCircle[] {
-  return places.map((place) => {
+  return places.filter(isMappedResumePlace).map((place) => {
     const random = createRandom(`resume|${place.label}`);
     const turns = 1.1 + random() * 0.14;
 
     if (place.span === "global") {
       const origin = { x: GLOBAL_MARK.x, y: GLOBAL_MARK.y };
       return {
-        detail: place.detail,
+        detail: place.what,
         global: true,
         hitRadius: Math.hypot(MAP_WIDTH / 2, MAP_HEIGHT / 2),
         kind: "resume" as const,
@@ -621,7 +626,7 @@ export function resumeCircles(
     const stretch = 0.74 + random() * 0.18;
 
     return {
-      detail: place.detail,
+      detail: place.what,
       hitRadius: Math.max(radius * 1.35, 36),
       kind: "resume" as const,
       label: place.label,
@@ -641,6 +646,8 @@ export function applyResumeToStayCircles(
   const extras: ZoneCircle[] = [];
 
   for (const place of places) {
+    if (!isMappedResumePlace(place)) continue;
+
     const country = place.country;
     const match = country
       ? stays.find(
@@ -649,7 +656,7 @@ export function applyResumeToStayCircles(
       : undefined;
 
     if (match) {
-      match.detail = place.detail;
+      match.detail = place.what;
       continue;
     }
 

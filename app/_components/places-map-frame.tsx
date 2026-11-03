@@ -68,7 +68,14 @@ export function PlacesMap() {
           A rough map of recent regions, and a couple still ahead.
         </p>
 
-        <Suspense fallback={<PlacesMapSvg />}>
+        <Suspense
+          fallback={
+            <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-5">
+              <PlacesMapSvg className="w-full min-w-0 text-muted sm:flex-[1.4]" />
+              <div className="min-h-[9.75rem] min-w-0 sm:flex-1" />
+            </div>
+          }
+        >
           <CachedPlacesBlock />
         </Suspense>
 

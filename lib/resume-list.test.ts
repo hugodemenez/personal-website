@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   isResumeLoopKey,
   nextResumeIndex,
+  previousResumeIndex,
   resumeListItems,
   resumeLoopKeys,
   resumeLoopStepMs,
@@ -11,7 +12,7 @@ import {
 } from "./resume-list";
 import { RESUME_PLACES } from "./resume-places";
 
-test("lists resume beats as compact CV lines in a stable order", () => {
+test("lists resume beats in carousel order, including EDH", () => {
   const items = resumeListItems();
   assert.deepEqual(
     items.map((item) => item.key),
@@ -22,6 +23,7 @@ test("lists resume beats as compact CV lines in a stable order", () => {
     "Portugal",
     "Harvard",
     "Foundever",
+    "EDH",
   ]);
   assert.deepEqual(
     items.map((item) => item.title),
@@ -30,21 +32,23 @@ test("lists resume beats as compact CV lines in a stable order", () => {
       "Cofidis",
       "Harvard Business School Online",
       "Foundever",
+      "EDH with Rothschild & Co",
     ]
   );
-  assert.ok(items.every((item) => item.detail.length > 0));
 });
 
-test("skips places that have no resume detail", () => {
+test("skips places that have no table name", () => {
   const items = resumeListItems([
     {
-      country: "Spain",
-      detail: "",
+      place: "",
+      role: "Skip",
+      what: "",
+      year: "",
       label: "Spain",
+      country: "Spain",
       latitude: 40,
       longitude: -3,
       span: "city",
-      title: "Madrid",
     },
     RESUME_PLACES[0],
   ]);
@@ -56,21 +60,38 @@ test("skips places that have no resume detail", () => {
 
 test("keeps the resume list order regardless of which beat is active", () => {
   const keys = resumeLoopKeys();
-  assert.deepEqual(keys, ["France", "Portugal", "Harvard", "Foundever"]);
+  assert.deepEqual(keys, [
+    "France",
+    "Portugal",
+    "Harvard",
+    "Foundever",
+    "EDH",
+  ]);
   assert.ok(isResumeLoopKey("Foundever", keys));
   assert.ok(isResumeLoopKey("France", keys));
+  assert.ok(isResumeLoopKey("EDH", keys));
   assert.ok(!isResumeLoopKey("San Francisco", keys));
   assert.ok(!isResumeLoopKey("Canada", keys));
 });
 
 test("advances the resume loop one beat at a time and wraps", () => {
-  assert.equal(nextResumeIndex(4, -1), 0);
-  assert.equal(nextResumeIndex(4, 0), 1);
-  assert.equal(nextResumeIndex(4, 1), 2);
-  assert.equal(nextResumeIndex(4, 2), 3);
-  assert.equal(nextResumeIndex(4, 3), 0);
+  assert.equal(nextResumeIndex(5, -1), 0);
+  assert.equal(nextResumeIndex(5, 0), 1);
+  assert.equal(nextResumeIndex(5, 1), 2);
+  assert.equal(nextResumeIndex(5, 2), 3);
+  assert.equal(nextResumeIndex(5, 3), 4);
+  assert.equal(nextResumeIndex(5, 4), 0);
   assert.equal(nextResumeIndex(1, 0), 0);
   assert.equal(nextResumeIndex(0, 0), 0);
   assert.equal(resumeLoopStepMs(640), RESUME_RESTART_MS + 640 + RESUME_HOLD_MS);
   assert.ok(resumeLoopStepMs(640) > 640);
+});
+
+test("steps the resume loop backward and wraps", () => {
+  assert.equal(previousResumeIndex(5, -1), 4);
+  assert.equal(previousResumeIndex(5, 0), 4);
+  assert.equal(previousResumeIndex(5, 1), 0);
+  assert.equal(previousResumeIndex(5, 4), 3);
+  assert.equal(previousResumeIndex(1, 0), 0);
+  assert.equal(previousResumeIndex(0, 0), 0);
 });
